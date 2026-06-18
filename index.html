@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>EV 충전 기록 — ㈜대동산업</title>
+<title>EV 충전 기록 — </title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -274,12 +274,87 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .month-cnt{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0;font-weight:600}
 .year-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 </style>
+
+<script type="module">
+// ══ Firebase 초기화 ══
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, set, update, remove, onValue, get }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, signInAnonymously }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBspQaU-41QqKa15lizOVAxcDQkwSSdSMM",
+  authDomain: "inventory-dce00.firebaseapp.com",
+  databaseURL: "https://inventory-dce00-default-rtdb.firebaseio.com",
+  projectId: "inventory-dce00",
+  storageBucket: "inventory-dce00.firebasestorage.app",
+  messagingSenderId: "344489058455",
+  appId: "1:344489058455:web:d681bf992931af186889d2"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getDatabase(app);
+const auth = getAuth(app);
+
+// ── 익명 로그인 ──
+signInAnonymously(auth).then(()=>{
+  console.log("Firebase 익명 인증 완료");
+  // 실시간 데이터 구독
+  const evRef = ref(db, 'ev_charge');
+  onValue(evRef, snap => {
+    if(snap.exists()){
+      const data = snap.val();
+      // 객체 → 배열 변환, 최신순 정렬
+      window._fbRecords = Object.entries(data).map(([fbKey, v])=>({
+        ...v, fbKey
+      })).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+      // 전역 records 동기화
+      if(typeof records !== 'undefined'){
+        records.length = 0;
+        window._fbRecords.forEach(r=>records.push(r));
+        // 현재 탭 리렌더
+        const activeTab = ['input','log','stats','year'].find(t=>{
+          const el = document.getElementById('sec-'+t);
+          return el && el.classList.contains('on');
+        });
+        if(activeTab==='log') renderLog();
+        if(activeTab==='stats') renderStats();
+        if(activeTab==='year') renderYear();
+      }
+    } else {
+      if(typeof records !== 'undefined') records.length = 0;
+    }
+  });
+}).catch(e=>console.error("Auth 오류:", e));
+
+// ── 저장 ──
+window.fbSave = function(rec) {
+  const evRef = ref(db, 'ev_charge');
+  const newRef = push(evRef);
+  return set(newRef, { ...rec, fbKey: undefined }).then(()=>{
+    console.log("저장 완료");
+  });
+};
+
+// ── 수정 ──
+window.fbUpdate = function(fbKey, data) {
+  const recRef = ref(db, 'ev_charge/' + fbKey);
+  return update(recRef, data);
+};
+
+// ── 삭제 ──
+window.fbDelete = function(fbKey) {
+  const recRef = ref(db, 'ev_charge/' + fbKey);
+  return remove(recRef);
+};
+</script>
 </head>
 <body>
 
 <!-- ══ PIN 화면 ══ -->
 <div id="pin-screen">
-  <div class="pin-logo">㈜ 대동산업</div>
+  
   <div class="pin-title">PIN 입력</div>
   <div class="pin-sub">4자리 번호를 입력하세요</div>
   <div class="pin-dots" id="pin-dots">
@@ -312,7 +387,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div class="hdr-row">
       <div>
         <div class="hdr-title">⚡ EV 충전 기록</div>
-        <div class="hdr-sub">㈜ 대동산업 · 충전기 1·2·3호기</div>
+        <div class="hdr-sub">충전기 1·2·3호기</div>
       </div>
       <div class="hdr-badge" id="hdr-date"></div>
     </div>
@@ -322,7 +397,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <button class="tab on" onclick="goTab('input')">입력</button>
     <button class="tab" onclick="goTab('log')">기록</button>
     <button class="tab" onclick="goTab('stats')">월집계</button>
-    <button class="tab" onclick="goTab('year')">연집계</button>
   </div>
 
   <div class="content" id="swipe-area">
@@ -398,6 +472,22 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <button class="mnav-btn" onclick="changeMonth(1)">›</button>
       </div>
       <div id="stats-content"></div>
+
+      <!-- 연집계 숨김 영역 -->
+      <div style="margin-top:4px;margin-bottom:12px">
+        <button id="year-toggle-btn" onclick="toggleYear()"
+          style="width:100%;padding:11px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:-.2px;transition:all .15s">
+          연간 집계 펼치기 ›
+        </button>
+      </div>
+      <div id="year-panel" style="display:none">
+        <div class="month-nav">
+          <button class="mnav-btn" onclick="changeYear(-1)">‹</button>
+          <div class="mnav-label" id="year-label"></div>
+          <button class="mnav-btn" onclick="changeYear(1)">›</button>
+        </div>
+        <div id="year-content"></div>
+      </div>
     </div>
 
   </div>
@@ -411,7 +501,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div class="popup-sub">본인이 맞으면 확인을 눌러주세요.</div>
     <div class="user-box">
       <div class="user-name" id="pop-staff-name"></div>
-      <div class="user-sub">㈜ 대동산업</div>
+      
     </div>
     <div class="popup-btn-row">
       <button class="popup-btn" onclick="closePopup('pop-staff')">취소</button>
@@ -585,27 +675,14 @@ let editId = null;
 let editSt = {};
 let viewMonth = { y: now.getFullYear(), m: now.getMonth()+1 };
 
-let records = [
-  {id:1,date:'2026-06-11',staff:'송성민',charger:'1호기',car:'9966',start:1250.9,end:1263.2,kwh:12.3},
-  {id:2,date:'2026-06-10',staff:'관리부',charger:'2호기',car:'0292',start:1240.9,end:1250.9,kwh:10.0},
-  {id:3,date:'2026-06-09',staff:'최윤철',charger:'1호기',car:'0292',start:1216.9,end:1240.9,kwh:24.0},
-  {id:4,date:'2026-06-08',staff:'관리부',charger:'3호기',car:'9966',start:1200.5,end:1216.9,kwh:16.4},
-  {id:5,date:'2026-06-08',staff:'송성민',charger:'1호기',car:'0847',start:1183.0,end:1200.5,kwh:17.5},
-  {id:6,date:'2026-06-05',staff:'김대희',charger:'2호기',car:'0847',start:1162.8,end:1183.0,kwh:20.2},
-  {id:7,date:'2026-06-04',staff:'최윤철',charger:'1호기',car:'9966',start:1150.1,end:1162.8,kwh:12.7},
-  {id:8,date:'2026-06-02',staff:'사장님',charger:'3호기',car:'0292',start:1128.4,end:1150.1,kwh:21.7},
-  {id:9,date:'2026-06-02',staff:'부회장님',charger:'2호기',car:'9966',start:1116.0,end:1128.4,kwh:12.4},
-  {id:10,date:'2026-06-02',staff:'송성민',charger:'1호기',car:'9966',start:1092.0,end:1116.0,kwh:24.0},
-  {id:11,date:'2026-06-01',staff:'송성민',charger:'1호기',car:'0847',start:1078.5,end:1092.0,kwh:13.5},
-];
+let records = [];
 
 /* ══ 탭 ══ */
 function goTab(t) {
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',['input','log','stats','year'][i]===t));
-  document.querySelectorAll('.sec').forEach((s,i)=>s.classList.toggle('on',['sec-input','sec-log','sec-stats','sec-year'][i]==='sec-'+t));
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',['input','log','stats'][i]===t));
+  document.querySelectorAll('.sec').forEach((s,i)=>s.classList.toggle('on',['sec-input','sec-log','sec-stats'][i]==='sec-'+t));
   if(t==='log') renderLog();
-  if(t==='stats') renderStats();
-  if(t==='year') renderYear();
+  if(t==='stats'){ renderStats(); renderYear(); }
 }
 
 /* ══ 입력 ══ */
@@ -662,9 +739,20 @@ function openSaveConfirm(){
   openPopup('pop-save');
 }
 function confirmSave(){
-  records.unshift({id:Date.now(),date:now.toISOString().slice(0,10),...st});
+  const rec = {id:Date.now(), date:now.toISOString().slice(0,10), ...st};
   closePopup('pop-save');
-  showToast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`);
+  if(typeof window.fbSave === 'function'){
+    window.fbSave(rec).then(()=>{
+      showToast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`);
+    }).catch(()=>{
+      // Firebase 실패 시 로컬에라도 저장
+      records.unshift(rec);
+      showToast(`✓ ${st.kwh.toFixed(1)} kWh 저장 (로컬)`);
+    });
+  } else {
+    records.unshift(rec);
+    showToast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`);
+  }
   resetForm();
 }
 function resetForm(){
@@ -742,8 +830,22 @@ function confirmEdit(){
   if(staff) editSt.staff=staff.textContent;
   if(charger) editSt.charger=charger.textContent;
   if(car) editSt.car=car.textContent;
-  records[idx]={...records[idx],...editSt};
-  closePopup('pop-edit'); renderLog(); showToast('수정 완료');
+  const updated = {...records[idx],...editSt};
+  closePopup('pop-edit');
+  if(typeof window.fbUpdate === 'function' && updated.fbKey){
+    const {fbKey, ...data} = updated;
+    window.fbUpdate(fbKey, data).then(()=>{
+      showToast('수정 완료');
+    }).catch(()=>{
+      records[idx]=updated;
+      renderLog();
+      showToast('수정 완료 (로컬)');
+    });
+  } else {
+    records[idx]=updated;
+    renderLog();
+    showToast('수정 완료');
+  }
 }
 function openDeleteConfirm(){
   const r=records.find(x=>x.id===editId); if(!r)return;
@@ -755,9 +857,21 @@ function openDeleteConfirm(){
   openPopup('pop-delete');
 }
 function confirmDelete(){
-  records=records.filter(r=>r.id!==editId);
+  const rec = records.find(r=>r.id===editId);
   closePopup('pop-delete'); closePopup('pop-edit');
-  renderLog(); showToast('삭제 완료');
+  if(typeof window.fbDelete === 'function' && rec && rec.fbKey){
+    window.fbDelete(rec.fbKey).then(()=>{
+      showToast('삭제 완료');
+    }).catch(()=>{
+      records=records.filter(r=>r.id!==editId);
+      renderLog();
+      showToast('삭제 완료 (로컬)');
+    });
+  } else {
+    records=records.filter(r=>r.id!==editId);
+    renderLog();
+    showToast('삭제 완료');
+  }
 }
 
 /* ══ 월집계 ══ */
@@ -785,7 +899,7 @@ function renderStats(){
   el.innerHTML=`
     <div id="capture-target">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:11px;color:var(--text3)">㈜ 대동산업</span>
+        <span style="font-size:11px;color:var(--text3)"></span>
         <span style="font-size:11px;color:var(--text3)">충전기 1·2·3호기</span>
       </div>
       <div class="stat-row">
@@ -868,7 +982,7 @@ async function downloadPDF(){
       <div class="print-header">
         <div class="print-h1">전기차량 충전 기록 — ${y}년 ${m}월</div>
         <div class="print-meta">
-          <span>㈜ 대동산업</span><span>충전기 1·2·3호기</span><span>총 ${rows.length}건</span>
+          <span></span><span>충전기 1·2·3호기</span><span>총 ${rows.length}건</span>
         </div>
       </div>
       <table class="print-table">
@@ -895,7 +1009,7 @@ async function downloadPDF(){
         <div class="pt-label">이번 달 총 충전량</div>
         <div class="pt-val">${total.toFixed(1)} kWh</div>
       </div>
-      <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')} · ㈜ 대동산업</div>
+      <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')} · </div>
     </div>`;
 
   await new Promise(r=>setTimeout(r,200));
@@ -949,6 +1063,15 @@ async function captureShare(){
 
 
 
+
+function toggleYear(){
+  const panel = document.getElementById('year-panel');
+  const btn   = document.getElementById('year-toggle-btn');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  btn.textContent = open ? '연간 집계 접기 ∧' : '연간 집계 펼치기 ›';
+  if(open) renderYear();
+}
 /* ══ 연집계 ══ */
 let viewYear = { y: now.getFullYear() };
 
@@ -987,7 +1110,7 @@ function renderYear(){
   el.innerHTML = `
     <div id="year-capture-target">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:11px;color:var(--text3)">㈜ 대동산업</span>
+        <span style="font-size:11px;color:var(--text3)"></span>
         <span style="font-size:11px;color:var(--text3)">충전기 1·2·3호기</span>
       </div>
       <div class="year-stat-row">
@@ -1066,7 +1189,7 @@ async function yearDownloadPDF(){
     <div class="print-page">
       <div class="print-header">
         <div class="print-h1">전기차량 충전 기록 — ${y}년 연간 집계</div>
-        <div class="print-meta"><span>㈜ 대동산업</span><span>충전기 1·2·3호기</span><span>총 ${yearRecs.length}회 · ${totalKwh.toFixed(1)} kWh</span></div>
+        <div class="print-meta"><span></span><span>충전기 1·2·3호기</span><span>총 ${yearRecs.length}회 · ${totalKwh.toFixed(1)} kWh</span></div>
       </div>
       <table class="print-table">
         <thead><tr><th>월</th><th>충전횟수</th><th>충전량(kWh)</th><th>월비율</th></tr></thead>
@@ -1094,7 +1217,7 @@ async function yearDownloadPDF(){
         <div class="pt-label">${y}년 연간 총 충전량</div>
         <div class="pt-val">${totalKwh.toFixed(1)} kWh</div>
       </div>
-      <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')} · ㈜ 대동산업</div>
+      <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')} · </div>
     </div>`;
 
   await new Promise(r=>setTimeout(r,200));
@@ -1216,7 +1339,7 @@ async function detailDownloadPDF() {
     <div class="print-page">
       <div class="print-header">
         <div class="print-h1">${name} · ${y}년 ${m}월 충전 내역</div>
-        <div class="print-meta"><span>㈜ 대동산업</span><span>총 ${rows.length}회 · ${total.toFixed(1)} kWh</span></div>
+        <div class="print-meta"><span></span><span>총 ${rows.length}회 · ${total.toFixed(1)} kWh</span></div>
       </div>
       <table class="print-table">
         <thead><tr><th>순번</th><th>충전일</th><th>충전기</th><th>차량번호</th><th>시작 kWh</th><th>종료 kWh</th><th>충전량</th></tr></thead>
@@ -1229,7 +1352,7 @@ async function detailDownloadPDF() {
         <div class="pt-label">${name} 이번 달 총 충전량</div>
         <div class="pt-val">${total.toFixed(1)} kWh</div>
       </div>
-      <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')} · ㈜ 대동산업</div>
+      <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')} · </div>
     </div>`;
 
   await new Promise(r=>setTimeout(r,200));
@@ -1281,7 +1404,7 @@ async function detailCapture() {
 
 /* ══ 스와이프 ══ */
 (()=>{
-  const TABS = ['input','log','stats','year'];
+  const TABS = ['input','log','stats'];
   let tx = 0, ty = 0, swiping = false;
   const el = document.getElementById('swipe-area');
   el.addEventListener('touchstart', e=>{

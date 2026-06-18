@@ -273,6 +273,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .month-kwh{font-size:14px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--blue);width:72px;text-align:right;flex-shrink:0}
 .month-cnt{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0;font-weight:600}
 .year-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+
+/* pull-to-refresh 차단 */
+html { overscroll-behavior: none; }
+body { overscroll-behavior: none; overscroll-behavior-y: contain; }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -554,7 +558,10 @@ window.fbDelete = function(fbKey){
 <!-- ══ 수정 팝업 ══ -->
 <div class="overlay" id="pop-edit">
   <div class="popup">
-    <div class="popup-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div class="popup-handle" style="margin:0"></div>
+      <button onclick="closePopup('pop-edit')" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);line-height:1">×</button>
+    </div>
     <div class="popup-title">기록 수정</div>
     <div class="popup-sub" id="edit-date-label"></div>
     <div style="margin-bottom:11px">
@@ -616,7 +623,10 @@ window.fbDelete = function(fbKey){
 <!-- ══ 개인 상세 팝업 ══ -->
 <div class="overlay" id="pop-detail">
   <div class="detail-popup">
-    <div class="popup-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div class="popup-handle" style="margin:0"></div>
+      <button onclick="closePopup('pop-detail')" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);line-height:1">×</button>
+    </div>
     <div class="detail-header">
       <div class="detail-dot" id="detail-dot"></div>
       <div class="detail-name" id="detail-name"></div>
@@ -1429,6 +1439,15 @@ async function detailCapture() {
     }
   },'image/png');
 }
+
+
+/* pull-to-refresh 완전 차단 */
+document.addEventListener('touchmove', function(e){
+  if(e.touches.length === 1){
+    const el = e.target.closest('.popup, .detail-popup, #log-list, #stats-content, #year-content');
+    if(!el) e.preventDefault();
+  }
+}, { passive: false });
 
 /* ══ 스와이프 ══ */
 (()=>{

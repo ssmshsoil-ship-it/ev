@@ -275,14 +275,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .year-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 </style>
 
-<script type="module">
-// ══ Firebase 초기화 ══
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, push, set, update, remove, onValue, get }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getAuth, signInAnonymously }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyBspQaU-41QqKa15lizOVAxcDQkwSSdSMM",
   authDomain: "inventory-dce00.firebaseapp.com",
@@ -293,60 +289,51 @@ const firebaseConfig = {
   appId: "1:344489058455:web:d681bf992931af186889d2"
 };
 
-const app  = initializeApp(firebaseConfig);
-const db   = getDatabase(app);
-const auth = getAuth(app);
+firebase.initializeApp(firebaseConfig);
+const db   = firebase.database();
+const auth = firebase.auth();
 
-// ── 익명 로그인 ──
-signInAnonymously(auth).then(()=>{
-  console.log("Firebase 익명 인증 완료");
+// 익명 로그인
+auth.signInAnonymously().then(()=>{
+  console.log("✅ Firebase 익명 인증 완료");
+
   // 실시간 데이터 구독
-  const evRef = ref(db, 'ev_charge');
-  onValue(evRef, snap => {
+  db.ref('ev_charge').on('value', snap => {
+    records.length = 0;
     if(snap.exists()){
       const data = snap.val();
-      // 객체 → 배열 변환, 최신순 정렬
-      window._fbRecords = Object.entries(data).map(([fbKey, v])=>({
-        ...v, fbKey
-      })).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
-      // 전역 records 동기화
-      if(typeof records !== 'undefined'){
-        records.length = 0;
-        window._fbRecords.forEach(r=>records.push(r));
-        // 현재 탭 리렌더
-        const activeTab = ['input','log','stats','year'].find(t=>{
-          const el = document.getElementById('sec-'+t);
-          return el && el.classList.contains('on');
-        });
-        if(activeTab==='log') renderLog();
-        if(activeTab==='stats') renderStats();
-        if(activeTab==='year') renderYear();
-      }
-    } else {
-      if(typeof records !== 'undefined') records.length = 0;
+      Object.entries(data).forEach(([fbKey, v])=>{
+        records.push({...v, fbKey});
+      });
+      // 최신순 정렬
+      records.sort((a,b)=> b.date.localeCompare(a.date) || b.id - a.id);
     }
+    // 현재 탭 리렌더
+    const activeTab = ['input','log','stats'].find(t=>{
+      const el = document.getElementById('sec-'+t);
+      return el && el.classList.contains('on');
+    });
+    if(activeTab==='log')   renderLog();
+    if(activeTab==='stats') { renderStats(); }
   });
-}).catch(e=>console.error("Auth 오류:", e));
 
-// ── 저장 ──
-window.fbSave = function(rec) {
-  const evRef = ref(db, 'ev_charge');
-  const newRef = push(evRef);
-  return set(newRef, { ...rec, fbKey: undefined }).then(()=>{
-    console.log("저장 완료");
-  });
+}).catch(e=>{ console.error("Auth 오류:", e); showToast("Firebase 연결 실패"); });
+
+// 저장
+window.fbSave = function(rec){
+  const {fbKey, ...data} = rec;
+  return db.ref('ev_charge').push(data);
 };
 
-// ── 수정 ──
-window.fbUpdate = function(fbKey, data) {
-  const recRef = ref(db, 'ev_charge/' + fbKey);
-  return update(recRef, data);
+// 수정
+window.fbUpdate = function(fbKey, data){
+  const {fbKey:_, ...clean} = data;
+  return db.ref('ev_charge/'+fbKey).update(clean);
 };
 
-// ── 삭제 ──
-window.fbDelete = function(fbKey) {
-  const recRef = ref(db, 'ev_charge/' + fbKey);
-  return remove(recRef);
+// 삭제
+window.fbDelete = function(fbKey){
+  return db.ref('ev_charge/'+fbKey).remove();
 };
 </script>
 </head>

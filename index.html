@@ -2,11 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="manifest" href="data:application/json,{%22name%22:%22EV%20%EC%B6%A9%EC%A0%84%20%EA%B8%B0%EB%A1%9D%22,%22display%22:%22standalone%22,%22start_url%22:%22.%22,%22background_color%22:%22%23ffffff%22}">
 <title>EV 충전 기록 — </title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -37,7 +36,7 @@
   --red-border:#e8a8a0;
   --r:12px;--r-sm:8px;--r-xs:6px;
 }
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
 .mono{font-family:'IBM Plex Mono',monospace}
 
 /* ── PIN 화면 ── */
@@ -76,7 +75,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .tab.on{color:var(--blue);border-bottom-color:var(--blue)}
 
 /* ── 본문 ── */
-.content{padding:14px;max-width:480px;margin:0 auto}
+
 .sec{display:none}.sec.on{display:block}
 
 /* ── 카드 ── */
@@ -85,7 +84,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 /* ── 칩 ── */
 .chip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.chip{padding:10px 8px;border-radius:22px;font-size:15px;font-weight:600;background:var(--surface2);border:1.5px solid var(--border);color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .12s;white-space:nowrap;-webkit-tap-highlight-color:transparent;letter-spacing:-.2px;text-align:center;width:100%}
+.chip{padding:9px 16px;border-radius:22px;font-size:14px;font-weight:600;background:var(--surface2);border:1.5px solid var(--border);color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .12s;white-space:nowrap;-webkit-tap-highlight-color:transparent;letter-spacing:-.2px}
 .chip:active{transform:scale(.95)}
 .chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
 
@@ -116,8 +115,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .log-item{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:13px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:all .12s;margin-bottom:8px}
 .log-item:active{background:var(--surface2)}
 .log-bar{width:4px;height:40px;border-radius:2px;flex-shrink:0}
-.log-body{flex:1;min-width:0;overflow:hidden}
-.log-top{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;letter-spacing:-.2px;white-space:nowrap;overflow:hidden}
+.log-body{flex:1;min-width:0}
+.log-top{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;letter-spacing:-.2px}
 .log-car{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text3);background:var(--surface2);padding:2px 7px;border-radius:4px;font-weight:600}
 .log-bot{font-size:12px;color:var(--text3);margin-top:3px;font-family:'IBM Plex Mono',monospace;font-weight:500}
 .log-right{display:flex;align-items:center;gap:9px;flex-shrink:0}
@@ -168,7 +167,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .sec-title{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:16px 0 9px}
 
 /* ── 팝업 ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:flex-end;justify-content:center;touch-action:none}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:flex-end;justify-content:center;overflow:hidden}
 .overlay.show{display:flex}
 .popup{background:#fff;border-top:2px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:24px 20px 32px;animation:slideUp .2s ease;max-height:90vh;overflow-y:auto}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -234,7 +233,43 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 @media(max-width:380px){.content{padding:10px}.stat-val{font-size:18px}.chip{font-size:13px;padding:8px 13px}}
 
-/* ── 개인별 카드 ── */
+/* pull-to-refresh 차단 */
+html { overscroll-behavior: none; }
+
+.popup-close-btn{
+  background:var(--text);color:#fff;border:none;border-radius:50%;
+  width:40px;height:40px;font-size:22px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;line-height:1;
+  flex-shrink:0;-webkit-tap-highlight-color:transparent;
+}
+.popup-close-btn:active{opacity:.7}
+
+.detail-popup{
+  background:#fff;border-top:2px solid var(--border);
+  border-radius:16px 16px 0 0;
+  width:100%;max-width:480px;
+  height:95svh;min-height:95vh;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  align-self:flex-end;
+}
+.detail-popup-header{padding:18px 18px 0;flex-shrink:0}
+.detail-popup-body{
+  flex:1;overflow-y:auto;padding:0 18px 8px;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+}
+.detail-popup-footer{
+  padding:12px 18px 24px;flex-shrink:0;
+  background:#fff;border-top:1px solid var(--border);
+}
+
+.month-row{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer;transition:all .12s}
+.month-row:active{background:var(--surface2)}
+.month-badge{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);width:36px;flex-shrink:0}
+.month-bar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.month-bar-fill{height:100%;border-radius:3px;background:var(--blue)}
+.month-kwh{font-size:14px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--blue);width:72px;text-align:right;flex-shrink:0}
+.month-cnt{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0;font-weight:600}
 .person-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .person-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:12px}
 .person-card:active{background:var(--surface2)}
@@ -246,21 +281,16 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .person-kwh{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace}
 .person-pct{font-size:12px;color:var(--text3);margin-top:2px;font-weight:600}
 .person-arrow{font-size:16px;color:var(--text3);margin-left:6px}
-/* 개인 상세 팝업 */
-.detail-popup{background:#fff;border-top:2px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:480px;animation:slideUp .2s ease;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
-.detail-popup-header{padding:20px 18px 0;flex-shrink:0}
-.detail-popup-body{flex:1;overflow-y:auto;padding:0 18px;-webkit-overflow-scrolling:touch}
-.detail-popup-footer{padding:14px 18px 28px;flex-shrink:0;background:#fff;border-top:1px solid var(--border)}
-.detail-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.detail-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .detail-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
 .detail-name{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.4px}
 .detail-period{font-size:13px;color:var(--text3);font-weight:500;margin-left:auto}
-.detail-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.detail-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .detail-stat{background:var(--surface2);border-radius:var(--r-sm);padding:11px 10px;text-align:center}
 .detail-stat-label{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.4px;margin-bottom:4px;text-transform:uppercase}
 .detail-stat-val{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)}
 .detail-stat-unit{font-size:10px;color:var(--text3);font-weight:600;margin-top:2px}
-.detail-log{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.detail-log{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
 .detail-row{background:var(--surface2);border-radius:var(--r-sm);padding:10px 13px;display:flex;align-items:center;gap:10px}
 .detail-date{font-size:13px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;width:52px;flex-shrink:0;white-space:nowrap}
 .detail-info{flex:1;min-width:0}
@@ -269,34 +299,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .detail-kwh-val{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;flex-shrink:0}
 .detail-dl-row{display:flex;gap:8px}
 
-/* ── 연집계 ── */
-.year-nav{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.month-row{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer;transition:all .12s}
-.month-row:active{background:var(--surface2)}
-.month-badge{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);width:36px;flex-shrink:0}
-.month-bar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
-.month-bar-fill{height:100%;border-radius:3px;background:var(--blue)}
-.month-kwh{font-size:14px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--blue);width:72px;text-align:right;flex-shrink:0}
-.month-cnt{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0;font-weight:600}
-.year-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-
-/* pull-to-refresh 차단 */
-html, body { overscroll-behavior-y: none; }
-
-/* 팝업 닫기 버튼 */
-.popup-close-btn{
-  background:var(--text);color:#fff;
-  border:none;border-radius:50%;
-  width:40px;height:40px;
-  font-size:22px;font-weight:700;
-  cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  line-height:1;flex-shrink:0;
-  -webkit-tap-highlight-color:transparent;
-}
-.popup-close-btn:active{opacity:.7}
+#app-body{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.app-header{flex-shrink:0}
+.tabs{flex-shrink:0}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;max-width:480px;margin:0 auto}
 </style>
-
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -310,92 +317,43 @@ const firebaseConfig = {
   messagingSenderId: "344489058455",
   appId: "1:344489058455:web:d681bf992931af186889d2"
 };
-
-let fbReady = false;
-let db = null;
-
+let fbReady=false, db=null;
 function initFirebase(){
-  try {
-    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-
-    firebase.auth().signInAnonymously()
-      .then(()=>{
-        console.log("✅ Firebase 인증 완료");
-        fbReady = true;
-        // 실시간 구독
-        db.ref('ev_charge').on('value', snap => {
-          records.length = 0;
-          if(snap.exists()){
-            Object.entries(snap.val()).forEach(([fbKey,v])=>{
-              records.push({...v, fbKey});
-            });
-            records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
-          }
-          const activeTab=['input','log','stats'].find(t=>{
-            const el=document.getElementById('sec-'+t);
-            return el&&el.classList.contains('on');
-          });
-          if(activeTab==='log') renderLog();
-          if(activeTab==='stats') renderStats();
-        });
-      })
-      .catch(e=>{
-        console.warn("Firebase 인증 실패, 로컬 모드:", e.message);
-        fbReady = false;
-        loadLocal();
-      });
-  } catch(e){
-    console.warn("Firebase 초기화 실패:", e.message);
-    fbReady = false;
-    loadLocal();
-  }
-}
-
-// 로컬 저장소 (Firebase 안될 때 폴백)
-function saveLocal(){
-  try{ localStorage.setItem('ev_records', JSON.stringify(records)); }catch(e){}
-}
-function loadLocal(){
   try{
-    const d = localStorage.getItem('ev_records');
-    if(d){ const arr=JSON.parse(d); records.length=0; arr.forEach(r=>records.push(r)); }
-  }catch(e){}
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    db=firebase.database();
+    firebase.auth().signInAnonymously().then(()=>{
+      console.log("✅ Firebase OK");
+      fbReady=true;
+      db.ref('ev_charge').on('value',snap=>{
+        records.length=0;
+        if(snap.exists()){
+          Object.entries(snap.val()).forEach(([fbKey,v])=>records.push({...v,fbKey}));
+          records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+        }
+        const t=['input','log','stats'].find(t=>document.getElementById('sec-'+t)?.classList.contains('on'));
+        if(t==='log') renderLog();
+        if(t==='stats') renderStats();
+      });
+    }).catch(e=>{ console.warn("Auth 실패:",e.message); loadLocal(); });
+  }catch(e){ console.warn("FB 초기화 실패:",e.message); loadLocal(); }
 }
-
-// PIN 통과 후 호출
-window.onPinPass = function(){ initFirebase(); };
-
-window.fbSave = function(rec){
-  if(fbReady && db){
-    const {fbKey,...data} = rec;
-    return db.ref('ev_charge').push(data)
-      .catch(e=>{ console.warn("FB저장실패:", e); records.unshift(rec); saveLocal(); });
-  } else {
-    records.unshift(rec);
-    saveLocal();
-    return Promise.resolve();
-  }
+function saveLocal(){ try{ localStorage.setItem('ev_records',JSON.stringify(records)); }catch(e){} }
+function loadLocal(){
+  try{ const d=localStorage.getItem('ev_records'); if(d){ const a=JSON.parse(d); records.length=0; a.forEach(r=>records.push(r)); } }catch(e){}
+}
+window.onPinPass=function(){ initFirebase(); };
+window.fbSave=function(rec){
+  if(fbReady&&db){ const {fbKey,...d}=rec; return db.ref('ev_charge').push(d).catch(()=>{ records.unshift(rec); saveLocal(); }); }
+  records.unshift(rec); saveLocal(); return Promise.resolve();
 };
-
-window.fbUpdate = function(fbKey, data){
-  if(fbReady && db && fbKey){
-    const {fbKey:_,...clean}=data;
-    return db.ref('ev_charge/'+fbKey).update(clean)
-      .catch(e=>{ console.warn("FB수정실패:", e); saveLocal(); });
-  }
-  saveLocal();
-  return Promise.resolve();
+window.fbUpdate=function(fbKey,data){
+  if(fbReady&&db&&fbKey){ const {fbKey:_,...d}=data; return db.ref('ev_charge/'+fbKey).update(d).catch(()=>saveLocal()); }
+  saveLocal(); return Promise.resolve();
 };
-
-window.fbDelete = function(fbKey){
-  if(fbReady && db && fbKey){
-    return db.ref('ev_charge/'+fbKey).remove()
-      .catch(e=>{ console.warn("FB삭제실패:", e); saveLocal(); });
-  }
-  records = records.filter(r=>r.fbKey!==fbKey);
-  saveLocal();
-  return Promise.resolve();
+window.fbDelete=function(fbKey){
+  if(fbReady&&db&&fbKey){ return db.ref('ev_charge/'+fbKey).remove().catch(()=>saveLocal()); }
+  records=records.filter(r=>r.fbKey!==fbKey); saveLocal(); return Promise.resolve();
 };
 </script>
 </head>
@@ -436,7 +394,7 @@ window.fbDelete = function(fbKey){
     <div class="hdr-row">
       <div>
         <div class="hdr-title">⚡ EV 충전 기록</div>
-        <div class="hdr-sub">충전기 1·2·3호기</div>
+        <div class="hdr-sub"></div>
       </div>
       <div class="hdr-badge" id="hdr-date"></div>
     </div>
@@ -448,19 +406,19 @@ window.fbDelete = function(fbKey){
     <button class="tab" onclick="goTab('stats')">월집계</button>
   </div>
 
-  <div class="content" id="swipe-area">
+  <div class="content">
 
     <!-- 입력 탭 -->
     <div class="sec on" id="sec-input">
       <div class="card">
         <div class="card-title">작성자</div>
         <div class="chip-grid" id="chips-staff">
-          <div class="chip" onclick="selStaff(this,'관리부')">관리부</div>
-          <div class="chip" onclick="selStaff(this,'김대희')">김대희</div>
-          <div class="chip" onclick="selStaff(this,'부회장님')">부회장님</div>
-          <div class="chip" onclick="selStaff(this,'사장님')">사장님</div>
           <div class="chip" onclick="selStaff(this,'송성민')">송성민</div>
+          <div class="chip" onclick="selStaff(this,'박성수')">박성수</div>
           <div class="chip" onclick="selStaff(this,'최윤철')">최윤철</div>
+          <div class="chip" onclick="selStaff(this,'김대희')">김대희</div>
+          <div class="chip" onclick="selStaff(this,'송승훈')">송승훈</div>
+          <div class="chip" onclick="selStaff(this,'송상훈')">송상훈</div>
         </div>
       </div>
       <div class="card">
@@ -513,6 +471,7 @@ window.fbDelete = function(fbKey){
       <div id="log-list"></div>
     </div>
 
+
     <!-- 월집계 탭 -->
     <div class="sec" id="sec-stats">
       <div class="month-nav">
@@ -521,11 +480,9 @@ window.fbDelete = function(fbKey){
         <button class="mnav-btn" onclick="changeMonth(1)">›</button>
       </div>
       <div id="stats-content"></div>
-
-      <!-- 연집계 숨김 영역 -->
       <div style="margin-top:4px;margin-bottom:12px">
         <button id="year-toggle-btn" onclick="toggleYear()"
-          style="width:100%;padding:11px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:-.2px;transition:all .15s">
+          style="width:100%;padding:11px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:-.2px">
           연간 집계 펼치기 ›
         </button>
       </div>
@@ -539,13 +496,13 @@ window.fbDelete = function(fbKey){
       </div>
     </div>
 
+
   </div>
-</div><!-- /app-body -->
 
 <!-- ══ 작성자 확인 팝업 ══ -->
 <div class="overlay" id="pop-staff">
   <div class="popup">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="popup-handle" style="margin:0"></div>
       <button class="popup-close-btn" onclick="closePopup('pop-staff')">×</button>
     </div>
@@ -553,7 +510,6 @@ window.fbDelete = function(fbKey){
     <div class="popup-sub">본인이 맞으면 확인을 눌러주세요.</div>
     <div class="user-box">
       <div class="user-name" id="pop-staff-name"></div>
-      
     </div>
     <div class="popup-btn-row">
       <button class="popup-btn" onclick="closePopup('pop-staff')">취소</button>
@@ -565,7 +521,7 @@ window.fbDelete = function(fbKey){
 <!-- ══ 저장 확인 팝업 ══ -->
 <div class="overlay" id="pop-save">
   <div class="popup">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="popup-handle" style="margin:0"></div>
       <button class="popup-close-btn" onclick="closePopup('pop-save')">×</button>
     </div>
@@ -582,10 +538,137 @@ window.fbDelete = function(fbKey){
 <!-- ══ 수정 팝업 ══ -->
 <div class="overlay" id="pop-edit">
   <div class="popup">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="popup-handle" style="margin:0"></div>
       <button class="popup-close-btn" onclick="closePopup('pop-edit')">×</button>
     </div>
+    <div class="popup-title">기록 수정</div>
+    <div class="popup-sub" id="edit-date-label"></div>
+    <div style="margin-bottom:11px">
+      <div class="card-title" style="margin-bottom:8px">작성자</div>
+      <div class="chip-grid" id="edit-chips-staff"></div>
+    </div>
+    <div style="margin-bottom:11px">
+      <div class="card-title" style="margin-bottom:8px">충전기</div>
+      <div class="chip-grid" id="edit-chips-charger"></div>
+    </div>
+    <div style="margin-bottom:11px">
+      <div class="card-title" style="margin-bottom:8px">차량번호</div>
+      <div class="chip-grid" id="edit-chips-car"></div>
+    </div>
+    <div class="input-row" style="margin-bottom:11px">
+      <div class="input-field">
+        <div class="input-label">시작 (kWh)</div>
+        <input class="input-box" id="edit-start" type="number" inputmode="decimal" step="0.1" oninput="calcEditKwh()">
+      </div>
+      <div class="input-field">
+        <div class="input-label">종료 (kWh)</div>
+        <input class="input-box" id="edit-end" type="number" inputmode="decimal" step="0.1" oninput="calcEditKwh()">
+      </div>
+    </div>
+    <div class="calc-box" id="edit-calc-box" style="margin-bottom:14px">
+      <div><div class="cl-label">충전량 자동계산</div><div class="cl-sub">종료 − 시작</div></div>
+      <div class="calc-right"><div class="calc-num" id="edit-calc-num">—</div><div class="calc-unit">&nbsp;kWh</div></div>
+    </div>
+    <div class="popup-btn-row" style="margin-bottom:9px">
+      <button class="popup-btn" onclick="closePopup('pop-edit')">취소</button>
+      <button class="popup-btn confirm" id="edit-save-btn" onclick="confirmEdit()">저장</button>
+    </div>
+    <div class="divider"></div>
+    <button class="popup-btn danger" style="width:100%" onclick="openDeleteConfirm()">이 기록 삭제</button>
+  </div>
+</div>
+
+<!-- ══ 삭제 확인 팝업 ══ -->
+<div class="overlay" id="pop-delete">
+  <div class="popup">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="popup-handle" style="margin:0"></div>
+      <button class="popup-close-btn" onclick="closePopup('pop-delete')">×</button>
+    </div>
+    <div class="popup-title">삭제 확인</div>
+    <div class="popup-sub">삭제 후 복구할 수 없습니다.</div>
+    <div class="info-box" id="delete-info-box"></div>
+    <div class="popup-btn-row">
+      <button class="popup-btn" onclick="closePopup('pop-delete')">취소</button>
+      <button class="popup-btn danger" onclick="confirmDelete()">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 개인 상세 팝업 ══ -->
+<div class="overlay" id="pop-detail">
+  <div class="detail-popup">
+    <div class="detail-popup-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="popup-handle" style="margin:0"></div>
+        <button class="popup-close-btn" onclick="closePopup('pop-detail')">×</button>
+      </div>
+      <div class="detail-header">
+        <div class="detail-dot" id="detail-dot"></div>
+        <div class="detail-name" id="detail-name"></div>
+        <div class="detail-period" id="detail-period"></div>
+      </div>
+      <div class="detail-summary" id="detail-summary"></div>
+      <div class="sec-title" style="margin-top:4px;margin-bottom:8px">일자별 사용내역</div>
+    </div>
+    <div class="detail-popup-body">
+      <div class="detail-log" id="detail-log"></div>
+    </div>
+    <div class="detail-popup-footer">
+      <div class="detail-dl-row">
+        <button class="dl-btn pdf" onclick="detailDownloadPDF()">⬇ PDF</button>
+        <button class="dl-btn excel" onclick="detailDownloadCSV()">⬇ 엑셀</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /app-body -->
+<!-- ══ 로딩 ══ -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-box"><div class="spinner"></div><p id="loading-msg">처리 중...</p></div>
+</div>
+<!-- ══ 토스트 ══ -->
+<div class="toast" id="toast"></div>
+<!-- ══ PDF 렌더 영역 ══ -->
+<div id="print-area"></div>
+
+
+<!-- ══ 작성자 확인 팝업 ══ -->
+<div class="overlay" id="pop-staff">
+  <div class="popup">
+    <div class="popup-handle"></div>
+    <div class="popup-title">작성자 확인</div>
+    <div class="popup-sub">본인이 맞으면 확인을 눌러주세요.</div>
+    <div class="user-box">
+      <div class="user-name" id="pop-staff-name"></div>
+      
+    </div>
+    <div class="popup-btn-row">
+      <button class="popup-btn" onclick="closePopup('pop-staff')">취소</button>
+      <button class="popup-btn confirm" onclick="confirmStaff()">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 저장 확인 팝업 ══ -->
+<div class="overlay" id="pop-save">
+  <div class="popup">
+    <div class="popup-handle"></div>
+    <div class="popup-title">저장 확인</div>
+    <div class="popup-sub">아래 내용으로 저장합니다.</div>
+    <div class="info-box" id="save-info-box"></div>
+    <div class="popup-btn-row">
+      <button class="popup-btn" onclick="closePopup('pop-save')">수정</button>
+      <button class="popup-btn confirm" onclick="confirmSave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 수정 팝업 ══ -->
+<div class="overlay" id="pop-edit">
+  <div class="popup">
+    <div class="popup-handle"></div>
     <div class="popup-title">기록 수정</div>
     <div class="popup-sub" id="edit-date-label"></div>
     <div style="margin-bottom:11px">
@@ -632,10 +715,7 @@ window.fbDelete = function(fbKey){
 <!-- ══ 삭제 확인 팝업 ══ -->
 <div class="overlay" id="pop-delete">
   <div class="popup">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <div class="popup-handle" style="margin:0"></div>
-      <button class="popup-close-btn" onclick="closePopup('pop-delete')">×</button>
-    </div>
+    <div class="popup-handle"></div>
     <div class="popup-title">삭제 확인</div>
     <div class="popup-sub">삭제 후 복구할 수 없습니다.</div>
     <div class="info-box" id="delete-info-box"></div>
@@ -646,34 +726,6 @@ window.fbDelete = function(fbKey){
   </div>
 </div>
 
-
-<!-- ══ 개인 상세 팝업 ══ -->
-<div class="overlay" id="pop-detail">
-  <div class="detail-popup">
-    <div class="detail-popup-header">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div class="popup-handle" style="margin:0"></div>
-        <button class="popup-close-btn" onclick="closePopup('pop-detail')">×</button>
-      </div>
-      <div class="detail-header">
-        <div class="detail-dot" id="detail-dot"></div>
-        <div class="detail-name" id="detail-name"></div>
-        <div class="detail-period" id="detail-period"></div>
-      </div>
-      <div class="detail-summary" id="detail-summary"></div>
-      <div class="sec-title" style="margin-top:4px;margin-bottom:8px">일자별 사용내역</div>
-    </div>
-    <div class="detail-popup-body">
-      <div class="detail-log" id="detail-log"></div>
-    </div>
-    <div class="detail-popup-footer">
-      <div class="detail-dl-row">
-        <button class="dl-btn pdf" onclick="detailDownloadPDF()">⬇ PDF</button>
-        <button class="dl-btn excel" onclick="detailDownloadCSV()">⬇ 엑셀</button>
-      </div>
-    </div>
-  </div>
-</div>
 <!-- ══ 로딩 ══ -->
 <div class="loading-overlay" id="loading">
   <div class="loading-box">
@@ -730,7 +782,7 @@ function updateDots() {
 /* ══ 상태 ══ */
 const now = new Date();
 const DAYS = ['일','월','화','수','목','금','토'];
-const STAFF = ['관리부','김대희','부회장님','사장님','송성민','최윤철'];
+const STAFF = ['송성민','박성수','최윤철','김대희','송승훈','송상훈'];
 const COLORS = ['#1a7a4a','#1a4fa0','#7a4a1a','#6b1a7a','#7a1a1a','#1a6b7a'];
 
 document.getElementById('hdr-date').textContent =
@@ -749,7 +801,7 @@ function goTab(t) {
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',['input','log','stats'][i]===t));
   document.querySelectorAll('.sec').forEach((s,i)=>s.classList.toggle('on',['sec-input','sec-log','sec-stats'][i]==='sec-'+t));
   if(t==='log') renderLog();
-  if(t==='stats'){ renderStats(); renderYear(); }
+  if(t==='stats') renderStats();
 }
 
 /* ══ 입력 ══ */
@@ -806,16 +858,10 @@ function openSaveConfirm(){
   openPopup('pop-save');
 }
 function confirmSave(){
-  const rec = {id:Date.now(), date:now.toISOString().slice(0,10), ...st};
+  const rec={id:Date.now(),date:now.toISOString().slice(0,10),...st};
   closePopup('pop-save');
-  if(typeof window.fbSave === 'function'){
-    window.fbSave(rec).then(()=>{
-      showToast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`);
-    }).catch(()=>{
-      // Firebase 실패 시 로컬에라도 저장
-      records.unshift(rec);
-      showToast(`✓ ${st.kwh.toFixed(1)} kWh 저장 (로컬)`);
-    });
+  if(typeof window.fbSave==='function'){
+    window.fbSave(rec).then(()=>showToast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`));
   } else {
     records.unshift(rec);
     showToast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`);
@@ -863,7 +909,7 @@ function openEdit(id){
   document.getElementById('edit-chips-charger').innerHTML=
     ['1호기','2호기','3호기'].map(c=>`<div class="chip ${c===r.charger?'on':''}" onclick="editSel(this,'charger','${c}')">${c}</div>`).join('');
   document.getElementById('edit-chips-car').innerHTML=
-    ['9966','0292','0847'].map(c=>`<div class="chip ${c===r.car?'on':''}" onclick="editSel(this,'car','${c}')">${c}</div>`).join(''); document.getElementById('edit-chips-car').style.gridTemplateColumns='repeat(3,1fr)';
+    ['9966','0292','0847'].map(c=>`<div class="chip ${c===r.car?'on':''}" onclick="editSel(this,'car','${c}')">${c}</div>`).join('');
   document.getElementById('edit-start').value=r.start;
   document.getElementById('edit-end').value=r.end;
   calcEditKwh();
@@ -897,22 +943,11 @@ function confirmEdit(){
   if(staff) editSt.staff=staff.textContent;
   if(charger) editSt.charger=charger.textContent;
   if(car) editSt.car=car.textContent;
-  const updated = {...records[idx],...editSt};
+  const updated={...records[idx],...editSt};
   closePopup('pop-edit');
-  if(typeof window.fbUpdate === 'function' && updated.fbKey){
-    const {fbKey, ...data} = updated;
-    window.fbUpdate(fbKey, data).then(()=>{
-      showToast('수정 완료');
-    }).catch(()=>{
-      records[idx]=updated;
-      renderLog();
-      showToast('수정 완료 (로컬)');
-    });
-  } else {
-    records[idx]=updated;
-    renderLog();
-    showToast('수정 완료');
-  }
+  if(typeof window.fbUpdate==='function'&&updated.fbKey){
+    window.fbUpdate(updated.fbKey,updated).then(()=>showToast('수정 완료'));
+  } else { records[idx]=updated; renderLog(); showToast('수정 완료'); }
 }
 function openDeleteConfirm(){
   const r=records.find(x=>x.id===editId); if(!r)return;
@@ -924,21 +959,11 @@ function openDeleteConfirm(){
   openPopup('pop-delete');
 }
 function confirmDelete(){
-  const rec = records.find(r=>r.id===editId);
+  const rec=records.find(r=>r.id===editId);
   closePopup('pop-delete'); closePopup('pop-edit');
-  if(typeof window.fbDelete === 'function' && rec && rec.fbKey){
-    window.fbDelete(rec.fbKey).then(()=>{
-      showToast('삭제 완료');
-    }).catch(()=>{
-      records=records.filter(r=>r.id!==editId);
-      renderLog();
-      showToast('삭제 완료 (로컬)');
-    });
-  } else {
-    records=records.filter(r=>r.id!==editId);
-    renderLog();
-    showToast('삭제 완료');
-  }
+  if(typeof window.fbDelete==='function'&&rec?.fbKey){
+    window.fbDelete(rec.fbKey).then(()=>showToast('삭제 완료'));
+  } else { records=records.filter(r=>r.id!==editId); renderLog(); showToast('삭제 완료'); }
 }
 
 /* ══ 월집계 ══ */
@@ -986,26 +1011,16 @@ function renderStats(){
           <div class="stat-unit">kWh</div>
         </div>
       </div>
-      <div class="sec-title">개인별 월집계 <span style="font-size:10px;color:var(--blue);font-weight:600;margin-left:4px">클릭 → 상세</span></div>
-      <div class="person-grid">
+      <div class="sec-title">직원별</div>
+      <div class="staff-card">
         ${STAFF.map((n,i)=>{
           const k=staffMap[n]||0;
-          const cnt=rows.filter(r=>r.staff===n).length;
           const w=total?Math.round(k/total*100):0;
-          const col=COLORS[i];
-          return `<div class="person-card" onclick="openPersonDetail('${n}')">
-            <div class="person-left">
-              <div class="person-dot" style="background:${col}"></div>
-              <div>
-                <div class="person-name">${n}</div>
-                <div class="person-cnt">${cnt}회 충전</div>
-              </div>
-            </div>
-            <div class="person-right">
-              <div class="person-kwh" style="color:${col}">${k.toFixed(1)} kWh</div>
-              <div class="person-pct">${w}%</div>
-            </div>
-            <div class="person-arrow">›</div>
+          return `<div class="staff-row">
+            <div class="sname">${n}</div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${w}%;background:${COLORS[i]}"></div></div>
+            <div class="skwh">${k.toFixed(1)} kWh</div>
+            <div class="spct">${w}%</div>
           </div>`;
         }).join('')}
       </div>
@@ -1128,384 +1143,11 @@ async function captureShare(){
   },'image/png');
 }
 
-
-
-
-function toggleYear(){
-  const panel = document.getElementById('year-panel');
-  const btn   = document.getElementById('year-toggle-btn');
-  const open  = panel.style.display === 'none';
-  panel.style.display = open ? 'block' : 'none';
-  btn.textContent = open ? '연간 집계 접기 ∧' : '연간 집계 펼치기 ›';
-  if(open) renderYear();
-}
-/* ══ 연집계 ══ */
-let viewYear = { y: now.getFullYear() };
-
-function changeYear(d){
-  viewYear.y += d;
-  renderYear();
-}
-
-function renderYear(){
-  const y = viewYear.y;
-  const lbl = document.getElementById('year-label');
-  if(lbl) lbl.textContent = `${y}년`;
-
-  const yearRecs = records.filter(r=>r.date.startsWith(String(y)));
-  const totalKwh = yearRecs.reduce((s,r)=>s+r.kwh,0);
-  const totalCnt = yearRecs.length;
-
-  // 월별 집계
-  const monthMap = {};
-  for(let m=1;m<=12;m++) monthMap[m]={kwh:0,cnt:0};
-  yearRecs.forEach(r=>{
-    const m = parseInt(r.date.slice(5,7));
-    monthMap[m].kwh += r.kwh;
-    monthMap[m].cnt += 1;
-  });
-
-  // 직원별 연간 집계
-  const staffMap = {}; STAFF.forEach(n=>staffMap[n]=0);
-  yearRecs.forEach(r=>{ staffMap[r.staff]=(staffMap[r.staff]||0)+r.kwh; });
-
-  const maxMonthKwh = Math.max(...Object.values(monthMap).map(v=>v.kwh), 0.1);
-
-  const el = document.getElementById('year-content');
-  if(!el) return;
-
-  el.innerHTML = `
-    <div id="year-capture-target">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:11px;color:var(--text3)"></span>
-        <span style="font-size:11px;color:var(--text3)">충전기 1·2·3호기</span>
-      </div>
-      <div class="year-stat-row">
-        <div class="stat-card">
-          <div class="stat-label">연간 충전량</div>
-          <div class="stat-val" style="color:var(--blue)">${totalKwh.toFixed(1)}</div>
-          <div class="stat-unit">kWh</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">총 횟수</div>
-          <div class="stat-val">${totalCnt}</div>
-          <div class="stat-unit">회</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">월 평균</div>
-          <div class="stat-val">${(totalKwh/12).toFixed(1)}</div>
-          <div class="stat-unit">kWh</div>
-        </div>
-      </div>
-
-      <div class="sec-title">월별 충전량</div>
-      ${Array.from({length:12},(_,i)=>{
-        const m = i+1;
-        const {kwh,cnt} = monthMap[m];
-        const w = Math.round(kwh/maxMonthKwh*100);
-        return `<div class="month-row" onclick="jumpToMonth(${m})">
-          <div class="month-badge">${m}월</div>
-          <div class="month-bar-wrap"><div class="month-bar-fill" style="width:${w}%"></div></div>
-          <div class="month-kwh">${kwh>0?kwh.toFixed(1)+'':'—'} ${kwh>0?'kWh':''}</div>
-          <div class="month-cnt">${cnt>0?cnt+'회':''}</div>
-        </div>`;
-      }).join('')}
-
-      <div class="sec-title" style="margin-top:16px">직원별 연간</div>
-      <div class="staff-card">
-        ${STAFF.map((n,i)=>{
-          const k = staffMap[n]||0;
-          const w = totalKwh?Math.round(k/totalKwh*100):0;
-          return `<div class="staff-row">
-            <div class="sname">${n}</div>
-            <div class="bar-wrap"><div class="bar-fill" style="width:${w}%;background:${COLORS[i]}"></div></div>
-            <div class="skwh">${k.toFixed(1)} kWh</div>
-            <div class="spct">${w}%</div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-
-    <div class="sec-title">내보내기</div>
-    <div class="dl-row">
-      <button class="dl-btn pdf" onclick="yearDownloadPDF()">⬇ PDF</button>
-      <button class="dl-btn excel" onclick="yearDownloadCSV()">⬇ 엑셀</button>
-      <button class="dl-btn capture" onclick="yearCapture()">📸 캡처</button>
-    </div>`;
-}
-
-function jumpToMonth(m) {
-  viewMonth.y = viewYear.y;
-  viewMonth.m = m;
-  goTab('stats');
-}
-
-async function yearDownloadPDF(){
-  const y = viewYear.y;
-  const yearRecs = records.filter(r=>r.date.startsWith(String(y)));
-  const totalKwh = yearRecs.reduce((s,r)=>s+r.kwh,0);
-  const monthMap = {};
-  for(let m=1;m<=12;m++) monthMap[m]={kwh:0,cnt:0};
-  yearRecs.forEach(r=>{ const m=parseInt(r.date.slice(5,7)); monthMap[m].kwh+=r.kwh; monthMap[m].cnt+=1; });
-  const staffMap={}; STAFF.forEach(n=>staffMap[n]=0);
-  yearRecs.forEach(r=>{ staffMap[r.staff]=(staffMap[r.staff]||0)+r.kwh; });
-
-  showLoading('PDF 생성 중...');
-  const area = document.getElementById('print-area');
-  area.innerHTML = `
-    <div class="print-page">
-      <div class="print-header">
-        <div class="print-h1">전기차량 충전 기록 — ${y}년 연간 집계</div>
-        <div class="print-meta"><span></span><span>충전기 1·2·3호기</span><span>총 ${yearRecs.length}회 · ${totalKwh.toFixed(1)} kWh</span></div>
-      </div>
-      <table class="print-table">
-        <thead><tr><th>월</th><th>충전횟수</th><th>충전량(kWh)</th><th>월비율</th></tr></thead>
-        <tbody>${Array.from({length:12},(_,i)=>{
-          const m=i+1; const {kwh,cnt}=monthMap[m];
-          const pct=totalKwh?Math.round(kwh/totalKwh*100):0;
-          return `<tr><td>${m}월</td><td>${cnt}회</td><td><strong>${kwh.toFixed(1)}</strong></td><td>${pct}%</td></tr>`;
-        }).join('')}</tbody>
-      </table>
-      <div class="print-summary">
-        <div class="ps-box">
-          <div class="ps-box-title">직원별 연간 집계</div>
-          ${STAFF.filter(n=>staffMap[n]>0).map(n=>`
-            <div class="ps-row"><span class="ps-key">${n}</span><span class="ps-val">${staffMap[n].toFixed(1)} kWh</span></div>`).join('')}
-        </div>
-        <div class="ps-box">
-          <div class="ps-box-title">충전기별 집계</div>
-          ${['1호기','2호기','3호기'].map(c=>{
-            const k=yearRecs.filter(r=>r.charger===c).reduce((s,r)=>s+r.kwh,0);
-            return `<div class="ps-row"><span class="ps-key">${c}</span><span class="ps-val">${k.toFixed(1)} kWh</span></div>`;
-          }).join('')}
-        </div>
-      </div>
-      <div class="print-total">
-        <div class="pt-label">${y}년 연간 총 충전량</div>
-        <div class="pt-val">${totalKwh.toFixed(1)} kWh</div>
-      </div>
-      <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')} · </div>
-    </div>`;
-
-  await new Promise(r=>setTimeout(r,200));
-  const canvas = await html2canvas(area.querySelector('.print-page'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  doc.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,210,297);
-  doc.save(`${y}년_연간_EV충전기록.pdf`);
-  area.innerHTML=''; hideLoading();
-  showToast('PDF 다운로드 완료');
-}
-
-function yearDownloadCSV(){
-  const y = viewYear.y;
-  const yearRecs = records.filter(r=>r.date.startsWith(String(y)));
-  const staffMap={}; STAFF.forEach(n=>staffMap[n]=0);
-  yearRecs.forEach(r=>{ staffMap[r.staff]=(staffMap[r.staff]||0)+r.kwh; });
-  const monthMap={};
-  for(let m=1;m<=12;m++) monthMap[m]={kwh:0,cnt:0};
-  yearRecs.forEach(r=>{ const m=parseInt(r.date.slice(5,7)); monthMap[m].kwh+=r.kwh; monthMap[m].cnt+=1; });
-
-  let csv = `﻿${y}년 연간 EV 충전 기록\n`;
-  csv += '월,충전횟수,충전량(kWh)\n';
-  for(let m=1;m<=12;m++) csv += `${m}월,${monthMap[m].cnt},${monthMap[m].kwh.toFixed(1)}\n`;
-  csv += `\n직원별 연간 집계\n이름,충전량(kWh)\n`;
-  STAFF.forEach(n=>{ if(staffMap[n]>0) csv+=`${n},${staffMap[n].toFixed(1)}\n`; });
-  csv += `\n연간 합계,${yearRecs.reduce((s,r)=>s+r.kwh,0).toFixed(1)}\n`;
-
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
-  a.download=`${y}년_연간_EV충전기록.csv`;
-  a.click();
-  showToast('엑셀(CSV) 다운로드 완료');
-}
-
-async function yearCapture(){
-  showLoading('캡처 중...');
-  const target = document.getElementById('year-capture-target');
-  const canvas = await html2canvas(target,{scale:2,backgroundColor:'#ffffff',logging:false});
-  canvas.toBlob(async blob=>{
-    hideLoading();
-    const y = viewYear.y;
-    const file=new File([blob],`${y}년_연간집계.png`,{type:'image/png'});
-    if(navigator.share&&navigator.canShare({files:[file]})){
-      try{ await navigator.share({files:[file],title:`${y}년 연간 충전집계`}); }catch(e){}
-    } else {
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);
-      a.download=`${y}년_연간집계.png`;
-      a.click();
-      showToast('이미지 저장 완료');
-    }
-  },'image/png');
-}
-
-/* ══ 개인 상세 ══ */
-let detailPerson = '';
-
-function openPersonDetail(name) {
-  const {y,m} = viewMonth;
-  const pref = `${y}-${String(m).padStart(2,'0')}`;
-  const rows = records.filter(r=>r.date.startsWith(pref) && r.staff===name);
-  const total = rows.reduce((s,r)=>s+r.kwh,0);
-  const cnt = rows.length;
-  const idx = STAFF.indexOf(name);
-  const col = COLORS[idx] || '#888';
-  detailPerson = name;
-
-  document.getElementById('detail-dot').style.background = col;
-  document.getElementById('detail-name').textContent = name;
-  document.getElementById('detail-period').textContent = `${y}년 ${m}월`;
-
-  document.getElementById('detail-summary').innerHTML = `
-    <div class="detail-stat">
-      <div class="detail-stat-label">충전량</div>
-      <div class="detail-stat-val" style="color:${col}">${total.toFixed(1)}</div>
-      <div class="detail-stat-unit">kWh</div>
-    </div>
-    <div class="detail-stat">
-      <div class="detail-stat-label">횟수</div>
-      <div class="detail-stat-val">${cnt}</div>
-      <div class="detail-stat-unit">회</div>
-    </div>
-    <div class="detail-stat">
-      <div class="detail-stat-label">평균/회</div>
-      <div class="detail-stat-val">${cnt?(total/cnt).toFixed(1):'—'}</div>
-      <div class="detail-stat-unit">kWh</div>
-    </div>`;
-
-  if(!rows.length) {
-    document.getElementById('detail-log').innerHTML =
-      '<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">충전 기록이 없습니다</div>';
-  } else {
-    document.getElementById('detail-log').innerHTML = rows.map(r=>`
-      <div class="detail-row">
-        <div class="detail-date">${r.date.slice(5).replace('-','.')}</div>
-        <div class="detail-info">
-          <div class="detail-car">${r.car} · ${r.charger}</div>
-          <div class="detail-meter">${r.start.toFixed(1)} → ${r.end.toFixed(1)}</div>
-        </div>
-        <div class="detail-kwh-val" style="color:${col}">${r.kwh.toFixed(1)} kWh</div>
-      </div>`).join('');
-  }
-  openPopup('pop-detail');
-}
-
-async function detailDownloadPDF() {
-  const {y,m} = viewMonth;
-  const pref = `${y}-${String(m).padStart(2,'0')}`;
-  const name = detailPerson;
-  const rows = records.filter(r=>r.date.startsWith(pref) && r.staff===name);
-  const total = rows.reduce((s,r)=>s+r.kwh,0);
-  const idx = STAFF.indexOf(name);
-  const col = COLORS[idx]||'#111';
-
-  showLoading('PDF 생성 중...');
-  const area = document.getElementById('print-area');
-  area.innerHTML = `
-    <div class="print-page">
-      <div class="print-header">
-        <div class="print-h1">${name} · ${y}년 ${m}월 충전 내역</div>
-        <div class="print-meta"><span></span><span>총 ${rows.length}회 · ${total.toFixed(1)} kWh</span></div>
-      </div>
-      <table class="print-table">
-        <thead><tr><th>순번</th><th>충전일</th><th>충전기</th><th>차량번호</th><th>시작 kWh</th><th>종료 kWh</th><th>충전량</th></tr></thead>
-        <tbody>${rows.map((r,i)=>`<tr>
-          <td>${i+1}</td><td>${r.date.slice(5)}</td><td>${r.charger}</td><td>${r.car}</td>
-          <td>${r.start.toFixed(1)}</td><td>${r.end.toFixed(1)}</td><td><strong>${r.kwh.toFixed(1)}</strong></td>
-        </tr>`).join('')}</tbody>
-      </table>
-      <div class="print-total">
-        <div class="pt-label">${name} 이번 달 총 충전량</div>
-        <div class="pt-val">${total.toFixed(1)} kWh</div>
-      </div>
-      <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')} · </div>
-    </div>`;
-
-  await new Promise(r=>setTimeout(r,200));
-  const canvas = await html2canvas(area.querySelector('.print-page'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
-  const {jsPDF} = window.jspdf;
-  const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  doc.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,210,297);
-  doc.save(`${y}년_${m}월_${name}_충전내역.pdf`);
-  area.innerHTML = ''; hideLoading();
-  showToast('PDF 다운로드 완료');
-}
-
-function detailDownloadCSV() {
-  const {y,m} = viewMonth;
-  const pref = `${y}-${String(m).padStart(2,'0')}`;
-  const name = detailPerson;
-  const rows = records.filter(r=>r.date.startsWith(pref) && r.staff===name);
-  const total = rows.reduce((s,r)=>s+r.kwh,0);
-  let csv = `﻿${name} · ${y}년 ${m}월 충전 내역\n`;
-  csv += '순번,충전일자,충전기,차량번호,시작(kWh),종료(kWh),충전량(kWh)\n';
-  rows.forEach((r,i)=>{csv+=`${i+1},${r.date},${r.charger},${r.car},${r.start},${r.end},${r.kwh.toFixed(1)}\n`;});
-  csv += `\n합계,,,,,, ${total.toFixed(1)}\n`;
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
-  a.download = `${y}년_${m}월_${name}_충전내역.csv`;
-  a.click();
-  showToast('엑셀(CSV) 다운로드 완료');
-}
-
-
-
-
-/* pull-to-refresh 차단 - 최상단에서만 */
-document.addEventListener('touchmove', function(e){
-  // 스크롤 가능한 요소 안이면 허용
-  const scrollable = e.target.closest(
-    '.content, .popup, .detail-popup, .detail-log, #log-list, #stats-content, #year-content, .detail-popup-body'
-  );
-  if(scrollable){
-    // 해당 요소가 실제 스크롤 가능한지 확인
-    if(scrollable.scrollHeight > scrollable.clientHeight) return;
-  }
-  // 그 외(배경 등)는 차단
-  e.preventDefault();
-}, { passive: false });
-
-/* ══ 스와이프 ══ */
-(()=>{
-  const TABS = ['input','log','stats'];
-  let tx=0, ty=0, swipeDir=null;
-  document.addEventListener('touchstart', e=>{
-    // 팝업 열려있으면 스와이프 무시
-    if(document.querySelector('.overlay.show')) return;
-    tx = e.touches[0].clientX;
-    ty = e.touches[0].clientY;
-    swipeDir = null;
-  }, {passive:true});
-  document.addEventListener('touchmove', e=>{
-    if(document.querySelector('.overlay.show')) return;
-    if(swipeDir === 'vertical') return;
-    const dx = e.touches[0].clientX - tx;
-    const dy = e.touches[0].clientY - ty;
-    if(swipeDir === null && (Math.abs(dx)>8 || Math.abs(dy)>8)){
-      swipeDir = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
-    }
-  }, {passive:true});
-  document.addEventListener('touchend', e=>{
-    if(document.querySelector('.overlay.show')) return;
-    if(swipeDir !== 'horizontal') return;
-    const dx = e.changedTouches[0].clientX - tx;
-    const dy = e.changedTouches[0].clientY - ty;
-    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)*1.5) return;
-    const cur = TABS.findIndex(t=>document.getElementById('sec-'+t).classList.contains('on'));
-    if(dx < 0 && cur < TABS.length-1) goTab(TABS[cur+1]);
-    if(dx > 0 && cur > 0)             goTab(TABS[cur-1]);
-  }, {passive:true});
-})();
-
 /* ══ 유틸 ══ */
 function openPopup(id){document.getElementById(id).classList.add('show');}
 function closePopup(id){document.getElementById(id).classList.remove('show');}
 document.querySelectorAll('.overlay').forEach(o=>{
   o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');});
-  o.addEventListener('touchmove',e=>{
-    if(e.target===o) e.preventDefault();
-  },{passive:false});
 });
 function showToast(msg,dur=2200){
   const t=document.getElementById('toast');
@@ -1514,6 +1156,241 @@ function showToast(msg,dur=2200){
 }
 function showLoading(msg){document.getElementById('loading-msg').textContent=msg;document.getElementById('loading').classList.add('show');}
 function hideLoading(){document.getElementById('loading').classList.remove('show');}
+
+/* ══ 스와이프 (document 전체, 팝업 열릴때 비활성) ══ */
+(()=>{
+  const TABS=['input','log','stats'];
+  let tx=0,ty=0,swipeDir=null;
+  document.addEventListener('touchstart',e=>{
+    if(document.querySelector('.overlay.show')) return;
+    tx=e.touches[0].clientX; ty=e.touches[0].clientY; swipeDir=null;
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(document.querySelector('.overlay.show')) return;
+    if(swipeDir==='vertical') return;
+    const dx=e.touches[0].clientX-tx, dy=e.touches[0].clientY-ty;
+    if(swipeDir===null&&(Math.abs(dx)>8||Math.abs(dy)>8))
+      swipeDir=Math.abs(dx)>Math.abs(dy)?'horizontal':'vertical';
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(document.querySelector('.overlay.show')) return;
+    if(swipeDir!=='horizontal') return;
+    const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5) return;
+    const cur=TABS.findIndex(t=>document.getElementById('sec-'+t)?.classList.contains('on'));
+    if(dx<0&&cur<TABS.length-1) goTab(TABS[cur+1]);
+    if(dx>0&&cur>0) goTab(TABS[cur-1]);
+  },{passive:true});
+})();
+
+/* ══ overlay 클릭 닫기 ══ */
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('show'); });
+});
+
+/* ══ 유틸 ══ */
+function openPopup(id){ document.getElementById(id).classList.add('show'); }
+function closePopup(id){ document.getElementById(id).classList.remove('show'); }
+function showToast(msg,dur=2200){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+function showLoading(msg){ document.getElementById('loading-msg').textContent=msg||'처리 중...'; document.getElementById('loading').classList.add('show'); }
+function hideLoading(){ document.getElementById('loading').classList.remove('show'); }
+
+/* ══ 연집계 ══ */
+let viewYear={y:new Date().getFullYear()};
+function changeYear(d){ viewYear.y+=d; renderYear(); }
+function toggleYear(){
+  const panel=document.getElementById('year-panel');
+  const btn=document.getElementById('year-toggle-btn');
+  const open=panel.style.display==='none';
+  panel.style.display=open?'block':'none';
+  btn.textContent=open?'연간 집계 접기 ∧':'연간 집계 펼치기 ›';
+  if(open) renderYear();
+}
+function renderYear(){
+  const y=viewYear.y;
+  const lbl=document.getElementById('year-label');
+  if(lbl) lbl.textContent=y+'년';
+  const yr=records.filter(r=>r.date.startsWith(String(y)));
+  const total=yr.reduce((s,r)=>s+r.kwh,0);
+  const mMap={};for(let m=1;m<=12;m++)mMap[m]={kwh:0,cnt:0};
+  yr.forEach(r=>{const m=parseInt(r.date.slice(5,7));mMap[m].kwh+=r.kwh;mMap[m].cnt+=1;});
+  const sMap={};STAFF.forEach(n=>sMap[n]=0);
+  yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  const maxM=Math.max(...Object.values(mMap).map(v=>v.kwh),0.1);
+  const el=document.getElementById('year-content');
+  if(!el) return;
+  el.innerHTML=`
+    <div class="stat-row" style="margin-bottom:12px">
+      <div class="stat-card"><div class="stat-label">연간충전</div><div class="stat-val" style="color:var(--blue)">${total.toFixed(1)}</div><div class="stat-unit">kWh</div></div>
+      <div class="stat-card"><div class="stat-label">총횟수</div><div class="stat-val">${yr.length}</div><div class="stat-unit">회</div></div>
+      <div class="stat-card"><div class="stat-label">월평균</div><div class="stat-val">${(total/12).toFixed(1)}</div><div class="stat-unit">kWh</div></div>
+    </div>
+    <div class="sec-title">월별 충전량</div>
+    ${Array.from({length:12},(_,i)=>{
+      const m=i+1,{kwh,cnt}=mMap[m],w=Math.round(kwh/maxM*100);
+      return `<div class="month-row" onclick="jumpToMonth(${m})">
+        <div class="month-badge">${m}월</div>
+        <div class="month-bar-wrap"><div class="month-bar-fill" style="width:${w}%"></div></div>
+        <div class="month-kwh">${kwh>0?kwh.toFixed(1)+' kWh':'—'}</div>
+        <div class="month-cnt">${cnt>0?cnt+'회':''}</div>
+      </div>`;
+    }).join('')}
+    <div class="sec-title" style="margin-top:14px">직원별 연간</div>
+    <div class="staff-card">
+      ${STAFF.map((n,i)=>{const k=sMap[n]||0,w=total?Math.round(k/total*100):0;
+        return `<div class="staff-row">
+          <div class="sname">${n}</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${w}%;background:${COLORS[i]}"></div></div>
+          <div class="skwh">${k.toFixed(1)} kWh</div>
+          <div class="spct">${w}%</div>
+        </div>`;}).join('')}
+    </div>
+    <div class="dl-row" style="margin-bottom:16px">
+      <button class="dl-btn pdf" onclick="yearDownloadPDF()">⬇ PDF</button>
+      <button class="dl-btn excel" onclick="yearDownloadCSV()">⬇ 엑셀</button>
+      <button class="dl-btn capture" onclick="yearCapture()">📸 캡처</button>
+    </div>`;
+}
+function jumpToMonth(m){ viewMonth.y=viewYear.y; viewMonth.m=m; goTab('stats'); }
+
+async function yearDownloadPDF(){
+  const y=viewYear.y;
+  const yr=records.filter(r=>r.date.startsWith(String(y)));
+  const total=yr.reduce((s,r)=>s+r.kwh,0);
+  const mMap={};for(let m=1;m<=12;m++)mMap[m]={kwh:0,cnt:0};
+  yr.forEach(r=>{const m=parseInt(r.date.slice(5,7));mMap[m].kwh+=r.kwh;mMap[m].cnt+=1;});
+  const sMap={};STAFF.forEach(n=>sMap[n]=0);
+  yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  showLoading('PDF 생성 중...');
+  const area=document.getElementById('print-area');
+  area.innerHTML=`<div class="print-page">
+    <div class="print-header"><div class="print-h1">전기차량 충전 기록 — ${y}년 연간</div>
+    <div class="print-meta"><span>충전기 1·2·3호기</span><span>총 ${yr.length}회 · ${total.toFixed(1)} kWh</span></div></div>
+    <table class="print-table"><thead><tr><th>월</th><th>충전횟수</th><th>충전량(kWh)</th><th>비율</th></tr></thead>
+    <tbody>${Array.from({length:12},(_,i)=>{const m=i+1,{kwh,cnt}=mMap[m],pct=total?Math.round(kwh/total*100):0;
+      return `<tr><td>${m}월</td><td>${cnt}회</td><td><strong>${kwh.toFixed(1)}</strong></td><td>${pct}%</td></tr>`;}).join('')}</tbody></table>
+    <div class="print-summary"><div class="ps-box"><div class="ps-box-title">직원별</div>
+    ${STAFF.filter(n=>sMap[n]>0).map(n=>`<div class="ps-row"><span class="ps-key">${n}</span><span class="ps-val">${sMap[n].toFixed(1)} kWh</span></div>`).join('')}
+    </div></div>
+    <div class="print-total"><div class="pt-label">${y}년 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
+    <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
+  await new Promise(r=>setTimeout(r,200));
+  const canvas=await html2canvas(area.querySelector('.print-page'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
+  doc.save(`${y}년_연간_EV충전기록.pdf`);
+  area.innerHTML=''; hideLoading(); showToast('PDF 다운로드 완료');
+}
+function yearDownloadCSV(){
+  const y=viewYear.y;
+  const yr=records.filter(r=>r.date.startsWith(String(y)));
+  const mMap={};for(let m=1;m<=12;m++)mMap[m]={kwh:0,cnt:0};
+  yr.forEach(r=>{const m=parseInt(r.date.slice(5,7));mMap[m].kwh+=r.kwh;mMap[m].cnt+=1;});
+  const sMap={};STAFF.forEach(n=>sMap[n]=0);
+  yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  let csv=`﻿${y}년 연간 EV 충전 기록
+월,충전횟수,충전량(kWh)
+`;
+  for(let m=1;m<=12;m++) csv+=`${m}월,${mMap[m].cnt},${mMap[m].kwh.toFixed(1)}
+`;
+  csv+=`
+직원별
+`;STAFF.forEach(n=>{if(sMap[n]>0)csv+=`${n},${sMap[n].toFixed(1)}
+`;});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${y}년_연간_EV충전기록.csv`; a.click();
+  showToast('엑셀 다운로드 완료');
+}
+async function yearCapture(){
+  showLoading('캡처 중...');
+  const target=document.getElementById('year-content');
+  const canvas=await html2canvas(target,{scale:2,backgroundColor:'#f2f3f5',logging:false});
+  canvas.toBlob(async blob=>{
+    hideLoading();
+    const file=new File([blob],`${viewYear.y}년_연간집계.png`,{type:'image/png'});
+    if(navigator.share&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file]});}catch(e){}
+    } else {
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download=`${viewYear.y}년_연간집계.png`; a.click();
+      showToast('이미지 저장 완료');
+    }
+  },'image/png');
+}
+
+/* ══ 개인 상세 ══ */
+let detailPerson='';
+function openPersonDetail(name){
+  const {y,m}=viewMonth;
+  const pref=`${y}-${String(m).padStart(2,'0')}`;
+  const rows=records.filter(r=>r.date.startsWith(pref)&&r.staff===name);
+  const total=rows.reduce((s,r)=>s+r.kwh,0);
+  const idx=STAFF.indexOf(name);
+  const col=COLORS[idx]||'#888';
+  detailPerson=name;
+  document.getElementById('detail-dot').style.background=col;
+  document.getElementById('detail-name').textContent=name;
+  document.getElementById('detail-period').textContent=`${y}년 ${m}월`;
+  document.getElementById('detail-summary').innerHTML=`
+    <div class="detail-stat"><div class="detail-stat-label">충전량</div><div class="detail-stat-val" style="color:${col}">${total.toFixed(1)}</div><div class="detail-stat-unit">kWh</div></div>
+    <div class="detail-stat"><div class="detail-stat-label">횟수</div><div class="detail-stat-val">${rows.length}</div><div class="detail-stat-unit">회</div></div>
+    <div class="detail-stat"><div class="detail-stat-label">평균/회</div><div class="detail-stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</div><div class="detail-stat-unit">kWh</div></div>`;
+  document.getElementById('detail-log').innerHTML=rows.length
+    ? rows.map(r=>`<div class="detail-row">
+        <div class="detail-date">${r.date.slice(5).replace('-','.')}</div>
+        <div class="detail-info"><div class="detail-car">${r.car} · ${r.charger}</div><div class="detail-meter">${r.start.toFixed(1)} → ${r.end.toFixed(1)}</div></div>
+        <div class="detail-kwh-val" style="color:${col}">${r.kwh.toFixed(1)} kWh</div>
+      </div>`).join('')
+    : '<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">충전 기록이 없습니다</div>';
+  openPopup('pop-detail');
+}
+async function detailDownloadPDF(){
+  const {y,m}=viewMonth;
+  const name=detailPerson;
+  const rows=records.filter(r=>r.date.startsWith(`${y}-${String(m).padStart(2,'0')}`)&&r.staff===name);
+  const total=rows.reduce((s,r)=>s+r.kwh,0);
+  showLoading('PDF 생성 중...');
+  const area=document.getElementById('print-area');
+  area.innerHTML=`<div class="print-page">
+    <div class="print-header"><div class="print-h1">${name} · ${y}년 ${m}월 충전 내역</div>
+    <div class="print-meta"><span>총 ${rows.length}회</span><span>${total.toFixed(1)} kWh</span></div></div>
+    <table class="print-table"><thead><tr><th>순번</th><th>충전일</th><th>충전기</th><th>차량번호</th><th>시작kWh</th><th>종료kWh</th><th>충전량</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td>${r.charger}</td><td>${r.car}</td><td>${r.start.toFixed(1)}</td><td>${r.end.toFixed(1)}</td><td><strong>${r.kwh.toFixed(1)}</strong></td></tr>`).join('')}</tbody></table>
+    <div class="print-total"><div class="pt-label">${name} ${y}년 ${m}월 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
+    <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
+  await new Promise(r=>setTimeout(r,200));
+  const canvas=await html2canvas(area.querySelector('.print-page'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
+  doc.save(`${y}년_${m}월_${name}_충전내역.pdf`);
+  area.innerHTML=''; hideLoading(); showToast('PDF 다운로드 완료');
+}
+function detailDownloadCSV(){
+  const {y,m}=viewMonth;
+  const name=detailPerson;
+  const rows=records.filter(r=>r.date.startsWith(`${y}-${String(m).padStart(2,'0')}`)&&r.staff===name);
+  const total=rows.reduce((s,r)=>s+r.kwh,0);
+  let csv=`﻿${name} · ${y}년 ${m}월 충전 내역
+순번,충전일자,충전기,차량번호,시작(kWh),종료(kWh),충전량(kWh)
+`;
+  rows.forEach((r,i)=>{csv+=`${i+1},${r.date},${r.charger},${r.car},${r.start},${r.end},${r.kwh.toFixed(1)}
+`;});
+  csv+=`
+합계,,,,,,${total.toFixed(1)}
+`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${y}년_${m}월_${name}_충전내역.csv`; a.click();
+  showToast('엑셀 다운로드 완료');
+}
+
 </script>
 </body>
 </html>

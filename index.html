@@ -2,423 +2,285 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
-<title>EV 충전 기록 — </title>
+<title>EV 충전 기록</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f2f3f5;
-  --surface:#ffffff;
-  --surface2:#eaebee;
-  --border:#d8dae0;
-  --border2:#b8bbc6;
-  --text:#111318;
-  --text2:#44475a;
-  --text3:#888b9e;
-  /* 포인트 컬러 */
-  --green:#0f7a45;
-  --green-bg:#e6f5ee;
-  --green-border:#a8d9be;
-  --blue:#1752a8;
-  --blue-bg:#e8eefc;
-  --blue-border:#a0b8ef;
-  --orange:#c45c00;
-  --orange-bg:#fff0e6;
-  --orange-border:#f5c49a;
-  --red:#b52a1c;
-  --red-bg:#fdecea;
-  --red-border:#e8a8a0;
-  --r:12px;--r-sm:8px;--r-xs:6px;
+  --bg:#f2f3f5;--surface:#fff;--surface2:#eaebee;--border:#d8dae0;--border2:#b8bbc6;
+  --text:#111318;--text2:#44475a;--text3:#888b9e;
+  --green:#0f7a45;--green-bg:#e6f5ee;--green-bd:#a8d9be;
+  --blue:#1752a8;--blue-bg:#e8eefc;--blue-bd:#a0b8ef;
+  --orange:#c45c00;--orange-bg:#fff0e6;--orange-bd:#f5c49a;
+  --red:#b52a1c;--red-bg:#fdecea;--red-bd:#e8a8a0;
+  --r:12px;--rs:8px;--rx:6px;
 }
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
-.mono{font-family:'IBM Plex Mono',monospace}
+html{overscroll-behavior:none}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden}
 
-/* ── PIN 화면 ── */
-#pin-screen{
-  position:fixed;inset:0;background:#fff;z-index:999;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;
-}
+/* ── PIN ── */
+#pin-screen{position:fixed;inset:0;background:#fff;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px}
 .pin-logo{font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:36px}
 .pin-title{font-size:26px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.5px}
 .pin-sub{font-size:15px;color:var(--text3);margin-bottom:36px}
 .pin-dots{display:flex;gap:16px;margin-bottom:36px}
 .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border2);transition:all .15s}
-.pin-dot.filled{background:var(--blue);border-color:var(--blue)}
-.pin-dot.error{background:var(--red);border-color:var(--red)}
+.pin-dot.on{background:var(--blue);border-color:var(--blue)}
+.pin-dot.err{background:var(--red);border-color:var(--red)}
 .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:260px}
-.pin-key{height:68px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);font-size:24px;font-weight:600;color:var(--text);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .1s;-webkit-tap-highlight-color:transparent}
+.pin-key{height:68px;border-radius:var(--rs);border:1.5px solid var(--border);background:#fff;font-size:24px;font-weight:600;color:var(--text);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .1s;-webkit-tap-highlight-color:transparent}
 .pin-key:active{background:var(--surface2);transform:scale(.94)}
-.pin-key.del{font-size:18px;color:var(--text2)}
-.pin-error{font-size:14px;color:var(--red);margin-top:16px;height:20px;font-weight:500}
+.pin-err{font-size:14px;color:var(--red);margin-top:16px;height:20px;font-weight:500}
 
-/* ── 헤더 ── */
-.app-header{
-  background:#fff;
-  border-bottom:2px solid var(--border);
-  padding:14px 18px 12px;
-  position:sticky;top:0;z-index:50;
-}
+/* ── 앱 레이아웃 ── */
+#app{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.hdr{background:#fff;border-bottom:2px solid var(--border);padding:13px 18px 11px;flex-shrink:0}
 .hdr-row{display:flex;align-items:center;justify-content:space-between}
-.hdr-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.4px}
+.hdr-title{font-size:18px;font-weight:700;letter-spacing:-.4px}
 .hdr-sub{font-size:12px;color:var(--text3);margin-top:2px;font-weight:500}
-.hdr-badge{font-size:12px;font-weight:700;color:var(--green);background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:6px;padding:4px 10px;font-family:'IBM Plex Mono',monospace}
-
-/* ── 탭 ── */
-.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border)}
-.tab{flex:1;padding:13px 0;font-size:15px;font-weight:600;color:var(--text3);text-align:center;border-bottom:3px solid transparent;cursor:pointer;transition:all .15s;font-family:'Noto Sans KR',sans-serif;background:none;border-top:none;border-left:none;border-right:none;letter-spacing:-.2px}
+.hdr-badge{font-size:12px;font-weight:700;color:var(--green);background:var(--green-bg);border:1.5px solid var(--green-bd);border-radius:6px;padding:4px 10px;font-family:'IBM Plex Mono',monospace}
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:12px 0;font-size:14px;font-weight:600;color:var(--text3);text-align:center;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:none;transition:all .15s}
 .tab.on{color:var(--blue);border-bottom-color:var(--blue)}
-
-/* ── 본문 ── */
-
-.sec{display:none}.sec.on{display:block}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;overscroll-behavior-y:contain}
 
 /* ── 카드 ── */
 .card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
-.card-title{font-size:12px;font-weight:700;letter-spacing:.6px;color:var(--text3);text-transform:uppercase;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin-bottom:12px}
 
 /* ── 칩 ── */
 .chip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.chip{padding:9px 16px;border-radius:22px;font-size:14px;font-weight:600;background:var(--surface2);border:1.5px solid var(--border);color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .12s;white-space:nowrap;-webkit-tap-highlight-color:transparent;letter-spacing:-.2px}
+.chip{padding:10px 8px;border-radius:22px;font-size:14px;font-weight:600;background:var(--surface2);border:1.5px solid var(--border);color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .12s;text-align:center;-webkit-tap-highlight-color:transparent}
 .chip:active{transform:scale(.95)}
 .chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
 
 /* ── 입력 ── */
 .input-row{display:flex;gap:10px;margin-top:12px}
 .input-field{flex:1;display:flex;flex-direction:column;gap:5px}
-.input-label{font-size:12px;color:var(--text3);font-weight:600;letter-spacing:.3px}
-.input-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:13px 14px;font-size:18px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text);outline:none;width:100%;transition:border-color .15s;-webkit-appearance:none}
+.input-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.3px}
+.input-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:13px 14px;font-size:18px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text);outline:none;width:100%;-webkit-appearance:none;transition:border-color .15s}
 .input-box:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px var(--blue-bg)}
 
 /* ── 계산 결과 ── */
-.calc-box{background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:var(--r-sm);padding:14px 16px;margin:12px 0;display:flex;align-items:center;justify-content:space-between}
-.calc-box.zero{background:var(--surface2);border-color:var(--border)}
-.cl-label{font-size:13px;font-weight:700;color:var(--green);letter-spacing:.2px}
+.calc-box{background:var(--green-bg);border:1.5px solid var(--green-bd);border-radius:var(--rs);padding:14px 16px;margin:12px 0;display:flex;align-items:center;justify-content:space-between}
+.calc-box.z{background:var(--surface2);border-color:var(--border)}
+.cl-lbl{font-size:13px;font-weight:700;color:var(--green)}
 .cl-sub{font-size:11px;color:var(--text3);margin-top:3px}
-.calc-box.zero .cl-label{color:var(--text3)}
-.calc-right{display:flex;align-items:baseline;gap:4px}
+.calc-box.z .cl-lbl{color:var(--text3)}
 .calc-num{font-size:34px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--green);line-height:1}
-.calc-box.zero .calc-num{color:var(--text3)}
+.calc-box.z .calc-num{color:var(--text3)}
 .calc-unit{font-size:15px;color:var(--text3);font-weight:600}
 
 /* ── 저장 버튼 ── */
-.save-btn{width:100%;padding:16px;border-radius:var(--r-sm);background:var(--blue);color:#fff;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:-.2px;transition:opacity .15s;-webkit-tap-highlight-color:transparent}
+.save-btn{width:100%;padding:16px;border-radius:var(--rs);background:var(--blue);color:#fff;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:-.2px;-webkit-tap-highlight-color:transparent;margin-top:4px}
 .save-btn:active{opacity:.8}
 .save-btn:disabled{opacity:.25;cursor:not-allowed}
 
 /* ── 기록 리스트 ── */
-.log-item{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:13px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:all .12s;margin-bottom:8px}
+.log-item{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;margin-bottom:8px;-webkit-tap-highlight-color:transparent}
 .log-item:active{background:var(--surface2)}
 .log-bar{width:4px;height:40px;border-radius:2px;flex-shrink:0}
 .log-body{flex:1;min-width:0}
-.log-top{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;letter-spacing:-.2px}
-.log-car{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text3);background:var(--surface2);padding:2px 7px;border-radius:4px;font-weight:600}
-.log-bot{font-size:12px;color:var(--text3);margin-top:3px;font-family:'IBM Plex Mono',monospace;font-weight:500}
-.log-right{display:flex;align-items:center;gap:9px;flex-shrink:0}
-.log-kwh{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700}
-.edit-tag{font-size:11px;color:var(--blue);background:var(--blue-bg);border:1.5px solid var(--blue-border);border-radius:5px;padding:3px 8px;font-weight:600}
+.log-top{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.log-car{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 7px;border-radius:4px;font-weight:600}
+.log-bot{font-size:11px;color:var(--text3);margin-top:3px;font-family:'IBM Plex Mono',monospace}
+.log-kwh{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;flex-shrink:0}
+.edit-tag{font-size:11px;color:var(--blue);background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:5px;padding:3px 8px;font-weight:600;flex-shrink:0}
 
 /* ── 통계 ── */
 .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:14px}
-.stat-label{font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase}
-.stat-val{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);line-height:1}
-.stat-unit{font-size:11px;color:var(--text3);margin-top:4px;font-weight:600}
+.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:13px}
+.stat-label{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:5px;text-transform:uppercase}
+.stat-val{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1}
+.stat-unit{font-size:10px;color:var(--text3);margin-top:4px;font-weight:600}
+.sec-title{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:14px 0 9px}
 
-/* 직원 바 */
+/* ── 사용자별 바 ── */
 .staff-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
-.staff-row{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);gap:10px}
+.staff-row{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .staff-row:last-child{border-bottom:none}
-.sname{font-size:13px;font-weight:700;color:var(--text);width:52px;flex-shrink:0;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.staff-row:active{background:var(--surface2)}
+.sname{font-size:13px;font-weight:700;color:var(--text);width:52px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
 .bar-fill{height:100%;border-radius:3px}
-.skwh{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--text2);width:64px;text-align:right;flex-shrink:0}
-.spct{font-size:12px;color:var(--text3);width:32px;text-align:right;flex-shrink:0;font-weight:600}
+.skwh{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--text2);width:64px;text-align:right;flex-shrink:0}
+.spct{font-size:11px;color:var(--text3);width:32px;text-align:right;flex-shrink:0;font-weight:600}
+.s-arrow{font-size:14px;color:var(--text3);flex-shrink:0}
 
-/* 충전기 */
+/* ── 충전기별 ── */
 .charger-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.charger-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:13px;text-align:center}
-.cno{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.6px;margin-bottom:6px;text-transform:uppercase}
-.ckwh{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)}
-.cunit{font-size:11px;color:var(--text3);margin-top:2px;font-weight:600}
-.cbar{height:4px;background:var(--surface2);border-radius:2px;margin-top:9px;overflow:hidden}
+.charger-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:12px;text-align:center}
+.cno{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;margin-bottom:5px;text-transform:uppercase}
+.ckwh{font-size:17px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+.cunit{font-size:10px;color:var(--text3);margin-top:2px;font-weight:600}
+.cbar{height:4px;background:var(--surface2);border-radius:2px;margin-top:8px;overflow:hidden}
 .cbar-fill{height:100%;border-radius:2px;background:var(--orange)}
 
-/* 다운로드 버튼 */
-.dl-row{display:flex;gap:8px}
-.dl-btn{flex:1;padding:13px 6px;border-radius:var(--r-sm);border:1.5px solid;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s;-webkit-tap-highlight-color:transparent;letter-spacing:-.2px}
-.dl-btn:active{opacity:.75}
-.dl-btn.pdf{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
-.dl-btn.excel{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
-.dl-btn.capture{background:var(--orange-bg);color:var(--orange);border-color:var(--orange-border)}
+/* ── 다운로드 버튼 ── */
+.dl-row{display:flex;gap:8px;margin-top:4px}
+.dl-btn{flex:1;padding:12px 6px;border-radius:var(--rs);border:1.5px solid;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;justify-content:center;gap:4px;-webkit-tap-highlight-color:transparent;letter-spacing:-.2px}
+.dl-btn:active{opacity:.7}
+.dl-btn.pdf{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd)}
+.dl-btn.xls{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+.dl-btn.cap{background:var(--orange-bg);color:var(--orange);border-color:var(--orange-bd)}
 
-/* 월 선택 */
+/* ── 월 네비 ── */
 .month-nav{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.mnav-btn{background:#fff;border:1.5px solid var(--border);color:var(--text2);border-radius:var(--r-xs);padding:7px 13px;cursor:pointer;font-size:16px;font-family:sans-serif;font-weight:600}
-.mnav-btn:active{background:var(--surface2)}
-.mnav-label{flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.mnav-btn{background:#fff;border:1.5px solid var(--border);color:var(--text2);border-radius:var(--rx);padding:6px 12px;cursor:pointer;font-size:16px;font-weight:600;-webkit-tap-highlight-color:transparent}
+.mnav-label{flex:1;text-align:center;font-size:16px;font-weight:700;color:var(--text)}
 
-/* 섹션 타이틀 */
-.sec-title{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:16px 0 9px}
+/* ── 연집계 월행 ── */
+.month-row{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:11px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.month-row:active{background:var(--surface2)}
+.mbadge{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);width:36px;flex-shrink:0}
+.mbar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.mbar-fill{height:100%;border-radius:3px;background:var(--blue)}
+.mkwh{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--blue);width:76px;text-align:right;flex-shrink:0}
+.mcnt{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0}
 
-/* ── 팝업 ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:flex-end;justify-content:center;overflow:hidden}
-.overlay.show{display:flex}
-.popup{background:#fff;border-top:2px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:24px 20px 32px;animation:slideUp .2s ease;max-height:90vh;overflow-y:auto}
+/* ── 팝업 공통 ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.overlay.on{display:flex}
+.popup{background:#fff;border-top:2px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:20px 18px 32px;animation:slideUp .2s ease;max-height:90vh;overflow-y:auto}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.popup-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px}
-.popup-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:5px;letter-spacing:-.4px}
-.popup-sub{font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:18px;font-weight:500}
-
-/* 정보 박스 */
-.info-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;margin-bottom:18px}
-.info-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.pop-handle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.pop-handle{width:36px;height:4px;background:var(--border2);border-radius:2px}
+.pop-close{background:var(--text);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.pop-close:active{opacity:.7}
+.pop-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.4px}
+.pop-sub{font-size:14px;color:var(--text3);margin-bottom:16px;line-height:1.5}
+.info-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:13px 14px;margin-bottom:16px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
 .info-row:last-child{border-bottom:none}
 .info-key{font-size:13px;color:var(--text3);font-weight:600}
-.info-val{font-size:15px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace}
+.info-val{font-size:14px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace}
 .info-val.big{font-size:22px;color:var(--green)}
+.user-box{background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:var(--rs);padding:16px;text-align:center;margin-bottom:16px}
+.user-name{font-size:28px;font-weight:700;color:var(--blue)}
+.btn-row{display:flex;gap:9px}
+.btn{flex:1;padding:14px;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);-webkit-tap-highlight-color:transparent;letter-spacing:-.2px}
+.btn:active{opacity:.7}
+.btn.confirm{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.danger{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.divider{height:1px;background:var(--border);margin:12px 0}
 
-/* 작성자 확인 */
-.user-box{background:var(--blue-bg);border:1.5px solid var(--blue-border);border-radius:var(--r-sm);padding:18px;text-align:center;margin-bottom:18px}
-.user-name{font-size:30px;font-weight:700;color:var(--blue);letter-spacing:-.5px}
-.user-sub{font-size:13px;color:var(--text3);margin-top:4px;font-weight:500}
+/* ── 개인 상세 팝업 ── */
+.detail-popup{
+  background:#fff;border-top:2px solid var(--border);
+  border-radius:16px 16px 0 0;width:100%;max-width:480px;
+  height:95vh;display:flex;flex-direction:column;
+  animation:slideUp .2s ease;overflow:hidden;
+}
+.dp-header{padding:18px 18px 0;flex-shrink:0}
+.dp-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 18px 8px;overscroll-behavior-y:contain}
+.dp-footer{padding:12px 18px 24px;flex-shrink:0;background:#fff;border-top:1px solid var(--border)}
+.dp-name-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.dp-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.dp-name{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.4px}
+.dp-period{font-size:13px;color:var(--text3);font-weight:500;margin-left:auto}
+.dp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.dp-stat{background:var(--surface2);border-radius:var(--rs);padding:11px 10px;text-align:center}
+.dp-stat-label{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.4px;margin-bottom:4px;text-transform:uppercase}
+.dp-stat-val{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+.dp-stat-unit{font-size:10px;color:var(--text3);font-weight:600;margin-top:2px}
+.dp-row{background:var(--surface2);border-radius:var(--rs);padding:10px 13px;display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.dp-date{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;width:52px;flex-shrink:0;white-space:nowrap}
+.dp-info{flex:1;min-width:0}
+.dp-car{font-size:12px;font-weight:600;color:var(--text2)}
+.dp-meter{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.dp-kwh{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;flex-shrink:0}
 
-/* 팝업 버튼 */
-.popup-btn-row{display:flex;gap:9px}
-.popup-btn{flex:1;padding:14px;border-radius:var(--r-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);transition:opacity .12s;-webkit-tap-highlight-color:transparent;letter-spacing:-.2px}
-.popup-btn:active{opacity:.7}
-.popup-btn.confirm{background:var(--blue);color:#fff;border-color:var(--blue)}
-.popup-btn.danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
-.divider{height:1px;background:var(--border);margin:14px 0}
-
-/* ── 토스트 ── */
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:#fff;border-radius:22px;padding:11px 20px;font-size:14px;font-weight:600;z-index:300;opacity:0;transition:all .22s;white-space:nowrap;pointer-events:none;letter-spacing:-.2px}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ── 로딩 ── */
-.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.8);z-index:400;display:none;align-items:center;justify-content:center}
-.loading-overlay.show{display:flex}
+/* ── 토스트/로딩 ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:#fff;border-radius:22px;padding:11px 20px;font-size:14px;font-weight:600;z-index:400;opacity:0;transition:all .22s;white-space:nowrap;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading{position:fixed;inset:0;background:rgba(255,255,255,.8);z-index:500;display:none;align-items:center;justify-content:center}
+.loading.on{display:flex}
 .loading-box{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:24px 32px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
 .spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-box p{font-size:14px;color:var(--text3);font-weight:600}
 
-/* ── PDF 렌더 (숨김) ── */
-#print-area{position:fixed;left:-9999px;top:0;width:794px;background:#fff;font-family:'Noto Sans KR',sans-serif}
-.print-page{width:794px;min-height:1123px;padding:44px 50px;background:#fff;color:#111}
-.print-header{border-bottom:2.5px solid #111;padding-bottom:14px;margin-bottom:24px}
-.print-h1{font-size:20px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
-.print-meta{font-size:13px;color:#555;display:flex;gap:24px;font-weight:500}
-.print-table{width:100%;border-collapse:collapse;margin-bottom:28px;font-size:13px}
-.print-table th{background:#111;color:#fff;padding:9px 10px;text-align:center;font-size:12px;font-weight:700;letter-spacing:.3px}
-.print-table td{padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-family:'IBM Plex Mono',monospace;font-size:13px}
-.print-table tr:nth-child(even) td{background:#f6f6f6}
-.print-table td.name-cell{font-family:'Noto Sans KR',sans-serif;font-weight:600}
-.print-summary{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-.ps-box{border:1.5px solid #ddd;border-radius:7px;padding:14px 16px}
-.ps-box-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.6px;margin-bottom:10px;text-transform:uppercase}
-.ps-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;font-size:13px}
-.ps-row:last-child{border-bottom:none}
-.ps-key{color:#444;font-family:'Noto Sans KR',sans-serif;font-weight:500}
-.ps-val{font-family:'IBM Plex Mono',monospace;font-weight:700;color:#111}
-.print-total{background:#111;color:#fff;border-radius:7px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center}
-.pt-label{font-size:14px;font-weight:700}
-.pt-val{font-size:24px;font-weight:700;font-family:'IBM Plex Mono',monospace}
-.print-footer{margin-top:20px;text-align:center;font-size:11px;color:#bbb}
+/* ── PDF 렌더 ── */
+#parea{position:fixed;left:-9999px;top:0;width:794px;background:#fff;font-family:'Noto Sans KR',sans-serif}
+.ppage{width:794px;min-height:1123px;padding:44px 50px;background:#fff;color:#111}
+.phdr{border-bottom:2.5px solid #111;padding-bottom:14px;margin-bottom:22px}
+.ph1{font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:5px}
+.pmeta{font-size:12px;color:#666;display:flex;gap:24px;font-weight:500}
+.ptbl{width:100%;border-collapse:collapse;margin-bottom:26px;font-size:12px}
+.ptbl th{background:#111;color:#fff;padding:8px 10px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.3px}
+.ptbl td{padding:7px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.ptbl tr:nth-child(even) td{background:#f6f6f6}
+.ptbl td.nc{font-family:'Noto Sans KR',sans-serif;font-weight:600}
+.psum{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+.psbox{border:1.5px solid #ddd;border-radius:6px;padding:14px 16px}
+.psbox-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase}
+.psrow{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:12px}
+.psrow:last-child{border-bottom:none}
+.pskey{color:#555;font-family:'Noto Sans KR',sans-serif;font-weight:500}
+.psval{font-family:'IBM Plex Mono',monospace;font-weight:700;color:#111}
+.ptotal{background:#111;color:#fff;border-radius:6px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+.pt-label{font-size:13px;font-weight:700}
+.pt-val{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.pfoot{margin-top:18px;text-align:center;font-size:10px;color:#bbb}
 
-@media(max-width:380px){.content{padding:10px}.stat-val{font-size:18px}.chip{font-size:13px;padding:8px 13px}}
-
-/* pull-to-refresh 차단 */
-html { overscroll-behavior: none; }
-
-.popup-close-btn{
-  background:var(--text);color:#fff;border:none;border-radius:50%;
-  width:40px;height:40px;font-size:22px;font-weight:700;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;line-height:1;
-  flex-shrink:0;-webkit-tap-highlight-color:transparent;
-}
-.popup-close-btn:active{opacity:.7}
-
-.detail-popup{
-  background:#fff;border-top:2px solid var(--border);
-  border-radius:16px 16px 0 0;
-  width:100%;max-width:480px;
-  height:95svh;min-height:95vh;
-  display:flex;flex-direction:column;
-  overflow:hidden;
-  align-self:flex-end;
-}
-.detail-popup-header{padding:18px 18px 0;flex-shrink:0}
-.detail-popup-body{
-  flex:1;overflow-y:auto;padding:0 18px 8px;
-  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
-}
-.detail-popup-footer{
-  padding:12px 18px 24px;flex-shrink:0;
-  background:#fff;border-top:1px solid var(--border);
-}
-
-.month-row{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer;transition:all .12s}
-.month-row:active{background:var(--surface2)}
-.month-badge{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);width:36px;flex-shrink:0}
-.month-bar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
-.month-bar-fill{height:100%;border-radius:3px;background:var(--blue)}
-.month-kwh{font-size:14px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--blue);width:72px;text-align:right;flex-shrink:0}
-.month-cnt{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0;font-weight:600}
-.person-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.person-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:12px}
-.person-card:active{background:var(--surface2)}
-.person-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-.person-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.person-name{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.3px}
-.person-cnt{font-size:12px;color:var(--text3);margin-top:2px;font-weight:500}
-.person-right{text-align:right;flex-shrink:0}
-.person-kwh{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace}
-.person-pct{font-size:12px;color:var(--text3);margin-top:2px;font-weight:600}
-.person-arrow{font-size:16px;color:var(--text3);margin-left:6px}
-.detail-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.detail-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
-.detail-name{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.4px}
-.detail-period{font-size:13px;color:var(--text3);font-weight:500;margin-left:auto}
-.detail-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.detail-stat{background:var(--surface2);border-radius:var(--r-sm);padding:11px 10px;text-align:center}
-.detail-stat-label{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.4px;margin-bottom:4px;text-transform:uppercase}
-.detail-stat-val{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)}
-.detail-stat-unit{font-size:10px;color:var(--text3);font-weight:600;margin-top:2px}
-.detail-log{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
-.detail-row{background:var(--surface2);border-radius:var(--r-sm);padding:10px 13px;display:flex;align-items:center;gap:10px}
-.detail-date{font-size:13px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;width:52px;flex-shrink:0;white-space:nowrap}
-.detail-info{flex:1;min-width:0}
-.detail-car{font-size:12px;font-weight:600;color:var(--text2)}
-.detail-meter{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:1px}
-.detail-kwh-val{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;flex-shrink:0}
-.detail-dl-row{display:flex;gap:8px}
-
-#app-body{display:flex;flex-direction:column;height:100vh;overflow:hidden}
-.app-header{flex-shrink:0}
-.tabs{flex-shrink:0}
-.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;max-width:480px;margin:0 auto}
+@media(max-width:380px){.content{padding:10px}.stat-val{font-size:17px}.chip{font-size:13px;padding:8px 13px}}
 </style>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBspQaU-41QqKa15lizOVAxcDQkwSSdSMM",
-  authDomain: "inventory-dce00.firebaseapp.com",
-  databaseURL: "https://inventory-dce00-default-rtdb.firebaseio.com",
-  projectId: "inventory-dce00",
-  storageBucket: "inventory-dce00.firebasestorage.app",
-  messagingSenderId: "344489058455",
-  appId: "1:344489058455:web:d681bf992931af186889d2"
-};
-let fbReady=false, db=null;
-function initFirebase(){
-  try{
-    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    db=firebase.database();
-    firebase.auth().signInAnonymously().then(()=>{
-      console.log("✅ Firebase OK");
-      fbReady=true;
-      db.ref('ev_charge').on('value',snap=>{
-        records.length=0;
-        if(snap.exists()){
-          Object.entries(snap.val()).forEach(([fbKey,v])=>records.push({...v,fbKey}));
-          records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
-        }
-        const t=['input','log','stats'].find(t=>document.getElementById('sec-'+t)?.classList.contains('on'));
-        if(t==='log') renderLog();
-        if(t==='stats') renderStats();
-      });
-    }).catch(e=>{ console.warn("Auth 실패:",e.message); loadLocal(); });
-  }catch(e){ console.warn("FB 초기화 실패:",e.message); loadLocal(); }
-}
-function saveLocal(){ try{ localStorage.setItem('ev_records',JSON.stringify(records)); }catch(e){} }
-function loadLocal(){
-  try{ const d=localStorage.getItem('ev_records'); if(d){ const a=JSON.parse(d); records.length=0; a.forEach(r=>records.push(r)); } }catch(e){}
-}
-window.onPinPass=function(){ initFirebase(); };
-window.fbSave=function(rec){
-  if(fbReady&&db){ const {fbKey,...d}=rec; return db.ref('ev_charge').push(d).catch(()=>{ records.unshift(rec); saveLocal(); }); }
-  records.unshift(rec); saveLocal(); return Promise.resolve();
-};
-window.fbUpdate=function(fbKey,data){
-  if(fbReady&&db&&fbKey){ const {fbKey:_,...d}=data; return db.ref('ev_charge/'+fbKey).update(d).catch(()=>saveLocal()); }
-  saveLocal(); return Promise.resolve();
-};
-window.fbDelete=function(fbKey){
-  if(fbReady&&db&&fbKey){ return db.ref('ev_charge/'+fbKey).remove().catch(()=>saveLocal()); }
-  records=records.filter(r=>r.fbKey!==fbKey); saveLocal(); return Promise.resolve();
-};
-</script>
 </head>
 <body>
 
-<!-- ══ PIN 화면 ══ -->
+<!-- PIN -->
 <div id="pin-screen">
-  
+  <div class="pin-logo">EV 충전 기록</div>
   <div class="pin-title">PIN 입력</div>
   <div class="pin-sub">4자리 번호를 입력하세요</div>
   <div class="pin-dots" id="pin-dots">
-    <div class="pin-dot"></div>
-    <div class="pin-dot"></div>
-    <div class="pin-dot"></div>
-    <div class="pin-dot"></div>
+    <div class="pin-dot"></div><div class="pin-dot"></div>
+    <div class="pin-dot"></div><div class="pin-dot"></div>
   </div>
   <div class="pin-pad">
-    <button class="pin-key" onclick="pinInput('1')">1</button>
-    <button class="pin-key" onclick="pinInput('2')">2</button>
-    <button class="pin-key" onclick="pinInput('3')">3</button>
-    <button class="pin-key" onclick="pinInput('4')">4</button>
-    <button class="pin-key" onclick="pinInput('5')">5</button>
-    <button class="pin-key" onclick="pinInput('6')">6</button>
-    <button class="pin-key" onclick="pinInput('7')">7</button>
-    <button class="pin-key" onclick="pinInput('8')">8</button>
-    <button class="pin-key" onclick="pinInput('9')">9</button>
-    <div></div>
-    <button class="pin-key" onclick="pinInput('0')">0</button>
-    <button class="pin-key del" onclick="pinDel()">⌫</button>
+    <button class="pin-key" onclick="pi('1')">1</button><button class="pin-key" onclick="pi('2')">2</button><button class="pin-key" onclick="pi('3')">3</button>
+    <button class="pin-key" onclick="pi('4')">4</button><button class="pin-key" onclick="pi('5')">5</button><button class="pin-key" onclick="pi('6')">6</button>
+    <button class="pin-key" onclick="pi('7')">7</button><button class="pin-key" onclick="pi('8')">8</button><button class="pin-key" onclick="pi('9')">9</button>
+    <div></div><button class="pin-key" onclick="pi('0')">0</button><button class="pin-key" onclick="pd()">⌫</button>
   </div>
-  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-err" id="pin-err"></div>
 </div>
 
-<!-- ══ 앱 본체 (PIN 통과 후) ══ -->
-<div id="app-body" style="display:none">
-
-  <div class="app-header">
+<!-- APP -->
+<div id="app">
+  <div class="hdr">
     <div class="hdr-row">
-      <div>
-        <div class="hdr-title">⚡ EV 충전 기록</div>
-        <div class="hdr-sub"></div>
-      </div>
+      <div><div class="hdr-title">⚡ EV 충전 기록</div><div class="hdr-sub">충전기 1·2·3호기</div></div>
       <div class="hdr-badge" id="hdr-date"></div>
     </div>
   </div>
-
   <div class="tabs">
     <button class="tab on" onclick="goTab('input')">입력</button>
     <button class="tab" onclick="goTab('log')">기록</button>
     <button class="tab" onclick="goTab('stats')">월집계</button>
   </div>
-
-  <div class="content">
+  <div class="content" id="content">
 
     <!-- 입력 탭 -->
-    <div class="sec on" id="sec-input">
+    <div id="sec-input">
       <div class="card">
         <div class="card-title">작성자</div>
-        <div class="chip-grid" id="chips-staff">
-          <div class="chip" onclick="selStaff(this,'송성민')">송성민</div>
-          <div class="chip" onclick="selStaff(this,'박성수')">박성수</div>
-          <div class="chip" onclick="selStaff(this,'최윤철')">최윤철</div>
+        <div class="chip-grid">
+          <div class="chip" onclick="selStaff(this,'관리부')">관리부</div>
           <div class="chip" onclick="selStaff(this,'김대희')">김대희</div>
-          <div class="chip" onclick="selStaff(this,'송승훈')">송승훈</div>
-          <div class="chip" onclick="selStaff(this,'송상훈')">송상훈</div>
+          <div class="chip" onclick="selStaff(this,'부회장님')">부회장님</div>
+          <div class="chip" onclick="selStaff(this,'사장님')">사장님</div>
+          <div class="chip" onclick="selStaff(this,'송성민')">송성민</div>
+          <div class="chip" onclick="selStaff(this,'최윤철')">최윤철</div>
         </div>
       </div>
       <div class="card">
@@ -437,417 +299,271 @@ window.fbDelete=function(fbKey){
           <div class="chip" onclick="selChip(this,'car','0847')">0847</div>
           <div class="chip" onclick="selChip(this,'car','직접입력')">직접입력</div>
         </div>
-        <input id="car-manual" class="input-box" style="margin-top:10px;display:none" placeholder="차량번호 입력" oninput="st.car=this.value;checkReady()">
+        <input id="car-manual" class="input-box" style="margin-top:10px;display:none" placeholder="차량번호 입력" oninput="st.car=this.value;chkReady()">
       </div>
       <div class="card">
         <div class="card-title">계량기 수치 (kWh)</div>
         <div class="input-row">
-          <div class="input-field">
-            <div class="input-label">충전 시작</div>
-            <input class="input-box" id="inp-start" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcKwh()">
-          </div>
-          <div class="input-field">
-            <div class="input-label">충전 종료</div>
-            <input class="input-box" id="inp-end" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcKwh()">
-          </div>
+          <div class="input-field"><div class="input-label">충전 시작</div><input class="input-box" id="inp-s" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()"></div>
+          <div class="input-field"><div class="input-label">충전 종료</div><input class="input-box" id="inp-e" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()"></div>
         </div>
-        <div class="calc-box zero" id="calc-box">
-          <div>
-            <div class="cl-label">충전량 자동계산</div>
-            <div class="cl-sub">종료 − 시작</div>
-          </div>
-          <div class="calc-right">
+        <div class="calc-box z" id="calc-box">
+          <div><div class="cl-lbl">충전량 자동계산</div><div class="cl-sub">종료 − 시작</div></div>
+          <div style="display:flex;align-items:baseline;gap:4px">
             <div class="calc-num" id="calc-num">—</div>
-            <div class="calc-unit">&nbsp;kWh</div>
+            <div class="calc-unit">kWh</div>
           </div>
         </div>
       </div>
       <button class="save-btn" id="save-btn" onclick="openSaveConfirm()" disabled>기록 저장</button>
+      <div style="height:20px"></div>
     </div>
 
     <!-- 기록 탭 -->
-    <div class="sec" id="sec-log">
+    <div id="sec-log" style="display:none">
       <div class="sec-title">전체 충전 기록</div>
       <div id="log-list"></div>
     </div>
 
-
     <!-- 월집계 탭 -->
-    <div class="sec" id="sec-stats">
+    <div id="sec-stats" style="display:none">
       <div class="month-nav">
         <button class="mnav-btn" onclick="changeMonth(-1)">‹</button>
         <div class="mnav-label" id="month-label"></div>
         <button class="mnav-btn" onclick="changeMonth(1)">›</button>
       </div>
       <div id="stats-content"></div>
-      <div style="margin-top:4px;margin-bottom:12px">
-        <button id="year-toggle-btn" onclick="toggleYear()"
-          style="width:100%;padding:11px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:-.2px">
-          연간 집계 펼치기 ›
-        </button>
+      <!-- 연집계 토글 -->
+      <div style="margin:4px 0 12px">
+        <button id="yr-btn" onclick="toggleYear()" style="width:100%;padding:11px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">연간 집계 펼치기 ›</button>
       </div>
-      <div id="year-panel" style="display:none">
+      <div id="yr-panel" style="display:none">
         <div class="month-nav">
           <button class="mnav-btn" onclick="changeYear(-1)">‹</button>
-          <div class="mnav-label" id="year-label"></div>
+          <div class="mnav-label" id="yr-label"></div>
           <button class="mnav-btn" onclick="changeYear(1)">›</button>
         </div>
-        <div id="year-content"></div>
+        <div id="yr-content"></div>
       </div>
+      <div style="height:20px"></div>
     </div>
 
+  </div><!-- /content -->
+</div><!-- /app -->
 
-  </div>
-
-<!-- ══ 작성자 확인 팝업 ══ -->
+<!-- 작성자 확인 팝업 -->
 <div class="overlay" id="pop-staff">
   <div class="popup">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="popup-handle" style="margin:0"></div>
-      <button class="popup-close-btn" onclick="closePopup('pop-staff')">×</button>
-    </div>
-    <div class="popup-title">작성자 확인</div>
-    <div class="popup-sub">본인이 맞으면 확인을 눌러주세요.</div>
-    <div class="user-box">
-      <div class="user-name" id="pop-staff-name"></div>
-    </div>
-    <div class="popup-btn-row">
-      <button class="popup-btn" onclick="closePopup('pop-staff')">취소</button>
-      <button class="popup-btn confirm" onclick="confirmStaff()">확인</button>
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-staff')">×</button></div>
+    <div class="pop-title">작성자 확인</div>
+    <div class="pop-sub">본인이 맞으면 확인을 눌러주세요.</div>
+    <div class="user-box"><div class="user-name" id="ps-name"></div></div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeP('pop-staff')">취소</button>
+      <button class="btn confirm" onclick="confirmStaff()">확인</button>
     </div>
   </div>
 </div>
 
-<!-- ══ 저장 확인 팝업 ══ -->
+<!-- 저장 확인 팝업 -->
 <div class="overlay" id="pop-save">
   <div class="popup">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="popup-handle" style="margin:0"></div>
-      <button class="popup-close-btn" onclick="closePopup('pop-save')">×</button>
-    </div>
-    <div class="popup-title">저장 확인</div>
-    <div class="popup-sub">아래 내용으로 저장합니다.</div>
-    <div class="info-box" id="save-info-box"></div>
-    <div class="popup-btn-row">
-      <button class="popup-btn" onclick="closePopup('pop-save')">수정</button>
-      <button class="popup-btn confirm" onclick="confirmSave()">저장</button>
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-save')">×</button></div>
+    <div class="pop-title">저장 확인</div>
+    <div class="pop-sub">아래 내용으로 저장합니다.</div>
+    <div class="info-box" id="save-info"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeP('pop-save')">수정</button>
+      <button class="btn confirm" onclick="confirmSave()">저장</button>
     </div>
   </div>
 </div>
 
-<!-- ══ 수정 팝업 ══ -->
+<!-- 수정 팝업 -->
 <div class="overlay" id="pop-edit">
   <div class="popup">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="popup-handle" style="margin:0"></div>
-      <button class="popup-close-btn" onclick="closePopup('pop-edit')">×</button>
-    </div>
-    <div class="popup-title">기록 수정</div>
-    <div class="popup-sub" id="edit-date-label"></div>
-    <div style="margin-bottom:11px">
-      <div class="card-title" style="margin-bottom:8px">작성자</div>
-      <div class="chip-grid" id="edit-chips-staff"></div>
-    </div>
-    <div style="margin-bottom:11px">
-      <div class="card-title" style="margin-bottom:8px">충전기</div>
-      <div class="chip-grid" id="edit-chips-charger"></div>
-    </div>
-    <div style="margin-bottom:11px">
-      <div class="card-title" style="margin-bottom:8px">차량번호</div>
-      <div class="chip-grid" id="edit-chips-car"></div>
-    </div>
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-edit')">×</button></div>
+    <div class="pop-title">기록 수정</div>
+    <div class="pop-sub" id="edit-lbl"></div>
+    <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">작성자</div><div class="chip-grid" id="e-staff"></div></div>
+    <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">충전기</div><div class="chip-grid" id="e-charger"></div></div>
+    <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">차량번호</div><div class="chip-grid" style="grid-template-columns:repeat(3,1fr)" id="e-car"></div></div>
     <div class="input-row" style="margin-bottom:11px">
-      <div class="input-field">
-        <div class="input-label">시작 (kWh)</div>
-        <input class="input-box" id="edit-start" type="number" inputmode="decimal" step="0.1" oninput="calcEditKwh()">
-      </div>
-      <div class="input-field">
-        <div class="input-label">종료 (kWh)</div>
-        <input class="input-box" id="edit-end" type="number" inputmode="decimal" step="0.1" oninput="calcEditKwh()">
-      </div>
+      <div class="input-field"><div class="input-label">시작 (kWh)</div><input class="input-box" id="e-s" type="number" inputmode="decimal" step="0.1" oninput="calcEK()"></div>
+      <div class="input-field"><div class="input-label">종료 (kWh)</div><input class="input-box" id="e-e" type="number" inputmode="decimal" step="0.1" oninput="calcEK()"></div>
     </div>
-    <div class="calc-box" id="edit-calc-box" style="margin-bottom:14px">
-      <div><div class="cl-label">충전량 자동계산</div><div class="cl-sub">종료 − 시작</div></div>
-      <div class="calc-right"><div class="calc-num" id="edit-calc-num">—</div><div class="calc-unit">&nbsp;kWh</div></div>
+    <div class="calc-box z" id="e-calc" style="margin-bottom:14px">
+      <div><div class="cl-lbl">충전량 자동계산</div><div class="cl-sub">종료 − 시작</div></div>
+      <div style="display:flex;align-items:baseline;gap:4px"><div class="calc-num" id="e-num">—</div><div class="calc-unit">kWh</div></div>
     </div>
-    <div class="popup-btn-row" style="margin-bottom:9px">
-      <button class="popup-btn" onclick="closePopup('pop-edit')">취소</button>
-      <button class="popup-btn confirm" id="edit-save-btn" onclick="confirmEdit()">저장</button>
+    <div class="btn-row" style="margin-bottom:9px">
+      <button class="btn" onclick="closeP('pop-edit')">취소</button>
+      <button class="btn confirm" id="e-save-btn" onclick="confirmEdit()">저장</button>
     </div>
     <div class="divider"></div>
-    <button class="popup-btn danger" style="width:100%" onclick="openDeleteConfirm()">이 기록 삭제</button>
+    <button class="btn danger" style="width:100%" onclick="openDelConfirm()">이 기록 삭제</button>
   </div>
 </div>
 
-<!-- ══ 삭제 확인 팝업 ══ -->
-<div class="overlay" id="pop-delete">
+<!-- 삭제 확인 팝업 -->
+<div class="overlay" id="pop-del">
   <div class="popup">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="popup-handle" style="margin:0"></div>
-      <button class="popup-close-btn" onclick="closePopup('pop-delete')">×</button>
-    </div>
-    <div class="popup-title">삭제 확인</div>
-    <div class="popup-sub">삭제 후 복구할 수 없습니다.</div>
-    <div class="info-box" id="delete-info-box"></div>
-    <div class="popup-btn-row">
-      <button class="popup-btn" onclick="closePopup('pop-delete')">취소</button>
-      <button class="popup-btn danger" onclick="confirmDelete()">삭제</button>
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-del')">×</button></div>
+    <div class="pop-title">삭제 확인</div>
+    <div class="pop-sub">삭제 후 복구할 수 없습니다.</div>
+    <div class="info-box" id="del-info"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeP('pop-del')">취소</button>
+      <button class="btn danger" onclick="confirmDel()">삭제</button>
     </div>
   </div>
 </div>
 
-<!-- ══ 개인 상세 팝업 ══ -->
+<!-- 개인 상세 팝업 -->
 <div class="overlay" id="pop-detail">
   <div class="detail-popup">
-    <div class="detail-popup-header">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="popup-handle" style="margin:0"></div>
-        <button class="popup-close-btn" onclick="closePopup('pop-detail')">×</button>
+    <div class="dp-header">
+      <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-detail')">×</button></div>
+      <div class="dp-name-row">
+        <div class="dp-dot" id="dp-dot"></div>
+        <div class="dp-name" id="dp-name"></div>
+        <div class="dp-period" id="dp-period"></div>
       </div>
-      <div class="detail-header">
-        <div class="detail-dot" id="detail-dot"></div>
-        <div class="detail-name" id="detail-name"></div>
-        <div class="detail-period" id="detail-period"></div>
-      </div>
-      <div class="detail-summary" id="detail-summary"></div>
+      <div class="dp-stats" id="dp-stats"></div>
       <div class="sec-title" style="margin-top:4px;margin-bottom:8px">일자별 사용내역</div>
     </div>
-    <div class="detail-popup-body">
-      <div class="detail-log" id="detail-log"></div>
-    </div>
-    <div class="detail-popup-footer">
-      <div class="detail-dl-row">
-        <button class="dl-btn pdf" onclick="detailDownloadPDF()">⬇ PDF</button>
-        <button class="dl-btn excel" onclick="detailDownloadCSV()">⬇ 엑셀</button>
+    <div class="dp-body" id="dp-body"></div>
+    <div class="dp-footer">
+      <div class="dl-row">
+        <button class="dl-btn pdf" onclick="dpPDF()">⬇ PDF</button>
+        <button class="dl-btn xls" onclick="dpCSV()">⬇ 엑셀</button>
       </div>
     </div>
   </div>
 </div>
-</div><!-- /app-body -->
-<!-- ══ 로딩 ══ -->
-<div class="loading-overlay" id="loading">
-  <div class="loading-box"><div class="spinner"></div><p id="loading-msg">처리 중...</p></div>
-</div>
-<!-- ══ 토스트 ══ -->
+
+<!-- 토스트/로딩/PDF렌더 -->
 <div class="toast" id="toast"></div>
-<!-- ══ PDF 렌더 영역 ══ -->
-<div id="print-area"></div>
-
-
-<!-- ══ 작성자 확인 팝업 ══ -->
-<div class="overlay" id="pop-staff">
-  <div class="popup">
-    <div class="popup-handle"></div>
-    <div class="popup-title">작성자 확인</div>
-    <div class="popup-sub">본인이 맞으면 확인을 눌러주세요.</div>
-    <div class="user-box">
-      <div class="user-name" id="pop-staff-name"></div>
-      
-    </div>
-    <div class="popup-btn-row">
-      <button class="popup-btn" onclick="closePopup('pop-staff')">취소</button>
-      <button class="popup-btn confirm" onclick="confirmStaff()">확인</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ 저장 확인 팝업 ══ -->
-<div class="overlay" id="pop-save">
-  <div class="popup">
-    <div class="popup-handle"></div>
-    <div class="popup-title">저장 확인</div>
-    <div class="popup-sub">아래 내용으로 저장합니다.</div>
-    <div class="info-box" id="save-info-box"></div>
-    <div class="popup-btn-row">
-      <button class="popup-btn" onclick="closePopup('pop-save')">수정</button>
-      <button class="popup-btn confirm" onclick="confirmSave()">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ 수정 팝업 ══ -->
-<div class="overlay" id="pop-edit">
-  <div class="popup">
-    <div class="popup-handle"></div>
-    <div class="popup-title">기록 수정</div>
-    <div class="popup-sub" id="edit-date-label"></div>
-    <div style="margin-bottom:11px">
-      <div class="card-title" style="margin-bottom:8px">작성자</div>
-      <div class="chip-grid" id="edit-chips-staff"></div>
-    </div>
-    <div style="margin-bottom:11px">
-      <div class="card-title" style="margin-bottom:8px">충전기</div>
-      <div class="chip-grid" id="edit-chips-charger"></div>
-    </div>
-    <div style="margin-bottom:11px">
-      <div class="card-title" style="margin-bottom:8px">차량번호</div>
-      <div class="chip-grid" id="edit-chips-car"></div>
-    </div>
-    <div class="input-row" style="margin-bottom:11px">
-      <div class="input-field">
-        <div class="input-label">시작 (kWh)</div>
-        <input class="input-box" id="edit-start" type="number" inputmode="decimal" step="0.1" oninput="calcEditKwh()">
-      </div>
-      <div class="input-field">
-        <div class="input-label">종료 (kWh)</div>
-        <input class="input-box" id="edit-end" type="number" inputmode="decimal" step="0.1" oninput="calcEditKwh()">
-      </div>
-    </div>
-    <div class="calc-box" id="edit-calc-box" style="margin-bottom:14px">
-      <div>
-        <div class="cl-label">충전량 자동계산</div>
-        <div class="cl-sub">종료 − 시작</div>
-      </div>
-      <div class="calc-right">
-        <div class="calc-num" id="edit-calc-num">—</div>
-        <div class="calc-unit">&nbsp;kWh</div>
-      </div>
-    </div>
-    <div class="popup-btn-row" style="margin-bottom:9px">
-      <button class="popup-btn" onclick="closePopup('pop-edit')">취소</button>
-      <button class="popup-btn confirm" id="edit-save-btn" onclick="confirmEdit()">저장</button>
-    </div>
-    <div class="divider"></div>
-    <button class="popup-btn danger" style="width:100%" onclick="openDeleteConfirm()">이 기록 삭제</button>
-  </div>
-</div>
-
-<!-- ══ 삭제 확인 팝업 ══ -->
-<div class="overlay" id="pop-delete">
-  <div class="popup">
-    <div class="popup-handle"></div>
-    <div class="popup-title">삭제 확인</div>
-    <div class="popup-sub">삭제 후 복구할 수 없습니다.</div>
-    <div class="info-box" id="delete-info-box"></div>
-    <div class="popup-btn-row">
-      <button class="popup-btn" onclick="closePopup('pop-delete')">취소</button>
-      <button class="popup-btn danger" onclick="confirmDelete()">삭제</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ 로딩 ══ -->
-<div class="loading-overlay" id="loading">
-  <div class="loading-box">
-    <div class="spinner"></div>
-    <p id="loading-msg">처리 중...</p>
-  </div>
-</div>
-
-<!-- ══ 토스트 ══ -->
-<div class="toast" id="toast"></div>
-
-<!-- ══ PDF 렌더 영역 ══ -->
-<div id="print-area"></div>
+<div class="loading" id="loading"><div class="loading-box"><div class="spinner"></div><p id="loading-msg">처리 중...</p></div></div>
+<div id="parea"></div>
 
 <script>
-/* ══ PIN ══ */
-const PIN = '2131';
-let pinVal = '';
+// ── Firebase ──
+const FBC = {
+  apiKey:"AIzaSyBspQaU-41QqKa15lizOVAxcDQkwSSdSMM",
+  authDomain:"inventory-dce00.firebaseapp.com",
+  databaseURL:"https://inventory-dce00-default-rtdb.firebaseio.com",
+  projectId:"inventory-dce00",
+  storageBucket:"inventory-dce00.firebasestorage.app",
+  messagingSenderId:"344489058455",
+  appId:"1:344489058455:web:d681bf992931af186889d2"
+};
+let fbOK=false, DB=null;
+function initFB(){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(FBC);
+    DB=firebase.database();
+    firebase.auth().signInAnonymously().then(()=>{
+      fbOK=true;
+      DB.ref('ev_charge').on('value',snap=>{
+        records.length=0;
+        if(snap.exists()) Object.entries(snap.val()).forEach(([k,v])=>records.push({...v,fbKey:k}));
+        records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+        const t=curTab();
+        if(t==='log') renderLog();
+        if(t==='stats') renderStats();
+      });
+    }).catch(e=>{ console.warn('FB auth fail',e.message); loadLocal(); });
+  }catch(e){ console.warn('FB init fail',e.message); loadLocal(); }
+}
+function fbSave(rec){ const {fbKey,...d}=rec; return fbOK&&DB ? DB.ref('ev_charge').push(d) : (records.unshift(rec),saveLocal(),Promise.resolve()); }
+function fbUpd(fbKey,data){ const {fbKey:_,...d}=data; return fbOK&&DB&&fbKey ? DB.ref('ev_charge/'+fbKey).update(d) : (saveLocal(),Promise.resolve()); }
+function fbDel(fbKey){ return fbOK&&DB&&fbKey ? DB.ref('ev_charge/'+fbKey).remove() : (saveLocal(),Promise.resolve()); }
+function saveLocal(){ try{localStorage.setItem('ev',JSON.stringify(records));}catch(e){} }
+function loadLocal(){ try{const d=localStorage.getItem('ev');if(d){const a=JSON.parse(d);records.length=0;a.forEach(r=>records.push(r));}}catch(e){} }
 
-function pinInput(n) {
-  if(pinVal.length >= 4) return;
-  pinVal += n;
-  updateDots();
-  if(pinVal.length === 4) {
+// ── 상수 ──
+const PIN='2131';
+const STAFF=['관리부','김대희','부회장님','사장님','송성민','최윤철'];
+const COLORS=['#0f7a45','#1752a8','#7a4a1a','#6b1a7a','#b52a1c','#1a6b7a'];
+const now=new Date();
+const DAYS=['일','월','화','수','목','금','토'];
+
+// ── 상태 ──
+let records=[];
+let st={staff:'',charger:'',car:'',start:0,end:0,kwh:0};
+let pendStaff='';
+let editId=null, editSt={};
+let vm={y:now.getFullYear(),m:now.getMonth()+1};
+let vy={y:now.getFullYear()};
+let dpPerson='';
+
+// ── 헤더 날짜 ──
+document.getElementById('hdr-date').textContent=`${now.getMonth()+1}/${now.getDate()}(${DAYS[now.getDay()]})`;
+
+// ── PIN ──
+let pinV='';
+function pi(n){
+  if(pinV.length>=4) return;
+  pinV+=n; updateDots();
+  if(pinV.length===4){
     setTimeout(()=>{
-      if(pinVal === PIN) {
-        document.getElementById('pin-screen').style.display = 'none';
-        document.getElementById('app-body').style.display = 'block';
-        if(typeof window.onPinPass==='function') window.onPinPass();
-        renderStats();
+      if(pinV===PIN){
+        document.getElementById('pin-screen').style.display='none';
+        document.getElementById('app').style.display='flex';
+        initFB(); renderStats();
       } else {
-        document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('error'));
-        document.getElementById('pin-error').textContent = '번호가 맞지 않습니다';
-        setTimeout(()=>{
-          pinVal = '';
-          updateDots();
-          document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('error'));
-          document.getElementById('pin-error').textContent = '';
-        }, 700);
+        document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('err'));
+        document.getElementById('pin-err').textContent='번호가 맞지 않습니다';
+        setTimeout(()=>{ pinV=''; updateDots(); document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('err')); document.getElementById('pin-err').textContent=''; },700);
       }
-    }, 80);
+    },80);
   }
 }
-function pinDel() {
-  pinVal = pinVal.slice(0,-1);
-  updateDots();
-}
-function updateDots() {
-  document.querySelectorAll('.pin-dot').forEach((d,i)=>{
-    d.classList.toggle('filled', i < pinVal.length);
-  });
-}
+function pd(){ pinV=pinV.slice(0,-1); updateDots(); }
+function updateDots(){ document.querySelectorAll('.pin-dot').forEach((d,i)=>d.classList.toggle('on',i<pinV.length)); }
 
-/* ══ 상태 ══ */
-const now = new Date();
-const DAYS = ['일','월','화','수','목','금','토'];
-const STAFF = ['송성민','박성수','최윤철','김대희','송승훈','송상훈'];
-const COLORS = ['#1a7a4a','#1a4fa0','#7a4a1a','#6b1a7a','#7a1a1a','#1a6b7a'];
-
-document.getElementById('hdr-date').textContent =
-  `${now.getMonth()+1}/${now.getDate()}(${DAYS[now.getDay()]})`;
-
-let st = { staff:'', charger:'', car:'', start:0, end:0, kwh:0 };
-let pendingStaff = '';
-let editId = null;
-let editSt = {};
-let viewMonth = { y: now.getFullYear(), m: now.getMonth()+1 };
-
-let records = [];
-
-/* ══ 탭 ══ */
-function goTab(t) {
+// ── 탭 ──
+function curTab(){ return ['input','log','stats'].find(t=>document.getElementById('sec-'+t).style.display!=='none')||'input'; }
+function goTab(t){
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',['input','log','stats'][i]===t));
-  document.querySelectorAll('.sec').forEach((s,i)=>s.classList.toggle('on',['sec-input','sec-log','sec-stats'][i]==='sec-'+t));
+  ['input','log','stats'].forEach(id=>{ document.getElementById('sec-'+id).style.display= id===t?'block':'none'; });
+  document.getElementById('content').scrollTop=0;
   if(t==='log') renderLog();
   if(t==='stats') renderStats();
 }
 
-/* ══ 입력 ══ */
-function selStaff(el, name) {
-  pendingStaff = name;
-  document.getElementById('pop-staff-name').textContent = name;
-  openPopup('pop-staff');
+// ── 입력 ──
+function selStaff(el,name){ pendStaff=name; document.getElementById('ps-name').textContent=name; openP('pop-staff'); }
+function confirmStaff(){
+  st.staff=pendStaff;
+  document.querySelectorAll('#sec-input .chip-grid:first-child .chip, #sec-input .card:first-child .chip').forEach(c=>c.classList.toggle('on',c.textContent===pendStaff));
+  // 첫번째 card의 chip
+  document.querySelectorAll('#sec-input .card').forEach((card,ci)=>{ if(ci===0) card.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===pendStaff)); });
+  closeP('pop-staff'); chkReady();
 }
-function confirmStaff() {
-  st.staff = pendingStaff;
-  document.querySelectorAll('#chips-staff .chip').forEach(c=>{
-    c.classList.toggle('on', c.textContent === pendingStaff);
-  });
-  closePopup('pop-staff');
-  checkReady();
-}
-function selChip(el, key, val) {
+function selChip(el,key,val){
   el.closest('.chip-grid').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');
-  st[key] = val;
-  document.getElementById('car-manual').style.display = (val==='직접입력') ? 'block' : 'none';
-  if(val==='직접입력') st.car=''; 
-  checkReady();
+  el.classList.add('on'); st[key]=val;
+  document.getElementById('car-manual').style.display=(val==='직접입력')?'block':'none';
+  if(val==='직접입력') st.car=''; chkReady();
 }
-function calcKwh() {
-  const s = parseFloat(document.getElementById('inp-start').value);
-  const e = parseFloat(document.getElementById('inp-end').value);
+function calcK(){
+  const s=parseFloat(document.getElementById('inp-s').value);
+  const e=parseFloat(document.getElementById('inp-e').value);
   st.start=s; st.end=e;
   const box=document.getElementById('calc-box');
   const num=document.getElementById('calc-num');
-  if(!isNaN(s)&&!isNaN(e)&&e>s){
-    const k=Math.round((e-s)*10)/10;
-    st.kwh=k; num.textContent=k.toFixed(1); box.classList.remove('zero');
-  } else {
-    st.kwh=0; num.textContent='—'; box.classList.add('zero');
-  }
-  checkReady();
+  if(!isNaN(s)&&!isNaN(e)&&e>s){ const k=Math.round((e-s)*10)/10; st.kwh=k; num.textContent=k.toFixed(1); box.classList.remove('z'); }
+  else { st.kwh=0; num.textContent='—'; box.classList.add('z'); }
+  chkReady();
 }
-function checkReady(){
-  document.getElementById('save-btn').disabled = !(st.staff&&st.charger&&st.car&&st.kwh>0);
-}
+function chkReady(){ document.getElementById('save-btn').disabled=!(st.staff&&st.charger&&st.car&&st.kwh>0); }
 
-/* ══ 저장 ══ */
+// ── 저장 ──
 function openSaveConfirm(){
-  const d = now.toISOString().slice(0,10);
-  document.getElementById('save-info-box').innerHTML=`
+  const d=now.toISOString().slice(0,10);
+  document.getElementById('save-info').innerHTML=`
     <div class="info-row"><span class="info-key">날짜</span><span class="info-val">${d}</span></div>
     <div class="info-row"><span class="info-key">작성자</span><span class="info-val">${st.staff}</span></div>
     <div class="info-row"><span class="info-key">충전기</span><span class="info-val">${st.charger}</span></div>
@@ -855,34 +571,29 @@ function openSaveConfirm(){
     <div class="info-row"><span class="info-key">시작</span><span class="info-val">${st.start} kWh</span></div>
     <div class="info-row"><span class="info-key">종료</span><span class="info-val">${st.end} kWh</span></div>
     <div class="info-row"><span class="info-key">충전량</span><span class="info-val big">${st.kwh.toFixed(1)} kWh</span></div>`;
-  openPopup('pop-save');
+  openP('pop-save');
 }
 function confirmSave(){
   const rec={id:Date.now(),date:now.toISOString().slice(0,10),...st};
-  closePopup('pop-save');
-  if(typeof window.fbSave==='function'){
-    window.fbSave(rec).then(()=>showToast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`));
-  } else {
-    records.unshift(rec);
-    showToast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`);
-  }
+  closeP('pop-save');
+  fbSave(rec).then(()=>toast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`)).catch(()=>toast('저장 실패'));
   resetForm();
 }
 function resetForm(){
   st={staff:'',charger:'',car:'',start:0,end:0,kwh:0};
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
-  document.getElementById('inp-start').value='';
-  document.getElementById('inp-end').value='';
+  document.querySelectorAll('#sec-input .chip').forEach(c=>c.classList.remove('on'));
+  document.getElementById('inp-s').value='';
+  document.getElementById('inp-e').value='';
   document.getElementById('car-manual').style.display='none';
   document.getElementById('calc-num').textContent='—';
-  document.getElementById('calc-box').classList.add('zero');
+  document.getElementById('calc-box').classList.add('z');
   document.getElementById('save-btn').disabled=true;
 }
 
-/* ══ 기록 ══ */
+// ── 기록 ──
 function renderLog(){
   const el=document.getElementById('log-list');
-  if(!records.length){el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px;font-size:13px">기록이 없습니다</div>';return;}
+  if(!records.length){ el.innerHTML='<div style="text-align:center;color:var(--text3);padding:40px;font-size:14px">기록이 없습니다</div>'; return; }
   el.innerHTML=records.map(r=>{
     const col=COLORS[STAFF.indexOf(r.staff)]||'#888';
     return `<div class="log-item" onclick="openEdit(${r.id})">
@@ -891,7 +602,7 @@ function renderLog(){
         <div class="log-top">${r.staff}<span class="log-car">${r.car} · ${r.charger}</span></div>
         <div class="log-bot">${r.date} &nbsp; ${r.start} → ${r.end}</div>
       </div>
-      <div class="log-right">
+      <div style="display:flex;align-items:center;gap:8px">
         <div class="log-kwh" style="color:${col}">${r.kwh.toFixed(1)} kWh</div>
         <div class="edit-tag">수정</div>
       </div>
@@ -899,498 +610,290 @@ function renderLog(){
   }).join('');
 }
 
-/* ══ 수정/삭제 ══ */
+// ── 수정 ──
 function openEdit(id){
   const r=records.find(x=>x.id===id); if(!r)return;
   editId=id; editSt={...r};
-  document.getElementById('edit-date-label').textContent=`${r.date} · ${r.charger} · ${r.car}`;
-  document.getElementById('edit-chips-staff').innerHTML=
-    STAFF.map(n=>`<div class="chip ${n===r.staff?'on':''}" onclick="editSel(this,'staff','${n}')">${n}</div>`).join('');
-  document.getElementById('edit-chips-charger').innerHTML=
-    ['1호기','2호기','3호기'].map(c=>`<div class="chip ${c===r.charger?'on':''}" onclick="editSel(this,'charger','${c}')">${c}</div>`).join('');
-  document.getElementById('edit-chips-car').innerHTML=
-    ['9966','0292','0847'].map(c=>`<div class="chip ${c===r.car?'on':''}" onclick="editSel(this,'car','${c}')">${c}</div>`).join('');
-  document.getElementById('edit-start').value=r.start;
-  document.getElementById('edit-end').value=r.end;
-  calcEditKwh();
-  openPopup('pop-edit');
+  document.getElementById('edit-lbl').textContent=`${r.date} · ${r.charger} · ${r.car}`;
+  document.getElementById('e-staff').innerHTML=STAFF.map(n=>`<div class="chip ${n===r.staff?'on':''}" onclick="eChip(this,'staff','${n}')">${n}</div>`).join('');
+  document.getElementById('e-charger').innerHTML=['1호기','2호기','3호기'].map(c=>`<div class="chip ${c===r.charger?'on':''}" onclick="eChip(this,'charger','${c}')">${c}</div>`).join('');
+  document.getElementById('e-car').innerHTML=['9966','0292','0847'].map(c=>`<div class="chip ${c===r.car?'on':''}" onclick="eChip(this,'car','${c}')">${c}</div>`).join('');
+  document.getElementById('e-s').value=r.start;
+  document.getElementById('e-e').value=r.end;
+  calcEK(); openP('pop-edit');
 }
-function editSel(el,key,val){
-  el.closest('.chip-grid').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');
-  editSt[key]=val;
-}
-function calcEditKwh(){
-  const s=parseFloat(document.getElementById('edit-start').value);
-  const e=parseFloat(document.getElementById('edit-end').value);
+function eChip(el,key,val){ el.closest('.chip-grid').querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); editSt[key]=val; }
+function calcEK(){
+  const s=parseFloat(document.getElementById('e-s').value);
+  const e=parseFloat(document.getElementById('e-e').value);
   editSt.start=s; editSt.end=e;
-  const box=document.getElementById('edit-calc-box');
-  const num=document.getElementById('edit-calc-num');
-  if(!isNaN(s)&&!isNaN(e)&&e>s){
-    const k=Math.round((e-s)*10)/10;
-    editSt.kwh=k; num.textContent=k.toFixed(1); box.classList.remove('zero');
-    document.getElementById('edit-save-btn').disabled=false;
-  } else {
-    editSt.kwh=0; num.textContent='—'; box.classList.add('zero');
-    document.getElementById('edit-save-btn').disabled=true;
-  }
+  const box=document.getElementById('e-calc'), num=document.getElementById('e-num');
+  if(!isNaN(s)&&!isNaN(e)&&e>s){ const k=Math.round((e-s)*10)/10; editSt.kwh=k; num.textContent=k.toFixed(1); box.classList.remove('z'); document.getElementById('e-save-btn').disabled=false; }
+  else { editSt.kwh=0; num.textContent='—'; box.classList.add('z'); document.getElementById('e-save-btn').disabled=true; }
 }
 function confirmEdit(){
   const idx=records.findIndex(r=>r.id===editId); if(idx===-1)return;
-  const staff=document.querySelector('#edit-chips-staff .on');
-  const charger=document.querySelector('#edit-chips-charger .on');
-  const car=document.querySelector('#edit-chips-car .on');
-  if(staff) editSt.staff=staff.textContent;
-  if(charger) editSt.charger=charger.textContent;
-  if(car) editSt.car=car.textContent;
-  const updated={...records[idx],...editSt};
-  closePopup('pop-edit');
-  if(typeof window.fbUpdate==='function'&&updated.fbKey){
-    window.fbUpdate(updated.fbKey,updated).then(()=>showToast('수정 완료'));
-  } else { records[idx]=updated; renderLog(); showToast('수정 완료'); }
+  const s=document.querySelector('#e-staff .on'), ch=document.querySelector('#e-charger .on'), ca=document.querySelector('#e-car .on');
+  if(s) editSt.staff=s.textContent; if(ch) editSt.charger=ch.textContent; if(ca) editSt.car=ca.textContent;
+  const upd={...records[idx],...editSt};
+  closeP('pop-edit');
+  fbUpd(upd.fbKey,upd).then(()=>toast('수정 완료')).catch(()=>{ records[idx]=upd; renderLog(); toast('수정 완료'); });
 }
-function openDeleteConfirm(){
+function openDelConfirm(){
   const r=records.find(x=>x.id===editId); if(!r)return;
-  document.getElementById('delete-info-box').innerHTML=`
+  document.getElementById('del-info').innerHTML=`
     <div class="info-row"><span class="info-key">날짜</span><span class="info-val">${r.date}</span></div>
     <div class="info-row"><span class="info-key">작성자</span><span class="info-val">${r.staff}</span></div>
     <div class="info-row"><span class="info-key">충전기</span><span class="info-val">${r.charger}</span></div>
     <div class="info-row"><span class="info-key">충전량</span><span class="info-val" style="color:var(--red)">${r.kwh.toFixed(1)} kWh</span></div>`;
-  openPopup('pop-delete');
+  openP('pop-del');
 }
-function confirmDelete(){
-  const rec=records.find(r=>r.id===editId);
-  closePopup('pop-delete'); closePopup('pop-edit');
-  if(typeof window.fbDelete==='function'&&rec?.fbKey){
-    window.fbDelete(rec.fbKey).then(()=>showToast('삭제 완료'));
-  } else { records=records.filter(r=>r.id!==editId); renderLog(); showToast('삭제 완료'); }
+function confirmDel(){
+  const r=records.find(x=>x.id===editId);
+  closeP('pop-del'); closeP('pop-edit');
+  fbDel(r?.fbKey).then(()=>{ if(!fbOK){ records=records.filter(x=>x.id!==editId); renderLog(); } toast('삭제 완료'); }).catch(()=>{ records=records.filter(x=>x.id!==editId); renderLog(); toast('삭제 완료'); });
 }
 
-/* ══ 월집계 ══ */
-function changeMonth(d){
-  viewMonth.m+=d;
-  if(viewMonth.m>12){viewMonth.m=1;viewMonth.y++;}
-  if(viewMonth.m<1){viewMonth.m=12;viewMonth.y--;}
-  renderStats();
-}
+// ── 월집계 ──
+function changeMonth(d){ vm.m+=d; if(vm.m>12){vm.m=1;vm.y++;} if(vm.m<1){vm.m=12;vm.y--;} renderStats(); }
 function renderStats(){
-  const {y,m}=viewMonth;
-  const lbl=document.getElementById('month-label');
-  if(lbl) lbl.textContent=`${y}년 ${m}월`;
+  const {y,m}=vm;
+  document.getElementById('month-label').textContent=`${y}년 ${m}월`;
   const pref=`${y}-${String(m).padStart(2,'0')}`;
   const rows=records.filter(r=>r.date.startsWith(pref));
   const total=rows.reduce((s,r)=>s+r.kwh,0);
-  const staffMap={}; STAFF.forEach(n=>staffMap[n]=0);
-  rows.forEach(r=>{staffMap[r.staff]=(staffMap[r.staff]||0)+r.kwh;});
+  const sMap={}; STAFF.forEach(n=>sMap[n]=0);
+  rows.forEach(r=>{ sMap[r.staff]=(sMap[r.staff]||0)+r.kwh; });
   const cMap={'1호기':0,'2호기':0,'3호기':0};
-  rows.forEach(r=>{cMap[r.charger]=(cMap[r.charger]||0)+r.kwh;});
+  rows.forEach(r=>{ cMap[r.charger]=(cMap[r.charger]||0)+r.kwh; });
   const maxC=Math.max(...Object.values(cMap),0.1);
-
-  const el=document.getElementById('stats-content');
-  if(!el)return;
-  el.innerHTML=`
-    <div id="capture-target">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:11px;color:var(--text3)"></span>
-        <span style="font-size:11px;color:var(--text3)">충전기 1·2·3호기</span>
-      </div>
-      <div class="stat-row">
-        <div class="stat-card">
-          <div class="stat-label">총 충전량</div>
-          <div class="stat-val">${total.toFixed(1)}</div>
-          <div class="stat-unit">kWh</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">충전 횟수</div>
-          <div class="stat-val">${rows.length}</div>
-          <div class="stat-unit">회</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">평균/회</div>
-          <div class="stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</div>
-          <div class="stat-unit">kWh</div>
-        </div>
-      </div>
-      <div class="sec-title">직원별</div>
-      <div class="staff-card">
-        ${STAFF.map((n,i)=>{
-          const k=staffMap[n]||0;
-          const w=total?Math.round(k/total*100):0;
-          return `<div class="staff-row">
-            <div class="sname">${n}</div>
-            <div class="bar-wrap"><div class="bar-fill" style="width:${w}%;background:${COLORS[i]}"></div></div>
-            <div class="skwh">${k.toFixed(1)} kWh</div>
-            <div class="spct">${w}%</div>
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="sec-title">충전기별</div>
-      <div class="charger-row">
-        ${['1호기','2호기','3호기'].map(c=>{
-          const k=cMap[c]||0;
-          const w=Math.round(k/maxC*100);
-          return `<div class="charger-card">
-            <div class="cno">${c}</div>
-            <div class="ckwh">${k.toFixed(1)}</div>
-            <div class="cunit">kWh</div>
-            <div class="cbar"><div class="cbar-fill" style="width:${w}%"></div></div>
-          </div>`;
-        }).join('')}
-      </div>
+  document.getElementById('stats-content').innerHTML=`
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">총충전량</div><div class="stat-val" style="color:var(--green)">${total.toFixed(1)}</div><div class="stat-unit">kWh</div></div>
+      <div class="stat-card"><div class="stat-label">충전횟수</div><div class="stat-val">${rows.length}</div><div class="stat-unit">회</div></div>
+      <div class="stat-card"><div class="stat-label">평균/회</div><div class="stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</div><div class="stat-unit">kWh</div></div>
     </div>
-    <div class="sec-title">내보내기</div>
+    <div class="sec-title">사용자별 <span style="font-size:10px;color:var(--blue);margin-left:4px;font-weight:600">클릭 → 상세</span></div>
+    <div class="staff-card">
+      ${STAFF.map((n,i)=>{ const k=sMap[n]||0,w=total?Math.round(k/total*100):0;
+        return `<div class="staff-row" onclick="openDetail('${n}')">
+          <div class="sname">${n}</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${w}%;background:${COLORS[i]}"></div></div>
+          <div class="skwh">${k.toFixed(1)} kWh</div>
+          <div class="spct">${w}%</div>
+          <div class="s-arrow">›</div>
+        </div>`; }).join('')}
+    </div>
+    <div class="sec-title">충전기별</div>
+    <div class="charger-row">
+      ${['1호기','2호기','3호기'].map(c=>{ const k=cMap[c]||0,w=Math.round(k/maxC*100);
+        return `<div class="charger-card"><div class="cno">${c}</div><div class="ckwh">${k.toFixed(1)}</div><div class="cunit">kWh</div><div class="cbar"><div class="cbar-fill" style="width:${w}%"></div></div></div>`; }).join('')}
+    </div>
     <div class="dl-row">
-      <button class="dl-btn pdf" onclick="downloadPDF()">⬇ PDF</button>
-      <button class="dl-btn excel" onclick="downloadCSV()">⬇ 엑셀</button>
-      <button class="dl-btn capture" onclick="captureShare()">📸 캡처</button>
+      <button class="dl-btn pdf" onclick="statsPDF()">⬇ PDF</button>
+      <button class="dl-btn xls" onclick="statsCSV()">⬇ 엑셀</button>
+      <button class="dl-btn cap" onclick="statsCap()">📸 캡처</button>
     </div>`;
 }
 
-/* ══ PDF ══ */
-async function downloadPDF(){
-  const {y,m}=viewMonth;
+// ── 개인 상세 ──
+function openDetail(name){
+  const {y,m}=vm;
   const pref=`${y}-${String(m).padStart(2,'0')}`;
-  const rows=records.filter(r=>r.date.startsWith(pref));
-  const staffMap={}; STAFF.forEach(n=>staffMap[n]=0);
-  rows.forEach(r=>{staffMap[r.staff]=(staffMap[r.staff]||0)+r.kwh;});
-  const cMap={'1호기':0,'2호기':0,'3호기':0};
-  rows.forEach(r=>{cMap[r.charger]=(cMap[r.charger]||0)+r.kwh;});
+  const rows=records.filter(r=>r.date.startsWith(pref)&&r.staff===name);
   const total=rows.reduce((s,r)=>s+r.kwh,0);
-
-  showLoading('PDF 생성 중...');
-  const area=document.getElementById('print-area');
-  area.innerHTML=`
-    <div class="print-page">
-      <div class="print-header">
-        <div class="print-h1">전기차량 충전 기록 — ${y}년 ${m}월</div>
-        <div class="print-meta">
-          <span></span><span>충전기 1·2·3호기</span><span>총 ${rows.length}건</span>
-        </div>
-      </div>
-      <table class="print-table">
-        <thead><tr><th>순번</th><th>충전일</th><th>작성자</th><th>충전기</th><th>차량번호</th><th>시작 kWh</th><th>종료 kWh</th><th>충전량</th></tr></thead>
-        <tbody>${rows.map((r,i)=>`<tr>
-          <td>${i+1}</td><td>${r.date.slice(5)}</td>
-          <td class="name-cell">${r.staff}</td><td>${r.charger}</td><td>${r.car}</td>
-          <td>${r.start.toFixed(1)}</td><td>${r.end.toFixed(1)}</td><td><strong>${r.kwh.toFixed(1)}</strong></td>
-        </tr>`).join('')}</tbody>
-      </table>
-      <div class="print-summary">
-        <div class="ps-box">
-          <div class="ps-box-title">직원별 집계</div>
-          ${STAFF.filter(n=>staffMap[n]>0).map(n=>`
-            <div class="ps-row"><span class="ps-key">${n}</span><span class="ps-val">${staffMap[n].toFixed(1)} kWh</span></div>`).join('')}
-        </div>
-        <div class="ps-box">
-          <div class="ps-box-title">충전기별 집계</div>
-          ${Object.entries(cMap).map(([k,v])=>`
-            <div class="ps-row"><span class="ps-key">${k}</span><span class="ps-val">${v.toFixed(1)} kWh</span></div>`).join('')}
-        </div>
-      </div>
-      <div class="print-total">
-        <div class="pt-label">이번 달 총 충전량</div>
-        <div class="pt-val">${total.toFixed(1)} kWh</div>
-      </div>
-      <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')} · </div>
-    </div>`;
-
+  const col=COLORS[STAFF.indexOf(name)]||'#888';
+  dpPerson=name;
+  document.getElementById('dp-dot').style.background=col;
+  document.getElementById('dp-name').textContent=name;
+  document.getElementById('dp-period').textContent=`${y}년 ${m}월`;
+  document.getElementById('dp-stats').innerHTML=`
+    <div class="dp-stat"><div class="dp-stat-label">충전량</div><div class="dp-stat-val" style="color:${col}">${total.toFixed(1)}</div><div class="dp-stat-unit">kWh</div></div>
+    <div class="dp-stat"><div class="dp-stat-label">횟수</div><div class="dp-stat-val">${rows.length}</div><div class="dp-stat-unit">회</div></div>
+    <div class="dp-stat"><div class="dp-stat-label">평균/회</div><div class="dp-stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</div><div class="dp-stat-unit">kWh</div></div>`;
+  document.getElementById('dp-body').innerHTML=rows.length
+    ? rows.map(r=>`<div class="dp-row">
+        <div class="dp-date">${r.date.slice(5).replace('-','.')}</div>
+        <div class="dp-info"><div class="dp-car">${r.car} · ${r.charger}</div><div class="dp-meter">${r.start.toFixed(1)} → ${r.end.toFixed(1)}</div></div>
+        <div class="dp-kwh" style="color:${col}">${r.kwh.toFixed(1)} kWh</div>
+      </div>`).join('')
+    : '<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">기록 없음</div>';
+  openP('pop-detail');
+}
+async function dpPDF(){
+  const {y,m}=vm; const name=dpPerson;
+  const rows=records.filter(r=>r.date.startsWith(`${y}-${String(m).padStart(2,'0')}`)&&r.staff===name);
+  const total=rows.reduce((s,r)=>s+r.kwh,0);
+  showLoad('PDF 생성 중...');
+  const area=document.getElementById('parea');
+  area.innerHTML=`<div class="ppage"><div class="phdr"><div class="ph1">${name} · ${y}년 ${m}월 충전 내역</div><div class="pmeta"><span>총 ${rows.length}회</span><span>${total.toFixed(1)} kWh</span></div></div>
+    <table class="ptbl"><thead><tr><th>순번</th><th>충전일</th><th>충전기</th><th>차량번호</th><th>시작kWh</th><th>종료kWh</th><th>충전량</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td>${r.charger}</td><td>${r.car}</td><td>${r.start.toFixed(1)}</td><td>${r.end.toFixed(1)}</td><td><strong>${r.kwh.toFixed(1)}</strong></td></tr>`).join('')}</tbody></table>
+    <div class="ptotal"><div class="pt-label">${name} ${y}년 ${m}월 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
+    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
   await new Promise(r=>setTimeout(r,200));
-  const canvas=await html2canvas(area.querySelector('.print-page'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  doc.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,210,297);
+  const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
+  doc.save(`${y}년_${m}월_${name}_충전내역.pdf`);
+  area.innerHTML=''; hideLoad(); toast('PDF 저장 완료');
+}
+function dpCSV(){
+  const {y,m}=vm; const name=dpPerson;
+  const rows=records.filter(r=>r.date.startsWith(`${y}-${String(m).padStart(2,'0')}`)&&r.staff===name);
+  const total=rows.reduce((s,r)=>s+r.kwh,0);
+  let csv=`\uFEFF${name} · ${y}년 ${m}월 충전 내역\n순번,충전일자,충전기,차량번호,시작(kWh),종료(kWh),충전량(kWh)\n`;
+  rows.forEach((r,i)=>{ csv+=`${i+1},${r.date},${r.charger},${r.car},${r.start},${r.end},${r.kwh.toFixed(1)}\n`; });
+  csv+=`\n합계,,,,,,${total.toFixed(1)}\n`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${y}년_${m}월_${name}_충전내역.csv`; a.click(); toast('엑셀 저장 완료');
+}
+
+// ── 월집계 PDF/CSV/캡처 ──
+async function statsPDF(){
+  const {y,m}=vm; const pref=`${y}-${String(m).padStart(2,'0')}`;
+  const rows=records.filter(r=>r.date.startsWith(pref)); const total=rows.reduce((s,r)=>s+r.kwh,0);
+  const sMap={}; STAFF.forEach(n=>sMap[n]=0); rows.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  const cMap={'1호기':0,'2호기':0,'3호기':0}; rows.forEach(r=>{cMap[r.charger]=(cMap[r.charger]||0)+r.kwh;});
+  showLoad('PDF 생성 중...');
+  const area=document.getElementById('parea');
+  area.innerHTML=`<div class="ppage"><div class="phdr"><div class="ph1">전기차량 충전 기록 — ${y}년 ${m}월</div><div class="pmeta"><span>충전기 1·2·3호기</span><span>총 ${rows.length}건</span></div></div>
+    <table class="ptbl"><thead><tr><th>순번</th><th>충전일</th><th>작성자</th><th>충전기</th><th>차량번호</th><th>시작kWh</th><th>종료kWh</th><th>충전량</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td class="nc">${r.staff}</td><td>${r.charger}</td><td>${r.car}</td><td>${r.start.toFixed(1)}</td><td>${r.end.toFixed(1)}</td><td><strong>${r.kwh.toFixed(1)}</strong></td></tr>`).join('')}</tbody></table>
+    <div class="psum">
+      <div class="psbox"><div class="psbox-title">사용자별</div>${STAFF.filter(n=>sMap[n]>0).map(n=>`<div class="psrow"><span class="pskey">${n}</span><span class="psval">${sMap[n].toFixed(1)} kWh</span></div>`).join('')}</div>
+      <div class="psbox"><div class="psbox-title">충전기별</div>${Object.entries(cMap).map(([k,v])=>`<div class="psrow"><span class="pskey">${k}</span><span class="psval">${v.toFixed(1)} kWh</span></div>`).join('')}</div>
+    </div>
+    <div class="ptotal"><div class="pt-label">${y}년 ${m}월 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
+    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
+  await new Promise(r=>setTimeout(r,200));
+  const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
   doc.save(`${y}년_${m}월_EV충전기록.pdf`);
-  area.innerHTML=''; hideLoading();
-  showToast('PDF 다운로드 완료');
+  area.innerHTML=''; hideLoad(); toast('PDF 저장 완료');
 }
-
-/* ══ CSV ══ */
-function downloadCSV(){
-  const {y,m}=viewMonth;
-  const pref=`${y}-${String(m).padStart(2,'0')}`;
-  const rows=records.filter(r=>r.date.startsWith(pref));
-  const staffMap={}; STAFF.forEach(n=>staffMap[n]=0);
-  rows.forEach(r=>{staffMap[r.staff]=(staffMap[r.staff]||0)+r.kwh;});
-  let csv='\uFEFF순번,충전일자,작성자,충전기,차량번호,시작(kWh),종료(kWh),충전량(kWh)\n';
-  rows.forEach((r,i)=>{csv+=`${i+1},${r.date},${r.staff},${r.charger},${r.car},${r.start},${r.end},${r.kwh.toFixed(1)}\n`;});
-  csv+='\n직원별 집계\n';
-  STAFF.forEach(n=>{if(staffMap[n]>0)csv+=`,${n},${staffMap[n].toFixed(1)} kWh\n`;});
-  csv+=`,합계,${rows.reduce((s,r)=>s+r.kwh,0).toFixed(1)} kWh\n`;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
-  a.download=`${y}년_${m}월_EV충전기록.csv`;
-  a.click();
-  showToast('엑셀(CSV) 다운로드 완료');
+function statsCSV(){
+  const {y,m}=vm; const pref=`${y}-${String(m).padStart(2,'0')}`;
+  const rows=records.filter(r=>r.date.startsWith(pref)); const total=rows.reduce((s,r)=>s+r.kwh,0);
+  const sMap={}; STAFF.forEach(n=>sMap[n]=0); rows.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  let csv=`\uFEFF${y}년 ${m}월 EV 충전 기록\n순번,충전일자,작성자,충전기,차량번호,시작(kWh),종료(kWh),충전량(kWh)\n`;
+  rows.forEach((r,i)=>{ csv+=`${i+1},${r.date},${r.staff},${r.charger},${r.car},${r.start},${r.end},${r.kwh.toFixed(1)}\n`; });
+  csv+=`\n사용자별 집계\n`; STAFF.forEach(n=>{ if(sMap[n]>0) csv+=`${n},${sMap[n].toFixed(1)}\n`; });
+  csv+=`\n합계,${total.toFixed(1)}\n`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${y}년_${m}월_EV충전기록.csv`; a.click(); toast('엑셀 저장 완료');
 }
-
-/* ══ 캡처 ══ */
-async function captureShare(){
-  showLoading('캡처 중...');
-  const target=document.getElementById('capture-target');
-  const canvas=await html2canvas(target,{scale:2,backgroundColor:'#ffffff',logging:false});
+async function statsCap(){
+  showLoad('캡처 중...');
+  const target=document.getElementById('stats-content');
+  const canvas=await html2canvas(target,{scale:2,backgroundColor:'#f2f3f5',logging:false});
   canvas.toBlob(async blob=>{
-    hideLoading();
-    const file=new File([blob],'ev-charge.png',{type:'image/png'});
-    if(navigator.share&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file],title:`${viewMonth.y}년 ${viewMonth.m}월 충전집계`});}catch(e){}
-    } else {
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);
-      a.download=`${viewMonth.y}년_${viewMonth.m}월_충전집계.png`;
-      a.click();
-      showToast('이미지 저장 완료');
-    }
+    hideLoad(); const {y,m}=vm;
+    const file=new File([blob],`${y}년_${m}월_충전집계.png`,{type:'image/png'});
+    if(navigator.share&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});}catch(e){}}
+    else{ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click();toast('이미지 저장 완료'); }
   },'image/png');
 }
 
-/* ══ 유틸 ══ */
-function openPopup(id){document.getElementById(id).classList.add('show');}
-function closePopup(id){document.getElementById(id).classList.remove('show');}
-document.querySelectorAll('.overlay').forEach(o=>{
-  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');});
-});
-function showToast(msg,dur=2200){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),dur);
-}
-function showLoading(msg){document.getElementById('loading-msg').textContent=msg;document.getElementById('loading').classList.add('show');}
-function hideLoading(){document.getElementById('loading').classList.remove('show');}
-
-/* ══ 스와이프 (document 전체, 팝업 열릴때 비활성) ══ */
-(()=>{
-  const TABS=['input','log','stats'];
-  let tx=0,ty=0,swipeDir=null;
-  document.addEventListener('touchstart',e=>{
-    if(document.querySelector('.overlay.show')) return;
-    tx=e.touches[0].clientX; ty=e.touches[0].clientY; swipeDir=null;
-  },{passive:true});
-  document.addEventListener('touchmove',e=>{
-    if(document.querySelector('.overlay.show')) return;
-    if(swipeDir==='vertical') return;
-    const dx=e.touches[0].clientX-tx, dy=e.touches[0].clientY-ty;
-    if(swipeDir===null&&(Math.abs(dx)>8||Math.abs(dy)>8))
-      swipeDir=Math.abs(dx)>Math.abs(dy)?'horizontal':'vertical';
-  },{passive:true});
-  document.addEventListener('touchend',e=>{
-    if(document.querySelector('.overlay.show')) return;
-    if(swipeDir!=='horizontal') return;
-    const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
-    if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5) return;
-    const cur=TABS.findIndex(t=>document.getElementById('sec-'+t)?.classList.contains('on'));
-    if(dx<0&&cur<TABS.length-1) goTab(TABS[cur+1]);
-    if(dx>0&&cur>0) goTab(TABS[cur-1]);
-  },{passive:true});
-})();
-
-/* ══ overlay 클릭 닫기 ══ */
-document.querySelectorAll('.overlay').forEach(o=>{
-  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('show'); });
-});
-
-/* ══ 유틸 ══ */
-function openPopup(id){ document.getElementById(id).classList.add('show'); }
-function closePopup(id){ document.getElementById(id).classList.remove('show'); }
-function showToast(msg,dur=2200){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),dur);
-}
-function showLoading(msg){ document.getElementById('loading-msg').textContent=msg||'처리 중...'; document.getElementById('loading').classList.add('show'); }
-function hideLoading(){ document.getElementById('loading').classList.remove('show'); }
-
-/* ══ 연집계 ══ */
-let viewYear={y:new Date().getFullYear()};
-function changeYear(d){ viewYear.y+=d; renderYear(); }
+// ── 연집계 ──
 function toggleYear(){
-  const panel=document.getElementById('year-panel');
-  const btn=document.getElementById('year-toggle-btn');
-  const open=panel.style.display==='none';
-  panel.style.display=open?'block':'none';
-  btn.textContent=open?'연간 집계 접기 ∧':'연간 집계 펼치기 ›';
+  const p=document.getElementById('yr-panel'), b=document.getElementById('yr-btn');
+  const open=p.style.display==='none';
+  p.style.display=open?'block':'none';
+  b.textContent=open?'연간 집계 접기 ∧':'연간 집계 펼치기 ›';
   if(open) renderYear();
 }
+function changeYear(d){ vy.y+=d; renderYear(); }
 function renderYear(){
-  const y=viewYear.y;
-  const lbl=document.getElementById('year-label');
-  if(lbl) lbl.textContent=y+'년';
+  const y=vy.y; document.getElementById('yr-label').textContent=y+'년';
   const yr=records.filter(r=>r.date.startsWith(String(y)));
   const total=yr.reduce((s,r)=>s+r.kwh,0);
-  const mMap={};for(let m=1;m<=12;m++)mMap[m]={kwh:0,cnt:0};
-  yr.forEach(r=>{const m=parseInt(r.date.slice(5,7));mMap[m].kwh+=r.kwh;mMap[m].cnt+=1;});
-  const sMap={};STAFF.forEach(n=>sMap[n]=0);
-  yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  const mMap={}; for(let m=1;m<=12;m++) mMap[m]={kwh:0,cnt:0};
+  yr.forEach(r=>{ const m=parseInt(r.date.slice(5,7)); mMap[m].kwh+=r.kwh; mMap[m].cnt+=1; });
+  const sMap={}; STAFF.forEach(n=>sMap[n]=0); yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
   const maxM=Math.max(...Object.values(mMap).map(v=>v.kwh),0.1);
-  const el=document.getElementById('year-content');
-  if(!el) return;
-  el.innerHTML=`
+  document.getElementById('yr-content').innerHTML=`
     <div class="stat-row" style="margin-bottom:12px">
       <div class="stat-card"><div class="stat-label">연간충전</div><div class="stat-val" style="color:var(--blue)">${total.toFixed(1)}</div><div class="stat-unit">kWh</div></div>
       <div class="stat-card"><div class="stat-label">총횟수</div><div class="stat-val">${yr.length}</div><div class="stat-unit">회</div></div>
       <div class="stat-card"><div class="stat-label">월평균</div><div class="stat-val">${(total/12).toFixed(1)}</div><div class="stat-unit">kWh</div></div>
     </div>
     <div class="sec-title">월별 충전량</div>
-    ${Array.from({length:12},(_,i)=>{
-      const m=i+1,{kwh,cnt}=mMap[m],w=Math.round(kwh/maxM*100);
-      return `<div class="month-row" onclick="jumpToMonth(${m})">
-        <div class="month-badge">${m}월</div>
-        <div class="month-bar-wrap"><div class="month-bar-fill" style="width:${w}%"></div></div>
-        <div class="month-kwh">${kwh>0?kwh.toFixed(1)+' kWh':'—'}</div>
-        <div class="month-cnt">${cnt>0?cnt+'회':''}</div>
-      </div>`;
-    }).join('')}
-    <div class="sec-title" style="margin-top:14px">직원별 연간</div>
+    ${Array.from({length:12},(_,i)=>{ const m=i+1,{kwh,cnt}=mMap[m],w=Math.round(kwh/maxM*100);
+      return `<div class="month-row" onclick="jumpMonth(${m})"><div class="mbadge">${m}월</div><div class="mbar-wrap"><div class="mbar-fill" style="width:${w}%"></div></div><div class="mkwh">${kwh>0?kwh.toFixed(1)+' kWh':'—'}</div><div class="mcnt">${cnt>0?cnt+'회':''}</div></div>`; }).join('')}
+    <div class="sec-title" style="margin-top:14px">사용자별 연간</div>
     <div class="staff-card">
-      ${STAFF.map((n,i)=>{const k=sMap[n]||0,w=total?Math.round(k/total*100):0;
-        return `<div class="staff-row">
+      ${STAFF.map((n,i)=>{ const k=sMap[n]||0,w=total?Math.round(k/total*100):0;
+        return `<div class="staff-row" style="cursor:default">
           <div class="sname">${n}</div>
           <div class="bar-wrap"><div class="bar-fill" style="width:${w}%;background:${COLORS[i]}"></div></div>
           <div class="skwh">${k.toFixed(1)} kWh</div>
           <div class="spct">${w}%</div>
-        </div>`;}).join('')}
+        </div>`; }).join('')}
     </div>
-    <div class="dl-row" style="margin-bottom:16px">
-      <button class="dl-btn pdf" onclick="yearDownloadPDF()">⬇ PDF</button>
-      <button class="dl-btn excel" onclick="yearDownloadCSV()">⬇ 엑셀</button>
-      <button class="dl-btn capture" onclick="yearCapture()">📸 캡처</button>
+    <div class="dl-row" style="margin-bottom:8px">
+      <button class="dl-btn pdf" onclick="yearPDF()">⬇ PDF</button>
+      <button class="dl-btn xls" onclick="yearCSV()">⬇ 엑셀</button>
     </div>`;
 }
-function jumpToMonth(m){ viewMonth.y=viewYear.y; viewMonth.m=m; goTab('stats'); }
-
-async function yearDownloadPDF(){
-  const y=viewYear.y;
-  const yr=records.filter(r=>r.date.startsWith(String(y)));
+function jumpMonth(m){ vy.y&&(vm.y=vy.y); vm.m=m; goTab('stats'); document.getElementById('yr-panel').style.display='none'; document.getElementById('yr-btn').textContent='연간 집계 펼치기 ›'; }
+async function yearPDF(){
+  const y=vy.y; const yr=records.filter(r=>r.date.startsWith(String(y)));
   const total=yr.reduce((s,r)=>s+r.kwh,0);
-  const mMap={};for(let m=1;m<=12;m++)mMap[m]={kwh:0,cnt:0};
-  yr.forEach(r=>{const m=parseInt(r.date.slice(5,7));mMap[m].kwh+=r.kwh;mMap[m].cnt+=1;});
-  const sMap={};STAFF.forEach(n=>sMap[n]=0);
-  yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
-  showLoading('PDF 생성 중...');
-  const area=document.getElementById('print-area');
-  area.innerHTML=`<div class="print-page">
-    <div class="print-header"><div class="print-h1">전기차량 충전 기록 — ${y}년 연간</div>
-    <div class="print-meta"><span>충전기 1·2·3호기</span><span>총 ${yr.length}회 · ${total.toFixed(1)} kWh</span></div></div>
-    <table class="print-table"><thead><tr><th>월</th><th>충전횟수</th><th>충전량(kWh)</th><th>비율</th></tr></thead>
-    <tbody>${Array.from({length:12},(_,i)=>{const m=i+1,{kwh,cnt}=mMap[m],pct=total?Math.round(kwh/total*100):0;
-      return `<tr><td>${m}월</td><td>${cnt}회</td><td><strong>${kwh.toFixed(1)}</strong></td><td>${pct}%</td></tr>`;}).join('')}</tbody></table>
-    <div class="print-summary"><div class="ps-box"><div class="ps-box-title">직원별</div>
-    ${STAFF.filter(n=>sMap[n]>0).map(n=>`<div class="ps-row"><span class="ps-key">${n}</span><span class="ps-val">${sMap[n].toFixed(1)} kWh</span></div>`).join('')}
-    </div></div>
-    <div class="print-total"><div class="pt-label">${y}년 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
-    <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
+  const mMap={}; for(let m=1;m<=12;m++) mMap[m]={kwh:0,cnt:0};
+  yr.forEach(r=>{ const m=parseInt(r.date.slice(5,7)); mMap[m].kwh+=r.kwh; mMap[m].cnt+=1; });
+  const sMap={}; STAFF.forEach(n=>sMap[n]=0); yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  showLoad('PDF 생성 중...');
+  const area=document.getElementById('parea');
+  area.innerHTML=`<div class="ppage"><div class="phdr"><div class="ph1">전기차량 충전 기록 — ${y}년 연간</div><div class="pmeta"><span>충전기 1·2·3호기</span><span>총 ${yr.length}회 · ${total.toFixed(1)} kWh</span></div></div>
+    <table class="ptbl"><thead><tr><th>월</th><th>충전횟수</th><th>충전량(kWh)</th><th>비율</th></tr></thead>
+    <tbody>${Array.from({length:12},(_,i)=>{ const m=i+1,{kwh,cnt}=mMap[m],pct=total?Math.round(kwh/total*100):0;
+      return `<tr><td>${m}월</td><td>${cnt}회</td><td><strong>${kwh.toFixed(1)}</strong></td><td>${pct}%</td></tr>`; }).join('')}</tbody></table>
+    <div class="psum">
+      <div class="psbox"><div class="psbox-title">사용자별</div>${STAFF.filter(n=>sMap[n]>0).map(n=>`<div class="psrow"><span class="pskey">${n}</span><span class="psval">${sMap[n].toFixed(1)} kWh</span></div>`).join('')}</div>
+      <div class="psbox"><div class="psbox-title">충전기별</div>${['1호기','2호기','3호기'].map(c=>{ const k=yr.filter(r=>r.charger===c).reduce((s,r)=>s+r.kwh,0); return `<div class="psrow"><span class="pskey">${c}</span><span class="psval">${k.toFixed(1)} kWh</span></div>`; }).join('')}</div>
+    </div>
+    <div class="ptotal"><div class="pt-label">${y}년 연간 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
+    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
   await new Promise(r=>setTimeout(r,200));
-  const canvas=await html2canvas(area.querySelector('.print-page'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
-  doc.save(`${y}년_연간_EV충전기록.pdf`);
-  area.innerHTML=''; hideLoading(); showToast('PDF 다운로드 완료');
+  doc.save(`${y}년_연간_EV충전기록.pdf`); area.innerHTML=''; hideLoad(); toast('PDF 저장 완료');
 }
-function yearDownloadCSV(){
-  const y=viewYear.y;
-  const yr=records.filter(r=>r.date.startsWith(String(y)));
-  const mMap={};for(let m=1;m<=12;m++)mMap[m]={kwh:0,cnt:0};
-  yr.forEach(r=>{const m=parseInt(r.date.slice(5,7));mMap[m].kwh+=r.kwh;mMap[m].cnt+=1;});
-  const sMap={};STAFF.forEach(n=>sMap[n]=0);
-  yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
-  let csv=`﻿${y}년 연간 EV 충전 기록
-월,충전횟수,충전량(kWh)
-`;
-  for(let m=1;m<=12;m++) csv+=`${m}월,${mMap[m].cnt},${mMap[m].kwh.toFixed(1)}
-`;
-  csv+=`
-직원별
-`;STAFF.forEach(n=>{if(sMap[n]>0)csv+=`${n},${sMap[n].toFixed(1)}
-`;});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
-  a.download=`${y}년_연간_EV충전기록.csv`; a.click();
-  showToast('엑셀 다운로드 완료');
-}
-async function yearCapture(){
-  showLoading('캡처 중...');
-  const target=document.getElementById('year-content');
-  const canvas=await html2canvas(target,{scale:2,backgroundColor:'#f2f3f5',logging:false});
-  canvas.toBlob(async blob=>{
-    hideLoading();
-    const file=new File([blob],`${viewYear.y}년_연간집계.png`,{type:'image/png'});
-    if(navigator.share&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file]});}catch(e){}
-    } else {
-      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-      a.download=`${viewYear.y}년_연간집계.png`; a.click();
-      showToast('이미지 저장 완료');
-    }
-  },'image/png');
+function yearCSV(){
+  const y=vy.y; const yr=records.filter(r=>r.date.startsWith(String(y)));
+  const mMap={}; for(let m=1;m<=12;m++) mMap[m]={kwh:0,cnt:0};
+  yr.forEach(r=>{ const m=parseInt(r.date.slice(5,7)); mMap[m].kwh+=r.kwh; mMap[m].cnt+=1; });
+  const sMap={}; STAFF.forEach(n=>sMap[n]=0); yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  let csv=`\uFEFF${y}년 연간 EV 충전 기록\n월,충전횟수,충전량(kWh)\n`;
+  for(let m=1;m<=12;m++) csv+=`${m}월,${mMap[m].cnt},${mMap[m].kwh.toFixed(1)}\n`;
+  csv+=`\n사용자별\n`; STAFF.forEach(n=>{ if(sMap[n]>0) csv+=`${n},${sMap[n].toFixed(1)}\n`; });
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${y}년_연간_EV충전기록.csv`; a.click(); toast('엑셀 저장 완료');
 }
 
-/* ══ 개인 상세 ══ */
-let detailPerson='';
-function openPersonDetail(name){
-  const {y,m}=viewMonth;
-  const pref=`${y}-${String(m).padStart(2,'0')}`;
-  const rows=records.filter(r=>r.date.startsWith(pref)&&r.staff===name);
-  const total=rows.reduce((s,r)=>s+r.kwh,0);
-  const idx=STAFF.indexOf(name);
-  const col=COLORS[idx]||'#888';
-  detailPerson=name;
-  document.getElementById('detail-dot').style.background=col;
-  document.getElementById('detail-name').textContent=name;
-  document.getElementById('detail-period').textContent=`${y}년 ${m}월`;
-  document.getElementById('detail-summary').innerHTML=`
-    <div class="detail-stat"><div class="detail-stat-label">충전량</div><div class="detail-stat-val" style="color:${col}">${total.toFixed(1)}</div><div class="detail-stat-unit">kWh</div></div>
-    <div class="detail-stat"><div class="detail-stat-label">횟수</div><div class="detail-stat-val">${rows.length}</div><div class="detail-stat-unit">회</div></div>
-    <div class="detail-stat"><div class="detail-stat-label">평균/회</div><div class="detail-stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</div><div class="detail-stat-unit">kWh</div></div>`;
-  document.getElementById('detail-log').innerHTML=rows.length
-    ? rows.map(r=>`<div class="detail-row">
-        <div class="detail-date">${r.date.slice(5).replace('-','.')}</div>
-        <div class="detail-info"><div class="detail-car">${r.car} · ${r.charger}</div><div class="detail-meter">${r.start.toFixed(1)} → ${r.end.toFixed(1)}</div></div>
-        <div class="detail-kwh-val" style="color:${col}">${r.kwh.toFixed(1)} kWh</div>
-      </div>`).join('')
-    : '<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">충전 기록이 없습니다</div>';
-  openPopup('pop-detail');
-}
-async function detailDownloadPDF(){
-  const {y,m}=viewMonth;
-  const name=detailPerson;
-  const rows=records.filter(r=>r.date.startsWith(`${y}-${String(m).padStart(2,'0')}`)&&r.staff===name);
-  const total=rows.reduce((s,r)=>s+r.kwh,0);
-  showLoading('PDF 생성 중...');
-  const area=document.getElementById('print-area');
-  area.innerHTML=`<div class="print-page">
-    <div class="print-header"><div class="print-h1">${name} · ${y}년 ${m}월 충전 내역</div>
-    <div class="print-meta"><span>총 ${rows.length}회</span><span>${total.toFixed(1)} kWh</span></div></div>
-    <table class="print-table"><thead><tr><th>순번</th><th>충전일</th><th>충전기</th><th>차량번호</th><th>시작kWh</th><th>종료kWh</th><th>충전량</th></tr></thead>
-    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td>${r.charger}</td><td>${r.car}</td><td>${r.start.toFixed(1)}</td><td>${r.end.toFixed(1)}</td><td><strong>${r.kwh.toFixed(1)}</strong></td></tr>`).join('')}</tbody></table>
-    <div class="print-total"><div class="pt-label">${name} ${y}년 ${m}월 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
-    <div class="print-footer">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
-  await new Promise(r=>setTimeout(r,200));
-  const canvas=await html2canvas(area.querySelector('.print-page'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
-  doc.save(`${y}년_${m}월_${name}_충전내역.pdf`);
-  area.innerHTML=''; hideLoading(); showToast('PDF 다운로드 완료');
-}
-function detailDownloadCSV(){
-  const {y,m}=viewMonth;
-  const name=detailPerson;
-  const rows=records.filter(r=>r.date.startsWith(`${y}-${String(m).padStart(2,'0')}`)&&r.staff===name);
-  const total=rows.reduce((s,r)=>s+r.kwh,0);
-  let csv=`﻿${name} · ${y}년 ${m}월 충전 내역
-순번,충전일자,충전기,차량번호,시작(kWh),종료(kWh),충전량(kWh)
-`;
-  rows.forEach((r,i)=>{csv+=`${i+1},${r.date},${r.charger},${r.car},${r.start},${r.end},${r.kwh.toFixed(1)}
-`;});
-  csv+=`
-합계,,,,,,${total.toFixed(1)}
-`;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
-  a.download=`${y}년_${m}월_${name}_충전내역.csv`; a.click();
-  showToast('엑셀 다운로드 완료');
-}
+// ── 팝업 ──
+function openP(id){ document.getElementById(id).classList.add('on'); }
+function closeP(id){ document.getElementById(id).classList.remove('on'); }
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('on'); });
+});
 
+// ── 스와이프 ──
+(()=>{
+  const TABS=['input','log','stats'];
+  let tx=0,ty=0,dir=null;
+  document.addEventListener('touchstart',e=>{ if(document.querySelector('.overlay.on')) return; tx=e.touches[0].clientX; ty=e.touches[0].clientY; dir=null; },{passive:true});
+  document.addEventListener('touchmove',e=>{ if(document.querySelector('.overlay.on')) return; if(dir==='v') return; const dx=e.touches[0].clientX-tx,dy=e.touches[0].clientY-ty; if(dir===null&&(Math.abs(dx)>8||Math.abs(dy)>8)) dir=Math.abs(dx)>Math.abs(dy)?'h':'v'; },{passive:true});
+  document.addEventListener('touchend',e=>{ if(document.querySelector('.overlay.on')) return; if(dir!=='h') return; const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty; if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5) return; const cur=TABS.findIndex(t=>document.getElementById('sec-'+t).style.display!=='none'); if(dx<0&&cur<TABS.length-1) goTab(TABS[cur+1]); if(dx>0&&cur>0) goTab(TABS[cur-1]); },{passive:true});
+})();
+
+// ── 유틸 ──
+function toast(msg,dur=2200){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),dur); }
+function showLoad(msg){ document.getElementById('loading-msg').textContent=msg||'처리 중...'; document.getElementById('loading').classList.add('on'); }
+function hideLoad(){ document.getElementById('loading').classList.remove('on'); }
 </script>
 </body>
 </html>

@@ -289,51 +289,91 @@ const firebaseConfig = {
   appId: "1:344489058455:web:d681bf992931af186889d2"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db   = firebase.database();
-const auth = firebase.auth();
+let fbReady = false;
+let db = null;
 
-// 익명 로그인
-auth.signInAnonymously().then(()=>{
-  console.log("✅ Firebase 익명 인증 완료");
+function initFirebase(){
+  try {
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
 
-  // 실시간 데이터 구독
-  db.ref('ev_charge').on('value', snap => {
-    records.length = 0;
-    if(snap.exists()){
-      const data = snap.val();
-      Object.entries(data).forEach(([fbKey, v])=>{
-        records.push({...v, fbKey});
+    firebase.auth().signInAnonymously()
+      .then(()=>{
+        console.log("✅ Firebase 인증 완료");
+        fbReady = true;
+        // 실시간 구독
+        db.ref('ev_charge').on('value', snap => {
+          records.length = 0;
+          if(snap.exists()){
+            Object.entries(snap.val()).forEach(([fbKey,v])=>{
+              records.push({...v, fbKey});
+            });
+            records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+          }
+          const activeTab=['input','log','stats'].find(t=>{
+            const el=document.getElementById('sec-'+t);
+            return el&&el.classList.contains('on');
+          });
+          if(activeTab==='log') renderLog();
+          if(activeTab==='stats') renderStats();
+        });
+      })
+      .catch(e=>{
+        console.warn("Firebase 인증 실패, 로컬 모드:", e.message);
+        fbReady = false;
+        loadLocal();
       });
-      // 최신순 정렬
-      records.sort((a,b)=> b.date.localeCompare(a.date) || b.id - a.id);
-    }
-    // 현재 탭 리렌더
-    const activeTab = ['input','log','stats'].find(t=>{
-      const el = document.getElementById('sec-'+t);
-      return el && el.classList.contains('on');
-    });
-    if(activeTab==='log')   renderLog();
-    if(activeTab==='stats') { renderStats(); }
-  });
+  } catch(e){
+    console.warn("Firebase 초기화 실패:", e.message);
+    fbReady = false;
+    loadLocal();
+  }
+}
 
-}).catch(e=>{ console.error("Auth 오류:", e); showToast("Firebase 연결 실패"); });
+// 로컬 저장소 (Firebase 안될 때 폴백)
+function saveLocal(){
+  try{ localStorage.setItem('ev_records', JSON.stringify(records)); }catch(e){}
+}
+function loadLocal(){
+  try{
+    const d = localStorage.getItem('ev_records');
+    if(d){ const arr=JSON.parse(d); records.length=0; arr.forEach(r=>records.push(r)); }
+  }catch(e){}
+}
 
-// 저장
+// PIN 통과 후 호출
+window.onPinPass = function(){ initFirebase(); };
+
 window.fbSave = function(rec){
-  const {fbKey, ...data} = rec;
-  return db.ref('ev_charge').push(data);
+  if(fbReady && db){
+    const {fbKey,...data} = rec;
+    return db.ref('ev_charge').push(data)
+      .catch(e=>{ console.warn("FB저장실패:", e); records.unshift(rec); saveLocal(); });
+  } else {
+    records.unshift(rec);
+    saveLocal();
+    return Promise.resolve();
+  }
 };
 
-// 수정
 window.fbUpdate = function(fbKey, data){
-  const {fbKey:_, ...clean} = data;
-  return db.ref('ev_charge/'+fbKey).update(clean);
+  if(fbReady && db && fbKey){
+    const {fbKey:_,...clean}=data;
+    return db.ref('ev_charge/'+fbKey).update(clean)
+      .catch(e=>{ console.warn("FB수정실패:", e); saveLocal(); });
+  }
+  saveLocal();
+  return Promise.resolve();
 };
 
-// 삭제
 window.fbDelete = function(fbKey){
-  return db.ref('ev_charge/'+fbKey).remove();
+  if(fbReady && db && fbKey){
+    return db.ref('ev_charge/'+fbKey).remove()
+      .catch(e=>{ console.warn("FB삭제실패:", e); saveLocal(); });
+  }
+  records = records.filter(r=>r.fbKey!==fbKey);
+  saveLocal();
+  return Promise.resolve();
 };
 </script>
 </head>
@@ -623,6 +663,7 @@ function pinInput(n) {
       if(pinVal === PIN) {
         document.getElementById('pin-screen').style.display = 'none';
         document.getElementById('app-body').style.display = 'block';
+        if(typeof window.onPinPass==='function') window.onPinPass();
         renderStats();
       } else {
         document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('error'));

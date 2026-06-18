@@ -52,7 +52,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);flex-shrink:0}
 .tab{flex:1;padding:12px 0;font-size:14px;font-weight:600;color:var(--text3);text-align:center;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:none;transition:all .15s}
 .tab.on{color:var(--blue);border-bottom-color:var(--blue)}
-.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(24px + var(--sab));overscroll-behavior-y:contain}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(80px + var(--sab));overscroll-behavior-y:contain}
 
 /* ── 카드 ── */
 .card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
@@ -234,6 +234,21 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .pfoot{margin-top:18px;text-align:center;font-size:10px;color:#bbb}
 
 @media(max-width:380px){.content{padding:10px}.stat-val{font-size:17px}.chip{font-size:13px;padding:8px 13px}}
+
+/* 수정 팝업 컴팩트 */
+.popup-compact{padding:14px 16px 20px;max-height:96vh}
+.popup-compact .pop-handle-row{margin-bottom:10px}
+.popup-compact .pop-title{font-size:17px;margin-bottom:2px}
+.popup-compact .pop-sub{font-size:12px;margin-bottom:10px}
+.popup-compact .card-title{margin-bottom:6px;font-size:10px}
+.popup-compact .chip{padding:8px 6px;font-size:13px}
+.popup-compact .input-box{padding:10px 12px;font-size:16px}
+.popup-compact .calc-box{padding:10px 14px;margin:8px 0}
+.popup-compact .calc-num{font-size:28px}
+.popup-compact [style*="margin-bottom:11px"]{margin-bottom:8px!important}
+.popup-compact [style*="margin-bottom:14px"]{margin-bottom:10px!important}
+.popup-compact .btn-row{margin-bottom:6px!important}
+.popup-compact .divider{margin:8px 0}
 </style>
 </head>
 <body>
@@ -382,7 +397,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 <!-- 수정 팝업 -->
 <div class="overlay" id="pop-edit">
-  <div class="popup">
+  <div class="popup popup-compact">
     <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-edit')">×</button></div>
     <div class="pop-title">기록 수정</div>
     <div class="pop-sub" id="edit-lbl"></div>
@@ -898,6 +913,49 @@ document.querySelectorAll('.overlay').forEach(o=>{
 function toast(msg,dur=2200){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),dur); }
 function showLoad(msg){ document.getElementById('loading-msg').textContent=msg||'처리 중...'; document.getElementById('loading').classList.add('on'); }
 function hideLoad(){ document.getElementById('loading').classList.remove('on'); }
+
+/* 팝업 아래로 당기면 닫기 */
+(()=>{
+  let startY=0, startX=0, dragging=false;
+  document.querySelectorAll('.popup, .popup-compact, .detail-popup').forEach(popup=>{
+    popup.addEventListener('touchstart', e=>{
+      // 스크롤 가능한 내부 요소면 무시
+      const scrollable = e.target.closest('.dp-body');
+      if(scrollable && scrollable.scrollTop > 0) return;
+      startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
+      dragging = true;
+    },{passive:true});
+    popup.addEventListener('touchmove', e=>{
+      if(!dragging) return;
+      const dy = e.touches[0].clientY - startY;
+      const dx = e.touches[0].clientX - startX;
+      if(Math.abs(dy) > Math.abs(dx) && dy > 10){
+        popup.style.transition = 'none';
+        popup.style.transform = `translateY(${Math.max(0,dy)}px)`;
+      }
+    },{passive:true});
+    popup.addEventListener('touchend', e=>{
+      if(!dragging) return;
+      dragging = false;
+      const dy = e.changedTouches[0].clientY - startY;
+      popup.style.transition = 'transform .25s ease';
+      if(dy > 80){
+        popup.style.transform = 'translateY(100%)';
+        setTimeout(()=>{
+          const overlay = popup.closest('.overlay');
+          if(overlay) overlay.classList.remove('on');
+          popup.style.transform = '';
+          popup.style.transition = '';
+        },250);
+      } else {
+        popup.style.transform = '';
+        setTimeout(()=>{ popup.style.transition=''; },300);
+      }
+    },{passive:true});
+  });
+})();
+
 </script>
 </body>
 </html>

@@ -309,10 +309,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </div>
       <div class="card">
         <div class="card-title">차량번호</div>
-        <div class="chip-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="chip-grid" style="grid-template-columns:repeat(3,1fr)">
           <div class="chip" onclick="selChip(this,'car','9966')">9966</div>
           <div class="chip" onclick="selChip(this,'car','0292')">0292</div>
-          <div class="chip" onclick="selChip(this,'car','0847')">0847</div>
+          <div class="chip" onclick="selChip(this,'car','0857')">0857</div>
+          <div class="chip" onclick="selChip(this,'car','9927')">9927</div>
+          <div class="chip" onclick="selChip(this,'car','7621')">7621</div>
           <div class="chip" onclick="selChip(this,'car','직접입력')">직접입력</div>
         </div>
         <input id="car-manual" class="input-box" style="margin-top:10px;display:none" placeholder="차량번호 입력" oninput="st.car=this.value;chkReady()">
@@ -401,6 +403,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-edit')">×</button></div>
     <div class="pop-title">기록 수정</div>
     <div class="pop-sub" id="edit-lbl"></div>
+    <div style="margin-bottom:8px">
+      <div class="card-title" style="margin-bottom:6px">날짜</div>
+      <input class="input-box" id="e-date" type="date" style="font-size:15px;padding:10px 12px">
+    </div>
     <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">작성자</div><div class="chip-grid" id="e-staff"></div></div>
     <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">충전기</div><div class="chip-grid" id="e-charger"></div></div>
     <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">차량번호</div><div class="chip-grid" style="grid-template-columns:repeat(3,1fr)" id="e-car"></div></div>
@@ -503,6 +509,14 @@ const PIN='2131';
 const STAFF=['관리부','김대희','부회장님','사장님','송성민','최윤철'];
 const COLORS=['#0f7a45','#1752a8','#7a4a1a','#6b1a7a','#b52a1c','#1a6b7a'];
 const now=new Date();
+// 로컬 날짜 (UTC 버그 방지)
+function getLocalDate(d){
+  const t = d || new Date();
+  const y = t.getFullYear();
+  const m = String(t.getMonth()+1).padStart(2,'0');
+  const day = String(t.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 const DAYS=['일','월','화','수','목','금','토'];
 
 // ── 상태 ──
@@ -578,7 +592,7 @@ function chkReady(){ document.getElementById('save-btn').disabled=!(st.staff&&st
 
 // ── 저장 ──
 function openSaveConfirm(){
-  const d=now.toISOString().slice(0,10);
+  const d=getLocalDate();
   document.getElementById('save-info').innerHTML=`
     <div class="info-row"><span class="info-key">날짜</span><span class="info-val">${d}</span></div>
     <div class="info-row"><span class="info-key">작성자</span><span class="info-val">${st.staff}</span></div>
@@ -590,7 +604,7 @@ function openSaveConfirm(){
   openP('pop-save');
 }
 function confirmSave(){
-  const rec={id:Date.now(),date:now.toISOString().slice(0,10),...st};
+  const rec={id:Date.now(),date:getLocalDate(),...st};
   closeP('pop-save');
   fbSave(rec).then(()=>toast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`)).catch(()=>toast('저장 실패'));
   resetForm();
@@ -631,9 +645,10 @@ function openEdit(id){
   const r=records.find(x=>x.id===id); if(!r)return;
   editId=id; editSt={...r};
   document.getElementById('edit-lbl').textContent=`${r.date} · ${r.charger} · ${r.car}`;
+  document.getElementById('e-date').value=r.date;
   document.getElementById('e-staff').innerHTML=STAFF.map(n=>`<div class="chip ${n===r.staff?'on':''}" onclick="eChip(this,'staff','${n}')">${n}</div>`).join('');
   document.getElementById('e-charger').innerHTML=['1호기','2호기','3호기'].map(c=>`<div class="chip ${c===r.charger?'on':''}" onclick="eChip(this,'charger','${c}')">${c}</div>`).join('');
-  document.getElementById('e-car').innerHTML=['9966','0292','0847'].map(c=>`<div class="chip ${c===r.car?'on':''}" onclick="eChip(this,'car','${c}')">${c}</div>`).join('');
+  document.getElementById('e-car').innerHTML=['9966','0292','0857','9927','7621'].map(c=>`<div class="chip ${c===r.car?'on':''}" onclick="eChip(this,'car','${c}')">${c}</div>`).join('');
   document.getElementById('e-s').value=r.start;
   document.getElementById('e-e').value=r.end;
   calcEK(); openP('pop-edit');
@@ -651,6 +666,8 @@ function confirmEdit(){
   const idx=records.findIndex(r=>r.id===editId); if(idx===-1)return;
   const s=document.querySelector('#e-staff .on'), ch=document.querySelector('#e-charger .on'), ca=document.querySelector('#e-car .on');
   if(s) editSt.staff=s.textContent; if(ch) editSt.charger=ch.textContent; if(ca) editSt.car=ca.textContent;
+  const editDate=document.getElementById('e-date').value;
+  if(editDate) editSt.date=editDate;
   const upd={...records[idx],...editSt};
   closeP('pop-edit');
   fbUpd(upd.fbKey,upd).then(()=>toast('수정 완료')).catch(()=>{ records[idx]=upd; renderLog(); toast('수정 완료'); });

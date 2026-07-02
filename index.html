@@ -327,12 +327,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div class="hdr-row">
       <div>
         <div class="hdr-title">⚡ EV 충전 기록</div>
-        <div class="hdr-sub">충전기 1·2호기·고속</div>
+        <div id="hdr-user" style="font-size:13px;font-weight:700;color:var(--blue);margin-top:2px;display:none"></div>
+        <div class="hdr-sub" id="hdr-sub-txt">충전기 1·2호기·고속</div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
-        <div class="hdr-badge" id="hdr-date"></div>
-        <div id="hdr-user" style="font-size:12px;font-weight:700;color:var(--blue);display:none"></div>
-      </div>
+      <div class="hdr-badge" id="hdr-date"></div>
     </div>
   </div>
   <div class="tabs">
@@ -674,7 +672,7 @@ function pi(n){
         saveSession(selectedLoginName, user.role);
         document.getElementById('pin-screen').style.display='none';
         document.getElementById('app').style.display='flex';
-        document.getElementById('hdr-sub').textContent=`${selectedLoginName} · 충전기 1·2호기·고속`;
+        // hdr-user로 표시하므로 hdr-sub 변경 불필요
         autoSelectStaff(selectedLoginName);
         initFB(); renderStats(); setTimeout(loadTempStart,500);
       } else {
@@ -692,11 +690,12 @@ function pi(n){
 function pd(){ pinV=pinV.slice(0,-1); updateDots(); }
 function updateDots(){ document.querySelectorAll('.pin-dot').forEach((d,i)=>d.classList.toggle('on',i<pinV.length)); }
 function autoSelectStaff(name){
-  // 작성자 자동 세팅 (UI 없이 상태만)
   st.staff = name;
-  // 헤더에 이름 표시
   const userEl = document.getElementById('hdr-user');
-  if(userEl){ userEl.textContent = name + ' 님'; userEl.style.display='block'; }
+  if(userEl){
+    userEl.textContent = name + ' 님 로그인';
+    userEl.style.display = 'block';
+  }
   chkReady();
 }
 

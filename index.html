@@ -327,7 +327,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div class="hdr-row">
       <div>
         <div class="hdr-title">⚡ EV 충전 기록</div>
-        <div class="hdr-sub">충전기 1·2·3호기</div>
+        <div class="hdr-sub">충전기 1·2호기·고속</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
         <div class="hdr-badge" id="hdr-date"></div>
@@ -350,7 +350,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <div class="chip-grid">
           <div class="chip" onclick="selChip(this,'charger','1호기')">1호기</div>
           <div class="chip" onclick="selChip(this,'charger','2호기')">2호기</div>
-          <div class="chip" onclick="selChip(this,'charger','3호기')">3호기</div>
+          <div class="chip" onclick="selChip(this,'charger','고속')">고속</div>
         </div>
       </div>
       <div class="card">
@@ -654,7 +654,7 @@ document.getElementById('hdr-date').textContent=`${now.getMonth()+1}/${now.getDa
 if(loadSession()){
   document.getElementById('pin-screen').style.display='none';
   document.getElementById('app').style.display='flex';
-  document.getElementById('hdr-sub').textContent=`${currentUser.name} · 충전기 1·2·3호기`;
+  document.getElementById('hdr-sub').textContent=`${currentUser.name} · 충전기 1·2호기·고속`;
   autoSelectStaff(currentUser.name);
   initFB(); renderStats(); setTimeout(loadTempStart,500);
 } else {
@@ -674,7 +674,7 @@ function pi(n){
         saveSession(selectedLoginName, user.role);
         document.getElementById('pin-screen').style.display='none';
         document.getElementById('app').style.display='flex';
-        document.getElementById('hdr-sub').textContent=`${selectedLoginName} · 충전기 1·2·3호기`;
+        document.getElementById('hdr-sub').textContent=`${selectedLoginName} · 충전기 1·2호기·고속`;
         autoSelectStaff(selectedLoginName);
         initFB(); renderStats(); setTimeout(loadTempStart,500);
       } else {
@@ -809,7 +809,7 @@ function openEdit(id){
   document.getElementById('edit-lbl').textContent=`${r.date} · ${r.charger} · ${r.car}`;
   document.getElementById('e-date').value=r.date;
   document.getElementById('e-staff').innerHTML=STAFF.map(n=>`<div class="chip ${n===r.staff?'on':''}" onclick="eChip(this,'staff','${n}')">${n}</div>`).join('');
-  document.getElementById('e-charger').innerHTML=['1호기','2호기','3호기'].map(c=>`<div class="chip ${c===r.charger?'on':''}" onclick="eChip(this,'charger','${c}')">${c}</div>`).join('');
+  document.getElementById('e-charger').innerHTML=['1호기','2호기','고속'].map(c=>`<div class="chip ${c===r.charger?'on':''}" onclick="eChip(this,'charger','${c}')">${c}</div>`).join('');
   document.getElementById('e-car').innerHTML=['9966','0292','0857','9927','7621'].map(c=>`<div class="chip ${c===r.car?'on':''}" onclick="eChip(this,'car','${c}')">${c}</div>`).join('');
   document.getElementById('e-s').value=r.start;
   document.getElementById('e-e').value=r.end;
@@ -859,7 +859,7 @@ function renderStats(){
   const total=rows.reduce((s,r)=>s+r.kwh,0);
   const sMap={}; STAFF.forEach(n=>sMap[n]=0);
   rows.forEach(r=>{ sMap[r.staff]=(sMap[r.staff]||0)+r.kwh; });
-  const cMap={'1호기':0,'2호기':0,'3호기':0};
+  const cMap={'1호기':0,'2호기':0,'고속':0};
   rows.forEach(r=>{ cMap[r.charger]=(cMap[r.charger]||0)+r.kwh; });
   const maxC=Math.max(...Object.values(cMap),0.1);
   document.getElementById('stats-content').innerHTML=`
@@ -881,7 +881,7 @@ function renderStats(){
     </div>
     <div class="sec-title">충전기별</div>
     <div class="charger-row">
-      ${['1호기','2호기','3호기'].map(c=>{ const k=cMap[c]||0,w=Math.round(k/maxC*100);
+      ${['1호기','2호기','고속'].map(c=>{ const k=cMap[c]||0,w=Math.round(k/maxC*100);
         return `<div class="charger-card"><div class="cno">${c}</div><div class="ckwh">${k.toFixed(1)}</div><div class="cunit">kWh</div><div class="cbar"><div class="cbar-fill" style="width:${w}%"></div></div></div>`; }).join('')}
     </div>
     <div class="dl-row">
@@ -948,10 +948,10 @@ async function statsPDF(){
   const {y,m}=vm; const pref=`${y}-${String(m).padStart(2,'0')}`;
   const rows=records.filter(r=>r.date.startsWith(pref)); const total=rows.reduce((s,r)=>s+r.kwh,0);
   const sMap={}; STAFF.forEach(n=>sMap[n]=0); rows.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
-  const cMap={'1호기':0,'2호기':0,'3호기':0}; rows.forEach(r=>{cMap[r.charger]=(cMap[r.charger]||0)+r.kwh;});
+  const cMap={'1호기':0,'2호기':0,'고속':0}; rows.forEach(r=>{cMap[r.charger]=(cMap[r.charger]||0)+r.kwh;});
   showLoad('PDF 생성 중...');
   const area=document.getElementById('parea');
-  area.innerHTML=`<div class="ppage"><div class="phdr"><div class="ph1">전기차량 충전 기록 — ${y}년 ${m}월</div><div class="pmeta"><span>충전기 1·2·3호기</span><span>총 ${rows.length}건</span></div></div>
+  area.innerHTML=`<div class="ppage"><div class="phdr"><div class="ph1">전기차량 충전 기록 — ${y}년 ${m}월</div><div class="pmeta"><span>충전기 1·2호기·고속</span><span>총 ${rows.length}건</span></div></div>
     <table class="ptbl"><thead><tr><th>순번</th><th>충전일</th><th>작성자</th><th>충전기</th><th>차량번호</th><th>시작kWh</th><th>종료kWh</th><th>충전량</th></tr></thead>
     <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td class="nc">${r.staff}</td><td>${r.charger}</td><td>${r.car}</td><td>${r.start.toFixed(1)}</td><td>${r.end.toFixed(1)}</td><td><strong>${r.kwh.toFixed(1)}</strong></td></tr>`).join('')}</tbody></table>
     <div class="psum">
@@ -1034,13 +1034,13 @@ async function yearPDF(){
   const sMap={}; STAFF.forEach(n=>sMap[n]=0); yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
   showLoad('PDF 생성 중...');
   const area=document.getElementById('parea');
-  area.innerHTML=`<div class="ppage"><div class="phdr"><div class="ph1">전기차량 충전 기록 — ${y}년 연간</div><div class="pmeta"><span>충전기 1·2·3호기</span><span>총 ${yr.length}회 · ${total.toFixed(1)} kWh</span></div></div>
+  area.innerHTML=`<div class="ppage"><div class="phdr"><div class="ph1">전기차량 충전 기록 — ${y}년 연간</div><div class="pmeta"><span>충전기 1·2호기·고속</span><span>총 ${yr.length}회 · ${total.toFixed(1)} kWh</span></div></div>
     <table class="ptbl"><thead><tr><th>월</th><th>충전횟수</th><th>충전량(kWh)</th><th>비율</th></tr></thead>
     <tbody>${Array.from({length:12},(_,i)=>{ const m=i+1,{kwh,cnt}=mMap[m],pct=total?Math.round(kwh/total*100):0;
       return `<tr><td>${m}월</td><td>${cnt}회</td><td><strong>${kwh.toFixed(1)}</strong></td><td>${pct}%</td></tr>`; }).join('')}</tbody></table>
     <div class="psum">
       <div class="psbox"><div class="psbox-title">사용자별</div>${STAFF.filter(n=>sMap[n]>0).map(n=>`<div class="psrow"><span class="pskey">${n}</span><span class="psval">${sMap[n].toFixed(1)} kWh</span></div>`).join('')}</div>
-      <div class="psbox"><div class="psbox-title">충전기별</div>${['1호기','2호기','3호기'].map(c=>{ const k=yr.filter(r=>r.charger===c).reduce((s,r)=>s+r.kwh,0); return `<div class="psrow"><span class="pskey">${c}</span><span class="psval">${k.toFixed(1)} kWh</span></div>`; }).join('')}</div>
+      <div class="psbox"><div class="psbox-title">충전기별</div>${['1호기','2호기','고속'].map(c=>{ const k=yr.filter(r=>r.charger===c).reduce((s,r)=>s+r.kwh,0); return `<div class="psrow"><span class="pskey">${c}</span><span class="psval">${k.toFixed(1)} kWh</span></div>`; }).join('')}</div>
     </div>
     <div class="ptotal"><div class="pt-label">${y}년 연간 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
     <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
@@ -1151,11 +1151,10 @@ function loadTempStart(){
     if(temp.date!==getLocalDate()){ localStorage.removeItem('ev_temp_start'); return; }
     // 폼에 복원
     st.staff=temp.staff; st.charger=temp.charger; st.car=temp.car; st.start=temp.start;
-    // 칩 선택 복원
+    // 칩 선택 복원 (작성자 카드 없음: ci===0=충전기, ci===1=차량번호)
     document.querySelectorAll('#sec-input .card').forEach((card,ci)=>{
-      if(ci===0) card.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===temp.staff));
-      if(ci===1) card.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===temp.charger));
-      if(ci===2) card.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===temp.car));
+      if(ci===0) card.querySelectorAll('.chip').forEach(ch=>ch.classList.toggle('on',ch.textContent===temp.charger));
+      if(ci===1) card.querySelectorAll('.chip').forEach(ch=>ch.classList.toggle('on',ch.textContent===temp.car));
     });
     document.getElementById('inp-s').value=temp.start;
     document.getElementById('temp-banner').style.display='block';

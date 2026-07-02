@@ -29,17 +29,32 @@ html{overscroll-behavior:none}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden}
 
 /* ── PIN ── */
-#pin-screen{position:fixed;inset:0;background:#fff;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px}
-.pin-logo{font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:36px}
-.pin-title{font-size:26px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.5px}
-.pin-sub{font-size:15px;color:var(--text3);margin-bottom:36px}
-.pin-dots{display:flex;gap:16px;margin-bottom:36px}
-.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border2);transition:all .15s}
+#pin-screen{
+  position:fixed;inset:0;z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 24px;
+  background:linear-gradient(180deg,#1752a8 0%,#1752a8 28%,#f2f3f5 28%,#f2f3f5 100%);
+}
+.pin-logo{font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:20px}
+.pin-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.5px}
+.pin-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+.pin-dots{display:flex;gap:16px;margin-bottom:28px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);transition:all .15s}
 .pin-dot.on{background:var(--blue);border-color:var(--blue)}
 .pin-dot.err{background:var(--red);border-color:var(--red)}
-.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:260px}
-.pin-key{height:68px;border-radius:var(--rs);border:1.5px solid var(--border);background:#fff;font-size:24px;font-weight:600;color:var(--text);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .1s;-webkit-tap-highlight-color:transparent}
-.pin-key:active{background:var(--surface2);transform:scale(.94)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.pin-key{
+  height:62px;border-radius:50%;
+  border:none;
+  background:var(--surface2);
+  font-size:26px;font-weight:500;color:var(--text);
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:all .1s;-webkit-tap-highlight-color:transparent;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+.pin-key:active{background:#d0d3db;transform:scale(.92)}
+.pin-key.del{background:transparent;box-shadow:none;font-size:20px;color:var(--text2)}
 .pin-err{font-size:14px;color:var(--red);margin-top:16px;height:20px;font-weight:500}
 
 /* ── 앱 레이아웃 ── */
@@ -212,26 +227,26 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 /* ── PDF 렌더 ── */
 #parea{position:fixed;left:-9999px;top:0;width:794px;background:#fff;font-family:'Noto Sans KR',sans-serif}
-.ppage{width:794px;min-height:1123px;padding:44px 50px;background:#fff;color:#111}
-.phdr{border-bottom:2.5px solid #111;padding-bottom:14px;margin-bottom:22px}
-.ph1{font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:5px}
-.pmeta{font-size:12px;color:#666;display:flex;gap:24px;font-weight:500}
+.ppage{width:794px;min-height:1123px;padding:56px 54px 44px;background:#fff;color:#111}
+.phdr{border-bottom:2px solid #ccc;padding-bottom:16px;margin-bottom:26px;text-align:center}
+.ph1{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;color:#111;text-align:center}
+.pmeta{font-size:12px;color:#888;display:flex;gap:24px;font-weight:500;justify-content:center}
 .ptbl{width:100%;border-collapse:collapse;margin-bottom:26px;font-size:12px}
-.ptbl th{background:#111;color:#fff;padding:8px 10px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.3px}
-.ptbl td{padding:7px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-family:'IBM Plex Mono',monospace;font-size:12px}
-.ptbl tr:nth-child(even) td{background:#f6f6f6}
+.ptbl th{background:#e8edf5;color:#111;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.3px;border-bottom:2px solid #b0b8cc}
+.ptbl td{padding:7px 10px;text-align:center;border-bottom:1px solid #e8e8e8;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#111}
+.ptbl tr:nth-child(even) td{background:#f4f6fa}
 .ptbl td.nc{font-family:'Noto Sans KR',sans-serif;font-weight:600}
 .psum{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
-.psbox{border:1.5px solid #ddd;border-radius:6px;padding:14px 16px}
+.psbox{border:1.5px solid #ddd;border-radius:6px;padding:14px 16px;background:#fafafa}
 .psbox-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase}
-.psrow{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:12px}
+.psrow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;font-size:12px}
 .psrow:last-child{border-bottom:none}
-.pskey{color:#555;font-family:'Noto Sans KR',sans-serif;font-weight:500}
+.pskey{color:#444;font-family:'Noto Sans KR',sans-serif;font-weight:500}
 .psval{font-family:'IBM Plex Mono',monospace;font-weight:700;color:#111}
-.ptotal{background:#111;color:#fff;border-radius:6px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
-.pt-label{font-size:13px;font-weight:700}
-.pt-val{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace}
-.pfoot{margin-top:18px;text-align:center;font-size:10px;color:#bbb}
+.ptotal{background:#e8edf5;border:1.5px solid #b0b8cc;border-radius:6px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center}
+.pt-label{font-size:14px;font-weight:700;color:#111}
+.pt-val{font-size:24px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#1752a8}
+.pfoot{margin-top:20px;text-align:center;font-size:10px;color:#bbb}
 
 @media(max-width:380px){.content{padding:10px}.stat-val{font-size:17px}.chip{font-size:13px;padding:8px 13px}}
 
@@ -249,26 +264,61 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .popup-compact [style*="margin-bottom:14px"]{margin-bottom:10px!important}
 .popup-compact .btn-row{margin-bottom:6px!important}
 .popup-compact .divider{margin:8px 0}
+
+.pin-name-btn{
+  padding:16px 10px;border-radius:12px;
+  border:2px solid var(--border);
+  background:#fff;font-size:16px;font-weight:600;color:var(--text);
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:all .15s;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.pin-name-btn:active{transform:scale(.93)}
+.pin-name-btn.selected{
+  background:var(--blue);color:#fff;
+  border-color:var(--blue);
+  box-shadow:0 2px 8px rgba(23,82,168,.35);
+}
 </style>
 </head>
 <body>
 
 <!-- PIN -->
 <div id="pin-screen">
-  <div class="pin-logo">EV 충전 기록</div>
-  <div class="pin-title">PIN 입력</div>
-  <div class="pin-sub">4자리 번호를 입력하세요</div>
-  <div class="pin-dots" id="pin-dots">
-    <div class="pin-dot"></div><div class="pin-dot"></div>
-    <div class="pin-dot"></div><div class="pin-dot"></div>
+  <div id="login-inner" style="background:#fff;border-radius:20px;padding:28px 24px 24px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.12)">
+    <!-- Step 1: 이름 선택 -->
+    <div id="step-name">
+      <div class="pin-logo">EV 충전 기록</div>
+      <div class="pin-title">이름 선택</div>
+      <div class="pin-sub">본인 이름을 선택하세요</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;margin-bottom:16px">
+        <button class="pin-name-btn" onclick="selectName('관리부')">관리부</button>
+        <button class="pin-name-btn" onclick="selectName('김대희')">김대희</button>
+        <button class="pin-name-btn" onclick="selectName('부회장님')">부회장님</button>
+        <button class="pin-name-btn" onclick="selectName('사장님')">사장님</button>
+        <button class="pin-name-btn" onclick="selectName('송성민')">송성민</button>
+        <button class="pin-name-btn" onclick="selectName('최윤철')">최윤철</button>
+      </div>
+    </div>
+    <!-- Step 2: PIN 입력 -->
+    <div id="step-pin" style="display:none">
+      <div class="pin-logo">EV 충전 기록</div>
+      <div class="pin-title" id="pin-greeting">안녕하세요</div>
+      <div class="pin-sub">4자리 PIN을 입력하세요</div>
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pi('1')">1</button><button class="pin-key" onclick="pi('2')">2</button><button class="pin-key" onclick="pi('3')">3</button>
+        <button class="pin-key" onclick="pi('4')">4</button><button class="pin-key" onclick="pi('5')">5</button><button class="pin-key" onclick="pi('6')">6</button>
+        <button class="pin-key" onclick="pi('7')">7</button><button class="pin-key" onclick="pi('8')">8</button><button class="pin-key" onclick="pi('9')">9</button>
+        <div></div><button class="pin-key" onclick="pi('0')">0</button><button class="pin-key del" onclick="pd()">⌫</button>
+      </div>
+      <div class="pin-err" id="pin-err"></div>
+      <button onclick="backToName()" style="margin-top:16px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">← 이름 다시 선택</button>
+    </div>
   </div>
-  <div class="pin-pad">
-    <button class="pin-key" onclick="pi('1')">1</button><button class="pin-key" onclick="pi('2')">2</button><button class="pin-key" onclick="pi('3')">3</button>
-    <button class="pin-key" onclick="pi('4')">4</button><button class="pin-key" onclick="pi('5')">5</button><button class="pin-key" onclick="pi('6')">6</button>
-    <button class="pin-key" onclick="pi('7')">7</button><button class="pin-key" onclick="pi('8')">8</button><button class="pin-key" onclick="pi('9')">9</button>
-    <div></div><button class="pin-key" onclick="pi('0')">0</button><button class="pin-key" onclick="pd()">⌫</button>
-  </div>
-  <div class="pin-err" id="pin-err"></div>
 </div>
 
 <!-- APP -->
@@ -333,6 +383,17 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
           </div>
         </div>
       </div>
+      <!-- 임시저장 버튼 (충전 시작) -->
+      <button class="save-btn" id="start-btn" onclick="saveTempStart()"
+        style="background:var(--orange);margin-bottom:10px;display:none">
+        ⚡ 충전 시작 — 시작량 임시저장
+      </button>
+      <!-- 임시저장 안내 -->
+      <div id="temp-banner" style="display:none;background:var(--orange-bg);border:1.5px solid var(--orange-bd);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:4px">⏳ 충전 중 — 종료 후 최종저장</div>
+        <div style="font-size:12px;color:var(--text2)" id="temp-info"></div>
+      </div>
+      <!-- 최종저장 버튼 (충전 종료) -->
       <button class="save-btn" id="save-btn" onclick="openSaveConfirm()" disabled>기록 저장</button>
       <div style="height:20px"></div>
     </div>
@@ -504,9 +565,72 @@ function fbDel(fbKey){ return fbOK&&DB&&fbKey ? DB.ref('ev_charge/'+fbKey).remov
 function saveLocal(){ try{localStorage.setItem('ev',JSON.stringify(records));}catch(e){} }
 function loadLocal(){ try{const d=localStorage.getItem('ev');if(d){const a=JSON.parse(d);records.length=0;a.forEach(r=>records.push(r));}}catch(e){} }
 
+// ── 로그인 상태 ──
+let selectedLoginName = '';
+let loginStep = 'name'; // 'name' | 'pin'
+
+function renderLoginScreen(){
+  document.getElementById('step-name').style.display = loginStep==='name'?'flex':'none';
+  document.getElementById('step-name').style.flexDirection='column';
+  document.getElementById('step-name').style.alignItems='center';
+  document.getElementById('step-pin').style.display  = loginStep==='pin'?'flex':'none';
+  document.getElementById('step-pin').style.flexDirection='column';
+  document.getElementById('step-pin').style.alignItems='center';
+}
+function selectName(name){
+  selectedLoginName = name;
+  // 선택 버튼 색상 피드백
+  document.querySelectorAll('.pin-name-btn').forEach(b=>{
+    b.classList.toggle('selected', b.textContent===name);
+  });
+  // 살짝 딜레이 후 PIN 화면으로
+  setTimeout(()=>{
+    loginStep = 'pin';
+    document.getElementById('pin-greeting').textContent = name + ' 님';
+    pinV = ''; updateDots();
+    document.getElementById('pin-err').textContent='';
+    renderLoginScreen();
+  }, 180);
+}
+function backToName(){
+  loginStep='name'; pinV=''; selectedLoginName='';
+  updateDots();
+  document.getElementById('pin-err').textContent='';
+  renderLoginScreen();
+}
+
 // ── 상수 ──
-const PIN='2131';
+
+const USERS = {
+  '관리부': {pin:'2131', role:'admin'},
+  '김대희': {pin:'9927', role:'user'},
+  '송성민': {pin:'9966', role:'user'},
+  '최윤철': {pin:'0857', role:'user'},
+  '사장님': {pin:'0292', role:'user'},
+  '부회장님':{pin:'7621', role:'user'},
+};
+let currentUser = null; // {name, role}
+
+function loadSession(){
+  try{
+    const s = localStorage.getItem('ev_session');
+    if(!s) return false;
+    const {name, role, exp} = JSON.parse(s);
+    if(Date.now() > exp){ localStorage.removeItem('ev_session'); return false; }
+    currentUser = {name, role};
+    return true;
+  }catch(e){ return false; }
+}
+function saveSession(name, role){
+  const exp = Date.now() + 5*24*60*60*1000; // 5일
+  localStorage.setItem('ev_session', JSON.stringify({name, role, exp}));
+}
+
+
 const STAFF=['관리부','김대희','부회장님','사장님','송성민','최윤철'];
+function isAdmin(){ return currentUser?.role==='admin'; }
+function userName(){ return currentUser?.name||''; }
+
 const COLORS=['#0f7a45','#1752a8','#7a4a1a','#6b1a7a','#b52a1c','#1a6b7a'];
 const now=new Date();
 // 로컬 날짜 (UTC 버그 방지)
@@ -530,6 +654,16 @@ let dpPerson='';
 
 // ── 헤더 날짜 ──
 document.getElementById('hdr-date').textContent=`${now.getMonth()+1}/${now.getDate()}(${DAYS[now.getDay()]})`;
+// 세션 복원
+if(loadSession()){
+  document.getElementById('pin-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('hdr-sub').textContent=`${currentUser.name} · 충전기 1·2·3호기`;
+  autoSelectStaff(currentUser.name);
+  initFB(); renderStats(); setTimeout(loadTempStart,500);
+} else {
+  renderLoginScreen();
+}
 
 // ── PIN ──
 let pinV='';
@@ -538,20 +672,36 @@ function pi(n){
   pinV+=n; updateDots();
   if(pinV.length===4){
     setTimeout(()=>{
-      if(pinV===PIN){
+      const user = USERS[selectedLoginName];
+      if(user && pinV===user.pin){
+        currentUser = {name:selectedLoginName, role:user.role};
+        saveSession(selectedLoginName, user.role);
         document.getElementById('pin-screen').style.display='none';
         document.getElementById('app').style.display='flex';
-        initFB(); renderStats();
+        document.getElementById('hdr-sub').textContent=`${selectedLoginName} · 충전기 1·2·3호기`;
+        autoSelectStaff(selectedLoginName);
+        initFB(); renderStats(); setTimeout(loadTempStart,500);
       } else {
         document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('err'));
-        document.getElementById('pin-err').textContent='번호가 맞지 않습니다';
-        setTimeout(()=>{ pinV=''; updateDots(); document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('err')); document.getElementById('pin-err').textContent=''; },700);
+        document.getElementById('pin-err').textContent='PIN이 맞지 않습니다';
+        setTimeout(()=>{
+          pinV=''; updateDots();
+          document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('err'));
+          document.getElementById('pin-err').textContent='';
+        },700);
       }
     },80);
   }
 }
 function pd(){ pinV=pinV.slice(0,-1); updateDots(); }
 function updateDots(){ document.querySelectorAll('.pin-dot').forEach((d,i)=>d.classList.toggle('on',i<pinV.length)); }
+function autoSelectStaff(name){
+  document.querySelectorAll('#sec-input .card').forEach((card,ci)=>{
+    if(ci===0) card.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===name));
+  });
+  st.staff=name;
+  chkReady();
+}
 
 // ── 탭 ──
 function curTab(){ return ['input','log','stats'].find(t=>document.getElementById('sec-'+t).style.display!=='none')||'input'; }
@@ -586,9 +736,15 @@ function calcK(){
   const num=document.getElementById('calc-num');
   if(!isNaN(s)&&!isNaN(e)&&e>s){ const k=Math.round((e-s)*10)/10; st.kwh=k; num.textContent=k.toFixed(1); box.classList.remove('z'); }
   else { st.kwh=0; num.textContent='—'; box.classList.add('z'); }
+  // 시작만 입력됐고 종료 없으면 임시저장 버튼 표시
+  const startBtn=document.getElementById('start-btn');
+  const tempOk = st.staff&&st.charger&&st.car&&!isNaN(s)&&s>0&&(isNaN(e)||e<=0||document.getElementById('inp-e').value==='');
+  if(startBtn) startBtn.style.display=tempOk?'block':'none';
   chkReady();
 }
-function chkReady(){ document.getElementById('save-btn').disabled=!(st.staff&&st.charger&&st.car&&st.kwh>0); }
+function chkReady(){
+  document.getElementById('save-btn').disabled=!(st.staff&&st.charger&&st.car&&st.kwh>0);
+}
 
 // ── 저장 ──
 function openSaveConfirm(){
@@ -607,6 +763,7 @@ function confirmSave(){
   const rec={id:Date.now(),date:getLocalDate(),...st};
   closeP('pop-save');
   fbSave(rec).then(()=>toast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`)).catch(()=>toast('저장 실패'));
+  clearTemp();
   resetForm();
 }
 function resetForm(){
@@ -801,7 +958,11 @@ async function statsPDF(){
   await new Promise(r=>setTimeout(r,200));
   const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
   const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
+  // A4 한 장 강제 - 캔버스 비율에 맞게 축소
+  const ratio = canvas.height/canvas.width;
+  const pw=210, ph=Math.min(297, pw*ratio);
+  const py=(297-ph)/2; // 세로 중앙
+  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,py,pw,ph);
   doc.save(`${y}년_${m}월_EV충전기록.pdf`);
   area.innerHTML=''; hideLoad(); toast('PDF 저장 완료');
 }
@@ -958,6 +1119,45 @@ function hideLoad(){ document.getElementById('loading').classList.remove('on'); 
     },{passive:true});
   });
 })();
+
+
+/* ══ 충전 시작 임시저장 ══ */
+function saveTempStart(){
+  if(!st.staff||!st.charger||!st.car||!st.start) return;
+  const temp = {
+    staff:st.staff, charger:st.charger, car:st.car,
+    start:st.start, date:getLocalDate()
+  };
+  localStorage.setItem('ev_temp_start', JSON.stringify(temp));
+  document.getElementById('start-btn').style.display='none';
+  document.getElementById('temp-banner').style.display='block';
+  document.getElementById('temp-info').textContent=
+    `${temp.staff} · ${temp.charger} · ${temp.car} · 시작: ${temp.start} kWh · ${temp.date}`;
+  toast('⚡ 충전 시작 임시저장 완료');
+}
+function loadTempStart(){
+  try{
+    const t=localStorage.getItem('ev_temp_start');
+    if(!t) return;
+    const temp=JSON.parse(t);
+    // 오늘 날짜 것만 복원
+    if(temp.date!==getLocalDate()){ localStorage.removeItem('ev_temp_start'); return; }
+    // 폼에 복원
+    st.staff=temp.staff; st.charger=temp.charger; st.car=temp.car; st.start=temp.start;
+    // 칩 선택 복원
+    document.querySelectorAll('#sec-input .card').forEach((card,ci)=>{
+      if(ci===0) card.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===temp.staff));
+      if(ci===1) card.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===temp.charger));
+      if(ci===2) card.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===temp.car));
+    });
+    document.getElementById('inp-s').value=temp.start;
+    document.getElementById('temp-banner').style.display='block';
+    document.getElementById('temp-info').textContent=
+      `${temp.staff} · ${temp.charger} · ${temp.car} · 시작: ${temp.start} kWh · ${temp.date}`;
+    toast('이전 충전 시작 기록 복원됨');
+  }catch(e){}
+}
+function clearTemp(){ localStorage.removeItem('ev_temp_start'); document.getElementById('temp-banner').style.display='none'; }
 
 </script>
 </body>

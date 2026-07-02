@@ -652,7 +652,6 @@ document.getElementById('hdr-date').textContent=`${now.getMonth()+1}/${now.getDa
 if(loadSession()){
   document.getElementById('pin-screen').style.display='none';
   document.getElementById('app').style.display='flex';
-  document.getElementById('hdr-sub').textContent=`${currentUser.name} · 충전기 1·2호기·고속`;
   autoSelectStaff(currentUser.name);
   initFB(); renderStats(); setTimeout(loadTempStart,500);
 } else {
@@ -691,11 +690,13 @@ function pd(){ pinV=pinV.slice(0,-1); updateDots(); }
 function updateDots(){ document.querySelectorAll('.pin-dot').forEach((d,i)=>d.classList.toggle('on',i<pinV.length)); }
 function autoSelectStaff(name){
   st.staff = name;
-  const userEl = document.getElementById('hdr-user');
-  if(userEl){
-    userEl.textContent = name + ' 님 로그인';
-    userEl.style.display = 'block';
-  }
+  // DOM 준비 후 실행 보장
+  const setUser = ()=>{
+    const el = document.getElementById('hdr-user');
+    if(el){ el.textContent = name + ' 님'; el.style.display='block'; }
+  };
+  setUser();
+  setTimeout(setUser, 100); // 세션복원 시 타이밍 보장
   chkReady();
 }
 
@@ -1164,6 +1165,45 @@ function loadTempStart(){
 }
 function clearTemp(){ localStorage.removeItem('ev_temp_start'); document.getElementById('temp-banner').style.display='none'; }
 
+
+
+/* ══ 탭 스와이프 (전체 화면) ══ */
+(()=>{
+  const TABS = ['input','log','stats'];
+  let tx=0, ty=0, dir=null;
+
+  document.addEventListener('touchstart', e=>{
+    if(document.querySelector('.overlay.on')) return;
+    tx = e.touches[0].clientX;
+    ty = e.touches[0].clientY;
+    dir = null;
+  },{passive:true});
+
+  document.addEventListener('touchmove', e=>{
+    if(document.querySelector('.overlay.on')) return;
+    if(dir==='v') return;
+    const dx = e.touches[0].clientX - tx;
+    const dy = e.touches[0].clientY - ty;
+    if(dir===null && (Math.abs(dx)>8 || Math.abs(dy)>8)){
+      dir = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+    }
+  },{passive:true});
+
+  document.addEventListener('touchend', e=>{
+    if(document.querySelector('.overlay.on')) return;
+    if(dir !== 'h') return;
+    const dx = e.changedTouches[0].clientX - tx;
+    const dy = e.changedTouches[0].clientY - ty;
+    // 수평 60px 이상, 수직의 1.5배 이상이어야 탭 전환
+    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)*1.5) return;
+    const cur = TABS.findIndex(t=>
+      document.getElementById('sec-'+t)?.style.display !== 'none'
+    );
+    if(cur === -1) return;
+    if(dx < 0 && cur < TABS.length-1) goTab(TABS[cur+1]); // 왼쪽 → 다음
+    if(dx > 0 && cur > 0)             goTab(TABS[cur-1]); // 오른쪽 → 이전
+  },{passive:true});
+})();
 </script>
 </body>
 </html>

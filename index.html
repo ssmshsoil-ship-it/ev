@@ -325,8 +325,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <div id="app">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="hdr-title">⚡ EV 충전 기록</div><div class="hdr-sub">충전기 1·2·3호기</div></div>
-      <div class="hdr-badge" id="hdr-date"></div>
+      <div>
+        <div class="hdr-title">⚡ EV 충전 기록</div>
+        <div class="hdr-sub">충전기 1·2·3호기</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+        <div class="hdr-badge" id="hdr-date"></div>
+        <div id="hdr-user" style="font-size:12px;font-weight:700;color:var(--blue);display:none"></div>
+      </div>
     </div>
   </div>
   <div class="tabs">
@@ -338,17 +344,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
     <!-- 입력 탭 -->
     <div id="sec-input">
-      <div class="card">
-        <div class="card-title">작성자</div>
-        <div class="chip-grid">
-          <div class="chip" onclick="selStaff(this,'관리부')">관리부</div>
-          <div class="chip" onclick="selStaff(this,'김대희')">김대희</div>
-          <div class="chip" onclick="selStaff(this,'부회장님')">부회장님</div>
-          <div class="chip" onclick="selStaff(this,'사장님')">사장님</div>
-          <div class="chip" onclick="selStaff(this,'송성민')">송성민</div>
-          <div class="chip" onclick="selStaff(this,'최윤철')">최윤철</div>
-        </div>
-      </div>
+
       <div class="card">
         <div class="card-title">충전기</div>
         <div class="chip-grid">
@@ -696,10 +692,11 @@ function pi(n){
 function pd(){ pinV=pinV.slice(0,-1); updateDots(); }
 function updateDots(){ document.querySelectorAll('.pin-dot').forEach((d,i)=>d.classList.toggle('on',i<pinV.length)); }
 function autoSelectStaff(name){
-  document.querySelectorAll('#sec-input .card').forEach((card,ci)=>{
-    if(ci===0) card.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===name));
-  });
-  st.staff=name;
+  // 작성자 자동 세팅 (UI 없이 상태만)
+  st.staff = name;
+  // 헤더에 이름 표시
+  const userEl = document.getElementById('hdr-user');
+  if(userEl){ userEl.textContent = name + ' 님'; userEl.style.display='block'; }
   chkReady();
 }
 
@@ -734,20 +731,28 @@ function calcK(){
   st.start=s; st.end=e;
   const box=document.getElementById('calc-box');
   const num=document.getElementById('calc-num');
-  if(!isNaN(s)&&!isNaN(e)&&e>s){ const k=Math.round((e-s)*10)/10; st.kwh=k; num.textContent=k.toFixed(1); box.classList.remove('z'); }
-  else { st.kwh=0; num.textContent='—'; box.classList.add('z'); }
-  // 시작만 입력됐고 종료 없으면 임시저장 버튼 표시
+  if(!isNaN(s)&&!isNaN(e)&&e>s){
+    const k=Math.round((e-s)*10)/10;
+    st.kwh=k; num.textContent=k.toFixed(1); box.classList.remove('z');
+  } else {
+    st.kwh=0; num.textContent='—'; box.classList.add('z');
+  }
+  // 임시저장 버튼: 충전기+차량 선택됐고 시작값만 있고 종료 없을 때
   const startBtn=document.getElementById('start-btn');
-  const tempOk = st.staff&&st.charger&&st.car&&!isNaN(s)&&s>0&&(isNaN(e)||e<=0||document.getElementById('inp-e').value==='');
-  if(startBtn) startBtn.style.display=tempOk?'block':'none';
+  const eVal = document.getElementById('inp-e').value;
+  const tempOk = st.charger && st.car && !isNaN(s) && s>0 && (!eVal || eVal==='');
+  if(startBtn) startBtn.style.display = tempOk ? 'block' : 'none';
   chkReady();
 }
 function chkReady(){
-  document.getElementById('save-btn').disabled=!(st.staff&&st.charger&&st.car&&st.kwh>0);
+  // staff는 로그인 시 자동 세팅, 별도 체크 불필요
+  if(!st.staff) st.staff = userName();
+  document.getElementById('save-btn').disabled=!(st.charger&&st.car&&st.kwh>0);
 }
 
 // ── 저장 ──
 function openSaveConfirm(){
+  if(!st.staff) st.staff = userName(); // 로그인 사용자 자동
   const d=getLocalDate();
   document.getElementById('save-info').innerHTML=`
     <div class="info-row"><span class="info-key">날짜</span><span class="info-val">${d}</span></div>
@@ -1123,7 +1128,9 @@ function hideLoad(){ document.getElementById('loading').classList.remove('on'); 
 
 /* ══ 충전 시작 임시저장 ══ */
 function saveTempStart(){
-  if(!st.staff||!st.charger||!st.car||!st.start) return;
+  if(!st.charger||!st.car||!st.start) return;
+  // staff는 로그인 세션에서 가져옴
+  st.staff = userName();
   const temp = {
     staff:st.staff, charger:st.charger, car:st.car,
     start:st.start, date:getLocalDate()

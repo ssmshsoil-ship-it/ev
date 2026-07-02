@@ -1069,14 +1069,7 @@ document.querySelectorAll('.overlay').forEach(o=>{
   o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('on'); });
 });
 
-// ── 스와이프 ──
-(()=>{
-  const TABS=['input','log','stats'];
-  let tx=0,ty=0,dir=null;
-  document.addEventListener('touchstart',e=>{ if(document.querySelector('.overlay.on')) return; tx=e.touches[0].clientX; ty=e.touches[0].clientY; dir=null; },{passive:true});
-  document.addEventListener('touchmove',e=>{ if(document.querySelector('.overlay.on')) return; if(dir==='v') return; const dx=e.touches[0].clientX-tx,dy=e.touches[0].clientY-ty; if(dir===null&&(Math.abs(dx)>8||Math.abs(dy)>8)) dir=Math.abs(dx)>Math.abs(dy)?'h':'v'; },{passive:true});
-  document.addEventListener('touchend',e=>{ if(document.querySelector('.overlay.on')) return; if(dir!=='h') return; const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty; if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5) return; const cur=TABS.findIndex(t=>document.getElementById('sec-'+t).style.display!=='none'); if(dx<0&&cur<TABS.length-1) goTab(TABS[cur+1]); if(dx>0&&cur>0) goTab(TABS[cur-1]); },{passive:true});
-})();
+// ── 스와이프: 하단 탭 스와이프 코드로 통합 ──
 
 // ── 유틸 ──
 function toast(msg,dur=2200){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),dur); }
@@ -1194,14 +1187,14 @@ function clearTemp(){ localStorage.removeItem('ev_temp_start'); document.getElem
     if(dir !== 'h') return;
     const dx = e.changedTouches[0].clientX - tx;
     const dy = e.changedTouches[0].clientY - ty;
-    // 수평 60px 이상, 수직의 1.5배 이상이어야 탭 전환
     if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)*1.5) return;
+    // 현재 탭 감지: goTab이 관리하는 on 클래스 기준
     const cur = TABS.findIndex(t=>
-      document.getElementById('sec-'+t)?.style.display !== 'none'
+      document.querySelector(`.tab:nth-child(${TABS.indexOf(t)+1})`)?.classList.contains('on')
     );
     if(cur === -1) return;
-    if(dx < 0 && cur < TABS.length-1) goTab(TABS[cur+1]); // 왼쪽 → 다음
-    if(dx > 0 && cur > 0)             goTab(TABS[cur-1]); // 오른쪽 → 이전
+    if(dx < 0 && cur < TABS.length-1) goTab(TABS[cur+1]);
+    if(dx > 0 && cur > 0)             goTab(TABS[cur-1]);
   },{passive:true});
 })();
 </script>

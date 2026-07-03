@@ -279,6 +279,22 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   border-color:var(--blue);
   box-shadow:0 2px 8px rgba(23,82,168,.35);
 }
+
+/* 충전기 계량기 수치 */
+.chip-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.chip-wrap{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+.chip-wrap .chip{ width:100%; }
+.charger-meter{
+  font-size:11px; font-weight:700;
+  font-family:'IBM Plex Mono', monospace;
+  color:var(--green); background:var(--green-bg);
+  border:1px solid var(--green-bd);
+  border-radius:6px; padding:2px 6px;
+  min-height:18px; text-align:center;
+  width:100%; letter-spacing:-.3px;
+  transition:all .3s;
+}
+.charger-meter.empty{ color:var(--text3); background:transparent; border-color:transparent; }
 </style>
 </head>
 <body>
@@ -346,9 +362,18 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="card">
         <div class="card-title">충전기</div>
         <div class="chip-grid">
-          <div class="chip" onclick="selChip(this,'charger','1호기')">1호기</div>
-          <div class="chip" onclick="selChip(this,'charger','2호기')">2호기</div>
-          <div class="chip" onclick="selChip(this,'charger','고속')">고속</div>
+          <div class="chip-wrap">
+            <div class="chip" onclick="selChip(this,'charger','1호기')">1호기</div>
+            <div class="charger-meter" id="meter-1호기"></div>
+          </div>
+          <div class="chip-wrap">
+            <div class="chip" onclick="selChip(this,'charger','2호기')">2호기</div>
+            <div class="charger-meter" id="meter-2호기"></div>
+          </div>
+          <div class="chip-wrap">
+            <div class="chip" onclick="selChip(this,'charger','고속')">고속</div>
+            <div class="charger-meter" id="meter-고속"></div>
+          </div>
         </div>
       </div>
       <div class="card">
@@ -549,6 +574,12 @@ function initFB(){
         const t=curTab();
         if(t==='log') renderLog();
         if(t==='stats') renderStats();
+        updateChargerMeters();
+      });
+      // 충전중 상태 실시간 구독
+      DB.ref('ev_charging').on('value', snap=>{
+        chargingState = snap.exists() ? snap.val() : {};
+        updateChargerMeters();
       });
     }).catch(e=>{ console.warn('FB auth fail',e.message); loadLocal(); });
   }catch(e){ console.warn('FB init fail',e.message); loadLocal(); }
@@ -645,6 +676,7 @@ let editId=null, editSt={};
 let vm={y:now.getFullYear(),m:now.getMonth()+1};
 let vy={y:now.getFullYear()};
 let dpPerson='';
+let chargingState={}; // {charger: {staff, start, date}}
 
 // ── 헤더 날짜 ──
 document.getElementById('hdr-date').textContent=`${now.getMonth()+1}/${now.getDate()}(${DAYS[now.getDay()]})`;
@@ -767,7 +799,13 @@ function openSaveConfirm(){
 function confirmSave(){
   const rec={id:Date.now(),date:getLocalDate(),...st};
   closeP('pop-save');
-  fbSave(rec).then(()=>toast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`)).catch(()=>toast('저장 실패'));
+  const chargerKey = st.charger;
+  fbSave(rec).then(()=>{
+    toast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`);
+    // 충전중 상태 해제
+    if(fbOK && DB) DB.ref('ev_charging/' + chargerKey).remove();
+    updateChargerMeters();
+  }).catch(()=>toast('저장 실패'));
   clearTemp();
   resetForm();
 }
@@ -1122,13 +1160,18 @@ function hideLoad(){ document.getElementById('loading').classList.remove('on'); 
 /* ══ 충전 시작 임시저장 ══ */
 function saveTempStart(){
   if(!st.charger||!st.car||!st.start) return;
-  // staff는 로그인 세션에서 가져옴
   st.staff = userName();
   const temp = {
     staff:st.staff, charger:st.charger, car:st.car,
     start:st.start, date:getLocalDate()
   };
   localStorage.setItem('ev_temp_start', JSON.stringify(temp));
+  // Firebase ev_charging 에 충전중 상태 기록
+  if(fbOK && DB){
+    DB.ref('ev_charging/' + st.charger).set({   start: st.start, date: getLocalDate(),
+      ts: Date.now()
+    });
+  }
   document.getElementById('start-btn').style.display='none';
   document.getElementById('temp-banner').style.display='block';
   document.getElementById('temp-info').textContent=
@@ -1197,6 +1240,39 @@ function clearTemp(){ localStorage.removeItem('ev_temp_start'); document.getElem
     if(dx > 0 && cur > 0)             goTab(TABS[cur-1]);
   },{passive:true});
 })();
+
+/* ══ 충전기 계량기 수치 업데이트 ══ */
+function updateChargerMeters(){
+  ['1호기','2호기','고속'].forEach(charger=>{
+    const el = document.getElementById('meter-' + charger);
+    if(!el) return;
+    const key = charger;
+    // 충전중 상태 확인
+    const charging = chargingState[key];
+    if(charging){
+      el.textContent = `⚡ ${charging.staff} 충전중`;
+      el.style.color = 'var(--orange)';
+      el.style.background = 'var(--orange-bg)';
+      el.style.borderColor = 'var(--orange-bd)';
+      el.classList.remove('empty');
+      return;
+    }
+    // 최근 종료값 표시
+    const recs = records.filter(r=>r.charger===charger && r.end);
+    if(recs.length === 0){
+      el.textContent = '';
+      el.classList.add('empty');
+      return;
+    }
+    const latest = recs[0];
+    el.textContent = latest.end.toFixed(1) + ' kWh';
+    el.style.color = 'var(--green)';
+    el.style.background = 'var(--green-bg)';
+    el.style.borderColor = 'var(--green-bd)';
+    el.classList.remove('empty');
+  });
+}
+
 </script>
 </body>
 </html>

@@ -826,10 +826,14 @@ function renderLog(){
   if(!records.length){ el.innerHTML='<div style="text-align:center;color:var(--text3);padding:40px;font-size:14px">기록이 없습니다</div>'; return; }
   el.innerHTML=records.map(r=>{
     const col=COLORS[STAFF.indexOf(r.staff)]||'#888';
+    const cc=chargerColor(r.charger);
     return `<div class="log-item" onclick="openEdit(${r.id})">
       <div class="log-bar" style="background:${col}"></div>
       <div class="log-body">
-        <div class="log-top">${r.staff}<span class="log-car">${r.car} · ${r.charger}</span></div>
+        <div class="log-top">${r.staff}
+          <span class="log-car" style="background:${cc.bg};color:${cc.color};border-color:${cc.border}">${r.charger}</span>
+          <span class="log-car">${r.car}</span>
+        </div>
         <div class="log-bot">${r.date} &nbsp; ${r.start} → ${r.end}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
@@ -1244,6 +1248,14 @@ function clearTemp(){ localStorage.removeItem('ev_temp_start'); document.getElem
   },{passive:true});
 })();
 
+
+/* ══ 충전기별 색상 ══ */
+function chargerColor(ch){
+  if(ch==='1호기') return {bg:'#e8eefc',color:'#1752a8',border:'#a0b8ef'};
+  if(ch==='2호기') return {bg:'#e6f5ee',color:'#0f7a45',border:'#a8d9be'};
+  if(ch==='고속')  return {bg:'#fff0e6',color:'#c45c00',border:'#f5c49a'};
+  return {bg:'var(--surface2)',color:'var(--text3)',border:'var(--border)'};
+}
 /* ══ 로그아웃 ══ */
 function logout(){
   localStorage.removeItem('ev_session');

@@ -27,9 +27,9 @@
   --red:#b52a1c;--red-bg:#fdecea;--red-bd:#e8a8a0;
   --r:12px;--rs:8px;--rx:6px;
 }
-html{overscroll-behavior:none;font-size:16px;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html{overscroll-behavior:none;font-size:16px;-webkit-text-size-adjust:100%;text-size-adjust:100%;zoom:1}
 :root{--sab:env(safe-area-inset-bottom,16px)}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden;zoom:1;-ms-content-zooming:none}
 
 /* ── PIN ── */
 #pin-screen{
@@ -801,16 +801,16 @@ function openSaveConfirm(){
 }
 function confirmSave(){
   const rec={id:Date.now(),date:getLocalDate(),...st};
-  closeP('pop-save');
+  const savedKwh = st.kwh;      // resetForm 전에 미리 저장
   const chargerKey = st.charger;
+  closeP('pop-save');
+  clearTemp();
+  resetForm();
   fbSave(rec).then(()=>{
-    toast(`✓ ${st.kwh.toFixed(1)} kWh 저장 완료`);
-    // 충전중 상태 해제
+    toast(`✓ ${savedKwh.toFixed(1)} kWh 저장 완료`);
     if(fbOK && DB) DB.ref('ev_charging/' + chargerKey).remove();
     updateChargerMeters();
   }).catch(()=>toast('저장 실패'));
-  clearTemp();
-  resetForm();
 }
 function resetForm(){
   st={staff:'',charger:'',car:'',start:0,end:0,kwh:0};

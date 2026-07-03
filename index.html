@@ -925,6 +925,9 @@ function renderStats(){
     <div class="dl-row">
       <button class="dl-btn pdf" onclick="statsPDF()">⬇ PDF</button>
       <button class="dl-btn xls" onclick="statsCSV()">⬇ 엑셀</button>
+    </div>
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
+      <button onclick="logout()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:10px 28px;font-size:14px;font-weight:600;color:var(--text3);cursor:pointer;font-family:'Noto Sans KR',sans-serif">로그아웃</button>
     </div>`;
 }
 
@@ -1240,6 +1243,19 @@ function clearTemp(){ localStorage.removeItem('ev_temp_start'); document.getElem
     if(dx > 0 && cur > 0)             goTab(TABS[cur-1]);
   },{passive:true});
 })();
+
+/* ══ 로그아웃 ══ */
+function logout(){
+  localStorage.removeItem('ev_session');
+  localStorage.removeItem('ev_temp_start');
+  currentUser = null;
+  selectedLoginName = '';
+  loginStep = 'name';
+  pinV = '';
+  document.getElementById('app').style.display='none';
+  document.getElementById('pin-screen').style.display='flex';
+  renderLoginScreen();
+}
 
 /* ══ 충전기 계량기 수치 업데이트 ══ */
 function updateChargerMeters(){

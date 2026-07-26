@@ -7,6 +7,8 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <title>EV 충전 기록</title>
@@ -27,9 +29,9 @@
   --red:#b52a1c;--red-bg:#fdecea;--red-bd:#e8a8a0;
   --r:12px;--rs:8px;--rx:6px;
 }
-html{overscroll-behavior:none;font-size:16px;-webkit-text-size-adjust:100%;text-size-adjust:100%;zoom:1}
+html{overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 :root{--sab:env(safe-area-inset-bottom,16px)}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden;zoom:1;-ms-content-zooming:none}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden}
 
 /* ── PIN ── */
 #pin-screen{

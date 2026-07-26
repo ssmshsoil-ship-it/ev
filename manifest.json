@@ -1,0 +1,24 @@
+{
+  "name": "EV 충전 기록",
+  "short_name": "EV충전",
+  "description": "전기차 충전 기록 관리",
+  "start_url": "/ev/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1752a8",
+  "theme_color": "#1752a8",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

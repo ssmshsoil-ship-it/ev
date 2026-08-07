@@ -1180,7 +1180,11 @@ function saveTempStart(){
   localStorage.setItem('ev_temp_start', JSON.stringify(temp));
   // Firebase ev_charging 에 충전중 상태 기록
   if(fbOK && DB){
-    DB.ref('ev_charging/' + st.charger).set({   start: st.start, date: getLocalDate(),
+    DB.ref('ev_charging/' + st.charger).set({
+      staff: st.staff,
+      car: st.car,
+      start: st.start,
+      date: getLocalDate(),
       ts: Date.now()
     });
   }

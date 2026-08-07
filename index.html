@@ -315,8 +315,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;margin-bottom:16px">
         <button class="pin-name-btn" onclick="selectName('관리부')">관리부</button>
         <button class="pin-name-btn" onclick="selectName('김대희')">김대희</button>
-        <button class="pin-name-btn" onclick="selectName('부회장님')">부회장님</button>
-        <button class="pin-name-btn" onclick="selectName('사장님')">사장님</button>
+        <button class="pin-name-btn" onclick="selectName('송상훈')">송상훈</button>
+        <button class="pin-name-btn" onclick="selectName('송승훈')">송승훈</button>
         <button class="pin-name-btn" onclick="selectName('송성민')">송성민</button>
         <button class="pin-name-btn" onclick="selectName('최윤철')">최윤철</button>
       </div>
@@ -636,8 +636,8 @@ const USERS = {
   '김대희': {pin:'9927', role:'user'},
   '송성민': {pin:'9966', role:'user'},
   '최윤철': {pin:'0857', role:'user'},
-  '사장님': {pin:'0292', role:'user'},
-  '부회장님':{pin:'7621', role:'user'},
+  '송승훈': {pin:'0292', role:'user'},
+  '송상훈':{pin:'7621', role:'user'},
 };
 let currentUser = null; // {name, role}
 
@@ -657,7 +657,7 @@ function saveSession(name, role){
 }
 
 
-const STAFF=['관리부','김대희','부회장님','사장님','송성민','최윤철'];
+const STAFF=['관리부','김대희','송상훈','송승훈','송성민','최윤철'];
 function isAdmin(){ return currentUser?.role==='admin'; }
 function userName(){ return currentUser?.name||''; }
 
@@ -1283,7 +1283,8 @@ function updateChargerMeters(){
     // 충전중 상태 확인
     const charging = chargingState[key];
     if(charging){
-      el.textContent = `⚡ ${charging.staff} 충전중`;
+      const staffName = charging.staff || '사용자';
+      el.textContent = `⚡ ${staffName} 충전중`;
       el.style.color = 'var(--orange)';
       el.style.background = 'var(--orange-bg)';
       el.style.borderColor = 'var(--orange-bd)';

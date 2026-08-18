@@ -1370,10 +1370,12 @@ function scrollMeterIntoView(){
     const saveBtn = document.getElementById('save-btn');
     if(!content || !saveBtn) return;
     if(kbHeight > 100){
+      content.style.paddingBottom = kbHeight + 'px';
       const btnRect = saveBtn.getBoundingClientRect();
       const diff = btnRect.bottom - window.visualViewport.height;
       content.scrollTop = content.scrollTop + diff;
     } else {
+      content.style.paddingBottom = '';
       content.scrollTop = 0;
     }
   });

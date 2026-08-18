@@ -1367,8 +1367,16 @@ function scrollMeterIntoView(){
   window.visualViewport.addEventListener('resize', function onVVResize(){
     const kbHeight = window.innerHeight - window.visualViewport.height;
     const content = document.getElementById('content');
-    if(content){
-      content.style.paddingBottom = kbHeight > 100 ? (kbHeight + 20) + 'px' : '';
+    const saveBtn = document.getElementById('save-btn');
+    if(!content || !saveBtn) return;
+    if(kbHeight > 100){
+      content.style.paddingBottom = '4px';
+      const btnRect = saveBtn.getBoundingClientRect();
+      const visibleBottom = window.visualViewport.height;
+      const diff = btnRect.bottom - visibleBottom;
+      if(diff > 0) content.scrollTop += diff + 8;
+    } else {
+      content.style.paddingBottom = '';
     }
   });
 }

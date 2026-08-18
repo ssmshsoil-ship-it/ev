@@ -34,7 +34,7 @@
 html{overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 :root{--sab:env(safe-area-inset-bottom,16px)}
 html{overscroll-behavior:none}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden;overscroll-behavior:none}
 
 /* ── PIN ── */
 #pin-screen{
@@ -66,7 +66,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .pin-err{font-size:14px;color:var(--red);margin-top:16px;height:20px;font-weight:500}
 
 /* ── 앱 레이아웃 ── */
-#app{display:none;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+#app{display:none;flex-direction:column;height:100vh;overflow:hidden}
 .hdr{background:#fff;border-bottom:2px solid var(--border);padding:13px 18px 11px;flex-shrink:0}
 .hdr-row{display:flex;align-items:center;justify-content:space-between}
 .hdr-title{font-size:18px;font-weight:700;letter-spacing:-.4px}
@@ -1363,38 +1363,10 @@ function manualRefresh(){
 
 /* ══ 키보드 시 계량기 카드 자동 스크롤 ══ */
 function scrollMeterIntoView(){
-  const content = document.getElementById('content');
-  const saveBtn = document.getElementById('save-btn');
-  if(!content || !saveBtn) return;
-
-  const doScroll = ()=>{
-    const btnRect = saveBtn.getBoundingClientRect();
-    const contentRect = content.getBoundingClientRect();
-    const overflow = btnRect.bottom - contentRect.bottom;
-    if(overflow > 0){
-      content.scrollTop += overflow + 16;
-    }
-  };
-
-  // 키패드가 뜨면 content 하단에 여백을 강제로 만들어
-  // 스크롤할 공간 자체를 확보 (핵심 수정)
-  content.style.paddingBottom = '340px';
-
-  if(window.visualViewport){
-    window.visualViewport.addEventListener('resize', doScroll, {once:true});
-    setTimeout(doScroll, 120);
-    setTimeout(doScroll, 350);
-  } else {
-    [150, 350, 600].forEach(delay=> setTimeout(doScroll, delay));
-  }
+  // 화면 고정 방식으로 복귀 - 자동 스크롤 비활성화
 }
-
-// 계량기 입력 포커스 해제(blur) 시 원래 여백으로 복원
 function restoreContentPadding(){
-  setTimeout(()=>{
-    const content = document.getElementById('content');
-    if(content) content.style.paddingBottom = '';
-  }, 200);
+  // 화면 고정 방식으로 복귀 - 자동 스크롤 비활성화
 }
 /* ══ 로그아웃 ══ */
 function logout(){

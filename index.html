@@ -25,10 +25,10 @@
 :root{
   --bg:#f2f3f5;--surface:#fff;--surface2:#eaebee;--border:#d8dae0;--border2:#b8bbc6;
   --text:#111318;--text2:#44475a;--text3:#888b9e;
-  --green:#0f7a45;--green-bg:#e6f5ee;--green-bd:#a8d9be;
+  --green:#00A952;--green-bg:#E6F8EE;--green-bd:#8ADCAE;
   --blue:#1752a8;--blue-bg:#e8eefc;--blue-bd:#a0b8ef;
-  --orange:#c45c00;--orange-bg:#fff0e6;--orange-bd:#f5c49a;
-  --red:#b52a1c;--red-bg:#fdecea;--red-bd:#e8a8a0;
+  --orange:#FF7315;--orange-bg:#FFF0E5;--orange-bd:#FFC299;
+  --red:#E53935;--red-bg:#FDECEC;--red-bd:#F5A8A5;
   --r:12px;--rs:8px;--rx:6px;
 }
 html{overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -73,7 +73,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .hdr-sub{font-size:12px;color:var(--text3);margin-top:2px;font-weight:500}
 .hdr-badge{font-size:12px;font-weight:700;color:var(--green);background:var(--green-bg);border:1.5px solid var(--green-bd);border-radius:6px;padding:4px 10px;font-family:'IBM Plex Mono',monospace}
 .tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);flex-shrink:0}
-.tab{flex:1;padding:12px 0;font-size:14px;font-weight:600;color:var(--text3);text-align:center;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:none;transition:all .15s}
+.tab{flex:1;padding:13px 0;font-size:16px;font-weight:700;color:var(--text3);text-align:center;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:none;transition:all .15s}
 .tab.on{color:var(--blue);border-bottom-color:var(--blue)}
 .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(24px + var(--sab));overscroll-behavior-y:contain}
 
@@ -83,7 +83,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 /* ── 칩 ── */
 .chip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.chip{padding:10px 8px;border-radius:22px;font-size:14px;font-weight:600;background:var(--surface2);border:1.5px solid var(--border);color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .12s;text-align:center;-webkit-tap-highlight-color:transparent}
+.chip{padding:10px 8px;border-radius:22px;font-size:14px;font-weight:700;background:var(--surface2);border:1.5px solid var(--border);color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .12s;text-align:center;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
 .chip:active{transform:scale(.95)}
 .chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
 
@@ -91,7 +91,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .input-row{display:flex;gap:10px;margin-top:12px}
 .input-field{flex:1;display:flex;flex-direction:column;gap:5px}
 .input-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.3px}
-.input-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:13px 14px;font-size:18px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text);outline:none;width:100%;-webkit-appearance:none;transition:border-color .15s}
+.input-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:13px 14px;font-size:18px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text);outline:none;width:100%;text-align:center;-webkit-appearance:none;transition:border-color .15s}
 .input-box:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px var(--blue-bg)}
 
 /* ── 계산 결과 ── */
@@ -100,12 +100,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .cl-lbl{font-size:13px;font-weight:700;color:var(--green)}
 .cl-sub{font-size:11px;color:var(--text3);margin-top:3px}
 .calc-box.z .cl-lbl{color:var(--text3)}
-.calc-num{font-size:34px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--green);line-height:1}
+.calc-num{font-size:34px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green);line-height:1}
 .calc-box.z .calc-num{color:var(--text3)}
 .calc-unit{font-size:15px;color:var(--text3);font-weight:600}
 
 /* ── 저장 버튼 ── */
-.save-btn{width:100%;padding:16px;border-radius:var(--rs);background:var(--blue);color:#fff;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:-.2px;-webkit-tap-highlight-color:transparent;margin-top:4px}
+.save-btn{width:100%;padding:16px;border-radius:var(--rs);background:var(--blue);color:#fff;font-size:16px;font-weight:800;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:-.2px;-webkit-tap-highlight-color:transparent;margin-top:4px}
 .save-btn:active{opacity:.8}
 .save-btn:disabled{opacity:.25;cursor:not-allowed}
 
@@ -117,14 +117,16 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .log-top{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
 .log-car{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 7px;border-radius:4px;font-weight:600}
 .log-bot{font-size:11px;color:var(--text3);margin-top:3px;font-family:'IBM Plex Mono',monospace}
-.log-kwh{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;flex-shrink:0}
+.log-kwh{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;flex-shrink:0}
 .edit-tag{font-size:11px;color:var(--blue);background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:5px;padding:3px 8px;font-weight:600;flex-shrink:0}
 
 /* ── 통계 ── */
 .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .stat-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:13px}
 .stat-label{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:5px;text-transform:uppercase}
-.stat-val{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1}
+
+.stat-inline{display:flex;align-items:baseline;justify-content:center;gap:4px}
+.stat-val{font-size:20px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1}
 .stat-unit{font-size:10px;color:var(--text3);margin-top:4px;font-weight:600}
 .sec-title{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:14px 0 9px}
 
@@ -136,7 +138,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .sname{font-size:13px;font-weight:700;color:var(--text);width:52px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
 .bar-fill{height:100%;border-radius:3px}
-.skwh{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--text2);width:64px;text-align:right;flex-shrink:0}
+.skwh{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:800;color:var(--text2);width:64px;text-align:right;flex-shrink:0}
 .spct{font-size:11px;color:var(--text3);width:32px;text-align:right;flex-shrink:0;font-weight:600}
 .s-arrow{font-size:14px;color:var(--text3);flex-shrink:0}
 
@@ -144,7 +146,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .charger-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .charger-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:12px;text-align:center}
 .cno{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;margin-bottom:5px;text-transform:uppercase}
-.ckwh{font-size:17px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+.ckwh{font-size:17px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--text)}
 .cunit{font-size:10px;color:var(--text3);margin-top:2px;font-weight:600}
 .cbar{height:4px;background:var(--surface2);border-radius:2px;margin-top:8px;overflow:hidden}
 .cbar-fill{height:100%;border-radius:2px;background:var(--orange)}
@@ -168,7 +170,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .mbadge{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);width:36px;flex-shrink:0}
 .mbar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
 .mbar-fill{height:100%;border-radius:3px;background:var(--blue)}
-.mkwh{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--blue);width:76px;text-align:right;flex-shrink:0}
+.mkwh{font-size:13px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--blue);width:76px;text-align:right;flex-shrink:0}
 .mcnt{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0}
 
 /* ── 팝업 공통 ── */
@@ -186,12 +188,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
 .info-row:last-child{border-bottom:none}
 .info-key{font-size:13px;color:var(--text3);font-weight:600}
-.info-val{font-size:14px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace}
+.info-val{font-size:14px;font-weight:800;color:var(--text);font-family:'IBM Plex Mono',monospace}
 .info-val.big{font-size:22px;color:var(--green)}
 .user-box{background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:var(--rs);padding:16px;text-align:center;margin-bottom:16px}
 .user-name{font-size:28px;font-weight:700;color:var(--blue)}
 .btn-row{display:flex;gap:9px}
-.btn{flex:1;padding:14px;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);-webkit-tap-highlight-color:transparent;letter-spacing:-.2px}
+.btn{flex:1;padding:14px;border-radius:var(--rs);font-size:15px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);-webkit-tap-highlight-color:transparent;letter-spacing:-.2px}
 .btn:active{opacity:.7}
 .btn.confirm{background:var(--blue);color:#fff;border-color:var(--blue)}
 .btn.danger{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
@@ -214,14 +216,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .dp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 .dp-stat{background:var(--surface2);border-radius:var(--rs);padding:11px 10px;text-align:center}
 .dp-stat-label{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.4px;margin-bottom:4px;text-transform:uppercase}
-.dp-stat-val{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+.dp-stat-val{font-size:18px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--text)}
 .dp-stat-unit{font-size:10px;color:var(--text3);font-weight:600;margin-top:2px}
 .dp-row{background:var(--surface2);border-radius:var(--rs);padding:10px 13px;display:flex;align-items:center;gap:10px;margin-bottom:7px}
 .dp-date{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;width:52px;flex-shrink:0;white-space:nowrap}
 .dp-info{flex:1;min-width:0}
 .dp-car{font-size:12px;font-weight:600;color:var(--text2)}
 .dp-meter{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:2px}
-.dp-kwh{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+.dp-kwh{font-size:15px;font-weight:800;font-family:'IBM Plex Mono',monospace;flex-shrink:0}
 
 /* ── 토스트/로딩 ── */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:#fff;border-radius:22px;padding:11px 20px;font-size:14px;font-weight:600;z-index:400;opacity:0;transition:all .22s;white-space:nowrap;pointer-events:none}
@@ -253,10 +255,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .psval{font-family:'IBM Plex Mono',monospace;font-weight:700;color:#111}
 .ptotal{background:#e8edf5;border:1.5px solid #b0b8cc;border-radius:6px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center}
 .pt-label{font-size:14px;font-weight:700;color:#111}
-.pt-val{font-size:24px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#1752a8}
+.pt-val{font-size:24px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#1752a8}
 .pfoot{margin-top:20px;text-align:center;font-size:10px;color:#bbb}
 
-@media(max-width:380px){.content{padding:10px}.stat-val{font-size:17px}.chip{font-size:13px;padding:8px 13px}}
+@media(max-width:380px){.content{padding:10px}
+.stat-inline{display:flex;align-items:baseline;justify-content:center;gap:4px}
+.stat-val{font-size:17px}.chip{font-size:13px;padding:8px 13px}}
 
 /* 수정 팝업 컴팩트 */
 .popup-compact{padding:14px 16px 20px;max-height:96vh}
@@ -357,7 +361,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div style="display:flex;align-items:center;gap:8px">
         <div class="hdr-badge" id="hdr-date"></div>
         <button onclick="manualRefresh()" id="refresh-btn"
-          style="background:var(--surface2);border:1.5px solid var(--border);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent">
+          style="background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--blue)">
             <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
             <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
@@ -405,11 +409,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         </div>
         <input id="car-manual" class="input-box" style="margin-top:10px;display:none" placeholder="차량번호 입력" oninput="st.car=this.value;chkReady()">
       </div>
-      <div class="card">
+      <div class="card" id="meter-card">
         <div class="card-title">계량기 수치 (kWh)</div>
         <div class="input-row">
-          <div class="input-field"><div class="input-label">충전 시작</div><input class="input-box" id="inp-s" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()"></div>
-          <div class="input-field"><div class="input-label">충전 종료</div><input class="input-box" id="inp-e" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()"></div>
+          <div class="input-field"><div class="input-label">충전 시작</div><input class="input-box" id="inp-s" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()" onfocus="scrollMeterIntoView()"></div>
+          <div class="input-field"><div class="input-label">충전 종료</div><input class="input-box" id="inp-e" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()" onfocus="scrollMeterIntoView()"></div>
         </div>
         <div class="calc-box z" id="calc-box">
           <div><div class="cl-lbl">충전량 자동계산</div><div class="cl-sub">종료 − 시작</div></div>
@@ -966,9 +970,9 @@ function renderStats(){
   const maxC=Math.max(...Object.values(cMap),0.1);
   document.getElementById('stats-content').innerHTML=`
     <div class="stat-row">
-      <div class="stat-card"><div class="stat-label">총충전량</div><div class="stat-val" style="color:var(--green)">${total.toFixed(1)}</div><div class="stat-unit">kWh</div></div>
-      <div class="stat-card"><div class="stat-label">충전횟수</div><div class="stat-val">${rows.length}</div><div class="stat-unit">회</div></div>
-      <div class="stat-card"><div class="stat-label">평균/회</div><div class="stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</div><div class="stat-unit">kWh</div></div>
+      <div class="stat-card"><div class="stat-label">총충전량</div><div class="stat-inline"><span class="stat-val" style="color:var(--green)">${total.toFixed(1)}</span><span class="stat-unit">kWh</span></div></div>
+      <div class="stat-card"><div class="stat-label">충전횟수</div><div class="stat-inline"><span class="stat-val">${rows.length}</span><span class="stat-unit">회</span></div></div>
+      <div class="stat-card"><div class="stat-label">평균/회</div><div class="stat-inline"><span class="stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</span><span class="stat-unit">kWh</span></div></div>
     </div>
     <div class="sec-title">사용자별 <span style="font-size:10px;color:var(--blue);margin-left:4px;font-weight:600">클릭 → 상세</span></div>
     <div class="staff-card">
@@ -984,14 +988,14 @@ function renderStats(){
     <div class="sec-title">충전기별</div>
     <div class="charger-row">
       ${['1호기','2호기','고속'].map(c=>{ const k=cMap[c]||0,w=Math.round(k/maxC*100);
-        return `<div class="charger-card"><div class="cno">${c}</div><div class="ckwh">${k.toFixed(1)}</div><div class="cunit">kWh</div><div class="cbar"><div class="cbar-fill" style="width:${w}%"></div></div></div>`; }).join('')}
+        return `<div class="charger-card"><div class="cno">${c}</div><div class="stat-inline" style="justify-content:center"><span class="ckwh">${k.toFixed(1)}</span><span class="cunit" style="margin-top:0">kWh</span></div><div class="cbar"><div class="cbar-fill" style="width:${w}%"></div></div></div>`; }).join('')}
     </div>
     <div class="dl-row">
       <button class="dl-btn pdf" onclick="statsPDF()">⬇ PDF</button>
       <button class="dl-btn xls" onclick="statsCSV()">⬇ 엑셀</button>
     </div>
     <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
-      <button onclick="logout()" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:10px 28px;font-size:14px;font-weight:600;color:var(--text3);cursor:pointer;font-family:'Noto Sans KR',sans-serif">로그아웃</button>
+      <button onclick="logout()" style="background:var(--red-bg);border:1.5px solid var(--red-bd);border-radius:8px;padding:10px 28px;font-size:14px;font-weight:700;color:var(--red);cursor:pointer;font-family:'Noto Sans KR',sans-serif">로그아웃</button>
     </div>`;
 }
 
@@ -1007,9 +1011,9 @@ function openDetail(name){
   document.getElementById('dp-name').textContent=name;
   document.getElementById('dp-period').textContent=`${y}년 ${m}월`;
   document.getElementById('dp-stats').innerHTML=`
-    <div class="dp-stat"><div class="dp-stat-label">충전량</div><div class="dp-stat-val" style="color:${col}">${total.toFixed(1)}</div><div class="dp-stat-unit">kWh</div></div>
-    <div class="dp-stat"><div class="dp-stat-label">횟수</div><div class="dp-stat-val">${rows.length}</div><div class="dp-stat-unit">회</div></div>
-    <div class="dp-stat"><div class="dp-stat-label">평균/회</div><div class="dp-stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</div><div class="dp-stat-unit">kWh</div></div>`;
+    <div class="dp-stat"><div class="dp-stat-label">충전량</div><div class="stat-inline" style="justify-content:center"><span class="dp-stat-val" style="color:${col}">${total.toFixed(1)}</span><span class="dp-stat-unit" style="margin-top:0">kWh</span></div></div>
+    <div class="dp-stat"><div class="dp-stat-label">횟수</div><div class="stat-inline" style="justify-content:center"><span class="dp-stat-val">${rows.length}</span><span class="dp-stat-unit" style="margin-top:0">회</span></div></div>
+    <div class="dp-stat"><div class="dp-stat-label">평균/회</div><div class="stat-inline" style="justify-content:center"><span class="dp-stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</span><span class="dp-stat-unit" style="margin-top:0">kWh</span></div></div>`;
   document.getElementById('dp-body').innerHTML=rows.length
     ? rows.map(r=>`<div class="dp-row">
         <div class="dp-date">${r.date.slice(5).replace('-','.')}</div>
@@ -1108,9 +1112,9 @@ function renderYear(){
   const maxM=Math.max(...Object.values(mMap).map(v=>v.kwh),0.1);
   document.getElementById('yr-content').innerHTML=`
     <div class="stat-row" style="margin-bottom:12px">
-      <div class="stat-card"><div class="stat-label">연간충전</div><div class="stat-val" style="color:var(--blue)">${total.toFixed(1)}</div><div class="stat-unit">kWh</div></div>
-      <div class="stat-card"><div class="stat-label">총횟수</div><div class="stat-val">${yr.length}</div><div class="stat-unit">회</div></div>
-      <div class="stat-card"><div class="stat-label">월평균</div><div class="stat-val">${(total/12).toFixed(1)}</div><div class="stat-unit">kWh</div></div>
+      <div class="stat-card"><div class="stat-label">연간충전</div><div class="stat-inline"><span class="stat-val" style="color:var(--blue)">${total.toFixed(1)}</span><span class="stat-unit">kWh</span></div></div>
+      <div class="stat-card"><div class="stat-label">총횟수</div><div class="stat-inline"><span class="stat-val">${yr.length}</span><span class="stat-unit">회</span></div></div>
+      <div class="stat-card"><div class="stat-label">월평균</div><div class="stat-inline"><span class="stat-val">${(total/12).toFixed(1)}</span><span class="stat-unit">kWh</span></div></div>
     </div>
     <div class="sec-title">월별 충전량</div>
     ${Array.from({length:12},(_,i)=>{ const m=i+1,{kwh,cnt}=mMap[m],w=Math.round(kwh/maxM*100);
@@ -1354,6 +1358,20 @@ function manualRefresh(){
     fbInitialized = false;
     initFB();
   }
+}
+
+/* ══ 키보드 시 계량기 카드 자동 스크롤 ══ */
+function scrollMeterIntoView(){
+  setTimeout(()=>{
+    const card = document.getElementById('meter-card');
+    const saveBtn = document.getElementById('save-btn');
+    if(card && saveBtn){
+      // 저장 버튼까지 보이도록 스크롤 (계량기+계산결과+저장버튼 전부 노출)
+      saveBtn.scrollIntoView({block:'end', behavior:'smooth'});
+    } else if(card){
+      card.scrollIntoView({block:'center', behavior:'smooth'});
+    }
+  }, 300); // 키보드 애니메이션 완료 대기
 }
 /* ══ 로그아웃 ══ */
 function logout(){

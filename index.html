@@ -33,7 +33,7 @@
 }
 html{overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 :root{--sab:env(safe-area-inset-bottom,16px)}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh}
 
 /* ── PIN ── */
 #pin-screen{
@@ -65,7 +65,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .pin-err{font-size:14px;color:var(--red);margin-top:16px;height:20px;font-weight:500}
 
 /* ── 앱 레이아웃 ── */
-#app{display:none;flex-direction:column;height:100vh;overflow:hidden}
+#app{display:none;flex-direction:column;min-height:100vh}
 .hdr{background:#fff;border-bottom:2px solid var(--border);padding:13px 18px 11px;flex-shrink:0}
 .hdr-row{display:flex;align-items:center;justify-content:space-between}
 .hdr-title{font-size:18px;font-weight:700;letter-spacing:-.4px}
@@ -74,7 +74,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);flex-shrink:0}
 .tab{flex:1;padding:12px 0;font-size:14px;font-weight:600;color:var(--text3);text-align:center;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:none;transition:all .15s}
 .tab.on{color:var(--blue);border-bottom-color:var(--blue)}
-.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(120px + var(--sab));overscroll-behavior-y:contain}
+.content{overflow-y:visible;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(200px + var(--sab))}
 
 /* ── 카드 ── */
 .card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
@@ -353,7 +353,16 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <div id="hdr-user" style="font-size:13px;font-weight:700;color:var(--blue);margin-top:2px;display:none"></div>
         <div class="hdr-sub" id="hdr-sub-txt">충전기 1·2호기·고속</div>
       </div>
-      <div class="hdr-badge" id="hdr-date"></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="hdr-badge" id="hdr-date"></div>
+        <button onclick="manualRefresh()" id="refresh-btn"
+          style="background:var(--surface2);border:1.5px solid var(--border);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--blue)">
+            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
   <div class="tabs">
@@ -568,12 +577,26 @@ const FBC = {
   appId:"1:1045133080450:web:0fc90b3f492a12164a019b"
 };
 let fbOK=false, DB=null;
+let fbInitialized = false; // 중복 리스너 방지
+
 function initFB(){
   try{
     if(!firebase.apps.length) firebase.initializeApp(FBC);
     DB=firebase.database();
+
+    // 이미 초기화됐으면 리스너 중복 등록 방지, auth 상태만 재확인
+    if(fbInitialized){
+      if(!firebase.auth().currentUser){
+        firebase.auth().signInAnonymously().catch(e=>console.warn('재인증 실패',e.message));
+      }
+      return;
+    }
+    fbInitialized = true;
+
     firebase.auth().signInAnonymously().then(()=>{
       fbOK=true;
+      // 기존 리스너 해제 후 재등록 (안전장치)
+      DB.ref('ev_charge').off();
       DB.ref('ev_charge').on('value',snap=>{
         records.length=0;
         if(snap.exists()) Object.entries(snap.val()).forEach(([k,v])=>{
@@ -584,14 +607,27 @@ function initFB(){
         if(t==='log') renderLog();
         if(t==='stats') renderStats();
         updateChargerMeters();
+      }, err=>{
+        console.warn('ev_charge 구독 오류', err.message);
+        fbOK = false;
+        fbInitialized = false;
       });
-      // 충전중 상태 실시간 구독
+
+      DB.ref('ev_charging').off();
       DB.ref('ev_charging').on('value', snap=>{
         chargingState = snap.exists() ? snap.val() : {};
         updateChargerMeters();
       });
-    }).catch(e=>{ console.warn('FB auth fail',e.message); loadLocal(); });
-  }catch(e){ console.warn('FB init fail',e.message); loadLocal(); }
+    }).catch(e=>{
+      console.warn('FB auth fail',e.message);
+      fbInitialized = false;
+      loadLocal();
+    });
+  }catch(e){
+    console.warn('FB init fail',e.message);
+    fbInitialized = false;
+    loadLocal();
+  }
 }
 function fbSave(rec){ const {fbKey,...d}=rec; return fbOK&&DB ? DB.ref('ev_charge').push(d) : (records.unshift(rec),saveLocal(),Promise.resolve()); }
 function fbUpd(fbKey,data){ const {fbKey:_,...d}=data; return fbOK&&DB&&fbKey ? DB.ref('ev_charge/'+fbKey).update(d) : (saveLocal(),Promise.resolve()); }
@@ -1275,6 +1311,41 @@ function chargerColor(ch){
   if(ch==='2호기') return {bg:'#e6f5ee',color:'#0f7a45',border:'#a8d9be'};
   if(ch==='고속')  return {bg:'#fff0e6',color:'#c45c00',border:'#f5c49a'};
   return {bg:'var(--surface2)',color:'var(--text3)',border:'var(--border)'};
+}
+
+/* ══ 수동 새로고침 ══ */
+function manualRefresh(){
+  const btn = document.getElementById('refresh-btn');
+  const svg = btn.querySelector('svg');
+  svg.style.transition = 'transform .6s ease';
+  svg.style.transform = 'rotate(360deg)';
+  setTimeout(()=>{ svg.style.transform = 'rotate(0deg)'; svg.style.transition=''; }, 600);
+
+  // Firebase 재연결 강제
+  if(DB){
+    DB.ref('ev_charge').once('value').then(snap=>{
+      records.length=0;
+      if(snap.exists()) Object.entries(snap.val()).forEach(([k,v])=>{
+        records.push({...v, staff: normName(v.staff), fbKey:k});
+      });
+      records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+      const t = curTab();
+      if(t==='log') renderLog();
+      if(t==='stats') renderStats();
+      updateChargerMeters();
+      fbOK = true;
+      toast('새로고침 완료');
+    }).catch(()=>{
+      toast('연결 실패 - 재시도 중...');
+      fbInitialized = false;
+      initFB();
+    });
+  } else {
+    // Firebase 미연결 상태면 재초기화 시도
+    toast('재연결 중...');
+    fbInitialized = false;
+    initFB();
+  }
 }
 /* ══ 로그아웃 ══ */
 function logout(){

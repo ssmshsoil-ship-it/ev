@@ -1370,19 +1370,17 @@ function scrollMeterIntoView(){
     const saveBtn = document.getElementById('save-btn');
     if(!content || !saveBtn) return;
     if(kbHeight > 100){
-      content.style.paddingBottom = '4px';
       const btnRect = saveBtn.getBoundingClientRect();
-      const visibleBottom = window.visualViewport.height;
-      const diff = btnRect.bottom - visibleBottom;
-      if(diff > 0) content.scrollTop += diff + 8;
+      const diff = btnRect.bottom - window.visualViewport.height;
+      content.scrollTop = content.scrollTop + diff;
     } else {
-      content.style.paddingBottom = '';
+      content.scrollTop = 0;
     }
   });
 }
 function restoreContentPadding(){
   const content = document.getElementById('content');
-  if(content) content.style.paddingBottom = '';
+  if(content) content.scrollTop = 0;
 }
 /* ══ 로그아웃 ══ */
 function logout(){

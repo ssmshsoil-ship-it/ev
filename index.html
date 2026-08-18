@@ -412,8 +412,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="card" id="meter-card">
         <div class="card-title">계량기 수치 (kWh)</div>
         <div class="input-row">
-          <div class="input-field"><div class="input-label">충전 시작</div><input class="input-box" id="inp-s" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()" onfocus="scrollMeterIntoView()"></div>
-          <div class="input-field"><div class="input-label">충전 종료</div><input class="input-box" id="inp-e" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()" onfocus="scrollMeterIntoView()"></div>
+          <div class="input-field"><div class="input-label">충전 시작</div><input class="input-box" id="inp-s" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()" onfocus="scrollMeterIntoView()" onblur="restoreContentPadding()"></div>
+          <div class="input-field"><div class="input-label">충전 종료</div><input class="input-box" id="inp-e" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()" onfocus="scrollMeterIntoView()" onblur="restoreContentPadding()"></div>
         </div>
         <div class="calc-box z" id="calc-box">
           <div><div class="cl-lbl">충전량 자동계산</div><div class="cl-sub">종료 − 시작</div></div>
@@ -440,7 +440,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
     <!-- 기록 탭 -->
     <div id="sec-log" style="display:none">
-      <div class="sec-title" style="text-align:center;font-size:15px;font-weight:800;color:var(--text2);display:flex;align-items:center;justify-content:center;min-height:32px">전체 충전 기록</div>
+      <div class="sec-title" style="text-align:center;font-size:15px;font-weight:800;color:var(--text2);margin-bottom:8px">전체 충전 기록</div>
       <div id="log-list"></div>
     </div>
 
@@ -1366,24 +1366,35 @@ function scrollMeterIntoView(){
   const content = document.getElementById('content');
   const saveBtn = document.getElementById('save-btn');
   if(!content || !saveBtn) return;
+
   const doScroll = ()=>{
     const btnRect = saveBtn.getBoundingClientRect();
     const contentRect = content.getBoundingClientRect();
-    // 저장 버튼이 보이는 영역(뷰포트) 아래로 벗어나면 그만큼 스크롤
     const overflow = btnRect.bottom - contentRect.bottom;
     if(overflow > 0){
       content.scrollTop += overflow + 16;
     }
   };
-  // visualViewport 지원 시 키보드 높이 변화를 실시간 감지
+
+  // 키패드가 뜨면 content 하단에 여백을 강제로 만들어
+  // 스크롤할 공간 자체를 확보 (핵심 수정)
+  content.style.paddingBottom = '340px';
+
   if(window.visualViewport){
-    const onResize = ()=>{ doScroll(); };
-    window.visualViewport.addEventListener('resize', onResize, {once:true});
-    setTimeout(doScroll, 100);
+    window.visualViewport.addEventListener('resize', doScroll, {once:true});
+    setTimeout(doScroll, 120);
     setTimeout(doScroll, 350);
   } else {
     [150, 350, 600].forEach(delay=> setTimeout(doScroll, delay));
   }
+}
+
+// 계량기 입력 포커스 해제(blur) 시 원래 여백으로 복원
+function restoreContentPadding(){
+  setTimeout(()=>{
+    const content = document.getElementById('content');
+    if(content) content.style.paddingBottom = '';
+  }, 200);
 }
 /* ══ 로그아웃 ══ */
 function logout(){

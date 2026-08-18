@@ -603,9 +603,9 @@ function initFB(){
           records.push({...v, staff: normName(v.staff), fbKey:k});
         });
         records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
-        const t=curTab();
-        if(t==='log') renderLog();
-        if(t==='stats') renderStats();
+        // 현재 보이는 탭과 무관하게 항상 최신 데이터로 갱신 (최초 로드 타이밍 이슈 방지)
+        renderLog();
+        renderStats();
         updateChargerMeters();
       }, err=>{
         console.warn('ev_charge 구독 오류', err.message);
@@ -737,7 +737,7 @@ if(loadSession()){
   document.getElementById('pin-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   autoSelectStaff(currentUser.name);
-  initFB(); renderStats(); setTimeout(loadTempStart,500);
+  initFB(); setTimeout(loadTempStart,500);
 } else {
   renderLoginScreen();
 }

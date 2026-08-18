@@ -14,7 +14,7 @@
 <title>EV 충전 기록</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;600&display=block" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -440,7 +440,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
     <!-- 기록 탭 -->
     <div id="sec-log" style="display:none">
-      <div class="sec-title" style="text-align:center;font-size:15px;font-weight:800;color:var(--text2);margin-bottom:8px">전체 충전 기록</div>
+      <div class="sec-title" style="text-align:center;font-size:15px;font-weight:800;color:var(--text2);margin:0 0 10px;line-height:1.4">전체 충전 기록</div>
       <div id="log-list"></div>
     </div>
 
@@ -986,7 +986,7 @@ function renderStats(){
           <div class="s-arrow">›</div>
         </div>`; }).join('')}
     </div>
-    <div class="sec-title" style="text-align:center">충전기별</div>
+    <div class="sec-title" style="text-align:center;font-size:13px;font-weight:800;color:var(--text2)">충전기별</div>
     <div class="charger-row">
       ${['1호기','2호기','고속'].map(c=>{ const k=cMap[c]||0,w=Math.round(k/maxC*100);
         return `<div class="charger-card"><div class="cno">${c}</div><div class="stat-inline" style="justify-content:center"><span class="ckwh">${k.toFixed(1)}</span><span class="cunit" style="margin-top:0">kWh</span></div><div class="cbar"><div class="cbar-fill" style="width:${w}%"></div></div></div>`; }).join('')}
@@ -1120,7 +1120,7 @@ function renderYear(){
     <div class="sec-title" style="text-align:center;font-size:13px;font-weight:800;color:var(--text2)">월별 충전량</div>
     ${Array.from({length:12},(_,i)=>{ const m=i+1,{kwh,cnt}=mMap[m],w=Math.round(kwh/maxM*100);
       return `<div class="month-row" onclick="jumpMonth(${m})"><div class="mbadge">${m}월</div><div class="mbar-wrap"><div class="mbar-fill" style="width:${w}%"></div></div><div class="mkwh">${kwh>0?kwh.toFixed(1)+' kWh':'—'}</div><div class="mcnt">${cnt>0?cnt+'회':''}</div></div>`; }).join('')}
-    <div class="sec-title" style="margin-top:14px;text-align:center">사용자별 연간</div>
+    <div class="sec-title" style="margin-top:14px;text-align:center;font-size:13px;font-weight:800;color:var(--text2)">사용자별 연간</div>
     <div class="staff-card">
       ${STAFF.map((n,i)=>{ const k=sMap[n]||0,w=total?Math.round(k/total*100):0;
         return `<div class="staff-row" style="cursor:default">
@@ -1363,10 +1363,18 @@ function manualRefresh(){
 
 /* ══ 키보드 시 계량기 카드 자동 스크롤 ══ */
 function scrollMeterIntoView(){
-  // 화면 고정 방식으로 복귀 - 자동 스크롤 비활성화
+  if(!window.visualViewport) return;
+  window.visualViewport.addEventListener('resize', function onVVResize(){
+    const kbHeight = window.innerHeight - window.visualViewport.height;
+    const content = document.getElementById('content');
+    if(content){
+      content.style.paddingBottom = kbHeight > 100 ? (kbHeight + 20) + 'px' : '';
+    }
+  });
 }
 function restoreContentPadding(){
-  // 화면 고정 방식으로 복귀 - 자동 스크롤 비활성화
+  const content = document.getElementById('content');
+  if(content) content.style.paddingBottom = '';
 }
 /* ══ 로그아웃 ══ */
 function logout(){

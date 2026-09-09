@@ -241,6 +241,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .ppage{width:794px;min-height:1123px;padding:56px 54px 44px;background:#fff;color:#111}
 .phdr{border-bottom:2px solid #ccc;padding-bottom:16px;margin-bottom:26px;text-align:center}
 .ph1{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;color:#111;text-align:center}
+.psub{font-size:13px;font-weight:600;color:#555;margin-bottom:10px;text-align:center;font-family:'IBM Plex Mono',monospace}
 .pmeta{font-size:12px;color:#888;display:flex;gap:24px;font-weight:500;justify-content:center}
 .ptbl{width:100%;border-collapse:collapse;margin-bottom:26px;font-size:12px}
 .ptbl th{background:#e8edf5;color:#111;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.3px;border-bottom:2px solid #b0b8cc}
@@ -1031,9 +1032,10 @@ async function dpPDF(){
   const {y,m}=vm; const name=dpPerson;
   const rows=records.filter(r=>r.date.startsWith(`${y}-${String(m).padStart(2,'0')}`)&&r.staff===name);
   const total=rows.reduce((s,r)=>s+r.kwh,0);
+  const cars=[...new Set(rows.map(r=>r.car))].join(', ')||'-';
   showLoad('PDF 생성 중...');
   const area=document.getElementById('parea');
-  area.innerHTML=`<div class="ppage"><div class="phdr"><div class="ph1">${name} · ${y}년 ${m}월 충전 내역</div><div class="pmeta"><span>총 ${rows.length}회</span><span>${total.toFixed(1)} kWh</span></div></div>
+  area.innerHTML=`<div class="ppage"><div class="phdr" style="padding-top:22px"><div class="ph1">${y}년 ${m}월 충전 내역</div><div class="psub">차량번호 : ${cars} &nbsp;&nbsp;&nbsp; 성명 : ${name}</div><div class="pmeta"><span>총 ${rows.length}회</span><span>${total.toFixed(1)} kWh</span></div></div>
     <table class="ptbl"><thead><tr><th>순번</th><th>충전일</th><th>충전기</th><th>차량번호</th><th>시작kWh</th><th>종료kWh</th><th>충전량</th></tr></thead>
     <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td>${r.charger}</td><td>${r.car}</td><td>${r.start.toFixed(1)}</td><td>${r.end.toFixed(1)}</td><td><strong>${r.kwh.toFixed(1)}</strong></td></tr>`).join('')}</tbody></table>
     <div class="ptotal"><div class="pt-label">${name} ${y}년 ${m}월 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>

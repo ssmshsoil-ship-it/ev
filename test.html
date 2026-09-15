@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>EV 충전 기록</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;600&display=block" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f2f3f5;--surface:#fff;--surface2:#eaebee;--border:#d8dae0;--border2:#b8bbc6;
+  --text:#111318;--text2:#44475a;--text3:#888b9e;
+  --green:#00A952;--green-bg:#E6F8EE;--green-bd:#8ADCAE;
+  --blue:#1752a8;--blue-bg:#e8eefc;--blue-bd:#a0b8ef;
+  --orange:#FF7315;--orange-bg:#FFF0E5;--orange-bd:#FFC299;
+  --red:#E53935;--red-bg:#FDECEC;--red-bd:#F5A8A5;
+  --r:12px;--rs:8px;--rx:6px;
+}
+html{overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+:root{--sab:env(safe-area-inset-bottom,16px)}
+html{overscroll-behavior:none}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden;overscroll-behavior:none}
+
+/* ── PIN ── */
+#pin-screen{
+  position:fixed;inset:0;z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 24px;
+  background:linear-gradient(180deg,#1752a8 0%,#1752a8 28%,#f2f3f5 28%,#f2f3f5 100%);
+}
+.pin-logo{font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:20px}
+.pin-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.5px}
+.pin-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+.pin-dots{display:flex;gap:16px;margin-bottom:28px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);transition:all .15s}
+.pin-dot.on{background:var(--blue);border-color:var(--blue)}
+.pin-dot.err{background:var(--red);border-color:var(--red)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.pin-key{
+  height:62px;border-radius:50%;
+  border:none;
+  background:var(--surface2);
+  font-size:26px;font-weight:500;color:var(--text);
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:all .1s;-webkit-tap-highlight-color:transparent;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+.pin-key:active{background:#d0d3db;transform:scale(.92)}
+.pin-key.del{background:transparent;box-shadow:none;font-size:20px;color:var(--text2)}
+.pin-err{font-size:14px;color:var(--red);margin-top:16px;height:20px;font-weight:500}
+
+/* ── 앱 레이아웃 ── */
+#app{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.hdr{background:#fff;border-bottom:2px solid var(--border);padding:13px 18px 11px;flex-shrink:0}
+.hdr-row{display:flex;align-items:center;justify-content:space-between}
+.hdr-title{font-size:18px;font-weight:700;letter-spacing:-.4px}
+.hdr-sub{font-size:12px;color:var(--text3);margin-top:2px;font-weight:500}
+.hdr-badge{font-size:12px;font-weight:700;color:var(--green);background:var(--green-bg);border:1.5px solid var(--green-bd);border-radius:6px;padding:4px 10px;font-family:'IBM Plex Mono',monospace}
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:13px 0;font-size:16px;font-weight:700;color:var(--text3);text-align:center;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:none;transition:all .15s}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(24px + var(--sab));overscroll-behavior-y:contain}
+
+/* ── 카드 ── */
+.card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.card-title{font-size:14px;font-weight:800;letter-spacing:.3px;color:var(--text2);text-transform:none;margin-bottom:12px;text-align:center}
+
+/* ── 칩 ── */
+.chip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chip{padding:10px 8px;border-radius:22px;font-size:14px;font-weight:700;background:var(--surface2);border:1.5px solid var(--border);color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .12s;text-align:center;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.chip:active{transform:scale(.95)}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+
+/* ── 입력 ── */
+.input-row{display:flex;gap:10px;margin-top:12px}
+.input-field{flex:1;display:flex;flex-direction:column;gap:5px}
+.input-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.3px;text-align:center}
+.input-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:13px 14px;font-size:18px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text);outline:none;width:100%;text-align:center;-webkit-appearance:none;transition:border-color .15s}
+.input-box:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px var(--blue-bg)}
+
+/* ── 계산 결과 ── */
+.calc-box{background:var(--green-bg);border:1.5px solid var(--green-bd);border-radius:var(--rs);padding:14px 16px;margin:12px 0;display:flex;align-items:center;justify-content:space-between}
+.calc-box.z{background:var(--surface2);border-color:var(--border)}
+.cl-lbl{font-size:13px;font-weight:700;color:var(--green)}
+.cl-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.calc-box.z .cl-lbl{color:var(--text3)}
+.calc-num{font-size:34px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green);line-height:1}
+.calc-box.z .calc-num{color:var(--text3)}
+.calc-unit{font-size:15px;color:var(--text3);font-weight:600}
+
+/* ── 저장 버튼 ── */
+.save-btn{width:100%;padding:16px;border-radius:var(--rs);background:var(--blue);color:#fff;font-size:16px;font-weight:800;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;letter-spacing:-.2px;-webkit-tap-highlight-color:transparent;margin-top:4px}
+.save-btn:active{opacity:.8}
+.save-btn:disabled{opacity:.25;cursor:not-allowed}
+
+/* ── 기록 리스트 ── */
+.log-item{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;margin-bottom:8px;-webkit-tap-highlight-color:transparent}
+.log-item:active{background:var(--surface2)}
+.log-bar{width:4px;height:40px;border-radius:2px;flex-shrink:0}
+.log-body{flex:1;min-width:0}
+.log-top{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.log-car{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 7px;border-radius:4px;font-weight:600}
+.log-date{font-size:11px;color:var(--text3);font-weight:500;margin-top:3px;font-family:'IBM Plex Mono',monospace}
+.log-meter{font-size:12px;color:var(--text);font-weight:800;margin-top:2px;font-family:'IBM Plex Mono',monospace}
+.log-kwh{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;flex-shrink:0}
+.edit-tag{font-size:11px;color:var(--blue);background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:5px;padding:3px 8px;font-weight:600;flex-shrink:0}
+
+/* ── 통계 ── */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:13px;text-align:center}
+.stat-label{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:5px;text-transform:uppercase;text-align:center}
+
+.stat-inline{display:flex;align-items:baseline;justify-content:center;gap:4px}
+.stat-val{font-size:20px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1}
+.stat-unit{font-size:10px;color:var(--text3);margin-top:4px;font-weight:600}
+.sec-title{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:14px 0 9px}
+
+/* ── 사용자별 바 ── */
+.staff-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.staff-row{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.staff-row:last-child{border-bottom:none}
+.staff-row:active{background:var(--surface2)}
+.sname{font-size:13px;font-weight:700;color:var(--text);width:52px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.skwh{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:800;color:var(--text2);width:64px;text-align:right;flex-shrink:0}
+.spct{font-size:11px;color:var(--text3);width:32px;text-align:right;flex-shrink:0;font-weight:600}
+.s-arrow{font-size:14px;color:var(--text3);flex-shrink:0}
+
+/* ── 충전기별 ── */
+.charger-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.charger-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:12px;text-align:center}
+.cno{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;margin-bottom:5px;text-transform:uppercase}
+.ckwh{font-size:17px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+.cunit{font-size:10px;color:var(--text3);margin-top:2px;font-weight:600}
+.cbar{height:4px;background:var(--surface2);border-radius:2px;margin-top:8px;overflow:hidden}
+.cbar-fill{height:100%;border-radius:2px;background:var(--orange)}
+
+/* ── 다운로드 버튼 ── */
+.dl-row{display:flex;gap:8px;margin-top:4px}
+.dl-btn{flex:1;padding:12px 6px;border-radius:var(--rs);border:1.5px solid;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;justify-content:center;gap:4px;-webkit-tap-highlight-color:transparent;letter-spacing:-.2px}
+.dl-btn:active{opacity:.7}
+.dl-btn.pdf{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd)}
+.dl-btn.xls{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+.dl-btn.cap{background:var(--orange-bg);color:var(--orange);border-color:var(--orange-bd)}
+
+/* ── 월 네비 ── */
+.month-nav{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.mnav-btn{background:#fff;border:1.5px solid var(--border);color:var(--text2);border-radius:var(--rx);padding:6px 12px;cursor:pointer;font-size:16px;font-weight:600;-webkit-tap-highlight-color:transparent}
+.mnav-label{flex:1;text-align:center;font-size:16px;font-weight:700;color:var(--text)}
+
+/* ── 연집계 월행 ── */
+.month-row{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:11px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.month-row:active{background:var(--surface2)}
+.mbadge{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);width:36px;flex-shrink:0}
+.mbar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.mbar-fill{height:100%;border-radius:3px;background:var(--blue)}
+.mkwh{font-size:13px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--blue);width:76px;text-align:right;flex-shrink:0}
+.mcnt{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0}
+
+/* ── 팝업 공통 ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.overlay.on{display:flex}
+.popup{background:#fff;border-top:2px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:20px 18px 32px;animation:slideUp .2s ease;max-height:90vh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.pop-handle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.pop-handle{width:36px;height:4px;background:var(--border2);border-radius:2px}
+.pop-close{background:var(--text);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.pop-close:active{opacity:.7}
+.pop-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.4px}
+.pop-sub{font-size:14px;color:var(--text3);margin-bottom:16px;line-height:1.5}
+.info-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:13px 14px;margin-bottom:16px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-key{font-size:13px;color:var(--text3);font-weight:600}
+.info-val{font-size:14px;font-weight:800;color:var(--text);font-family:'IBM Plex Mono',monospace}
+.info-val.big{font-size:22px;color:var(--green)}
+.user-box{background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:var(--rs);padding:16px;text-align:center;margin-bottom:16px}
+.user-name{font-size:28px;font-weight:700;color:var(--blue)}
+.btn-row{display:flex;gap:9px}
+.btn{flex:1;padding:14px;border-radius:var(--rs);font-size:15px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);-webkit-tap-highlight-color:transparent;letter-spacing:-.2px}
+.btn:active{opacity:.7}
+.btn.confirm{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.danger{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.divider{height:1px;background:var(--border);margin:12px 0}
+
+/* ── 개인 상세 팝업 ── */
+.detail-popup{
+  background:#fff;border-top:2px solid var(--border);
+  border-radius:16px 16px 0 0;width:100%;max-width:480px;
+  height:95vh;display:flex;flex-direction:column;
+  animation:slideUp .2s ease;overflow:hidden;
+}
+.dp-header{padding:18px 18px 0;flex-shrink:0}
+.dp-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 18px 8px;overscroll-behavior-y:contain}
+.dp-footer{padding:12px 18px 24px;flex-shrink:0;background:#fff;border-top:1px solid var(--border)}
+.dp-name-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.dp-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.dp-name{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.4px}
+.dp-period{font-size:13px;color:var(--text3);font-weight:500;margin-left:auto}
+.dp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.dp-stat{background:var(--surface2);border-radius:var(--rs);padding:11px 10px;text-align:center}
+.dp-stat-label{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.4px;margin-bottom:4px;text-transform:uppercase}
+.dp-stat-val{font-size:18px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+.dp-stat-unit{font-size:10px;color:var(--text3);font-weight:600;margin-top:2px}
+.dp-row{background:var(--surface2);border-radius:var(--rs);padding:10px 13px;display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.dp-date{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;width:52px;flex-shrink:0;white-space:nowrap}
+.dp-info{flex:1;min-width:0}
+.dp-car{font-size:12px;font-weight:600;color:var(--text2)}
+.dp-meter{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.dp-kwh{font-size:15px;font-weight:800;font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+
+/* ── 토스트/로딩 ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:#fff;border-radius:22px;padding:11px 20px;font-size:14px;font-weight:600;z-index:400;opacity:0;transition:all .22s;white-space:nowrap;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading{position:fixed;inset:0;background:rgba(255,255,255,.8);z-index:500;display:none;align-items:center;justify-content:center}
+.loading.on{display:flex}
+.loading-box{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:24px 32px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-box p{font-size:14px;color:var(--text3);font-weight:600}
+
+/* ── PDF 렌더 ── */
+#parea{position:fixed;left:-9999px;top:0;width:794px;background:#fff;font-family:'Noto Sans KR',sans-serif}
+.ppage{width:794px;min-height:1123px;padding:56px 54px 44px;background:#fff;color:#111}
+.phdr{border-bottom:2px solid #ccc;padding-bottom:16px;margin-bottom:26px;text-align:center}
+.ph1{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;color:#111;text-align:center}
+.psub{font-size:13px;font-weight:600;color:#555;margin-bottom:10px;text-align:center;font-family:'IBM Plex Mono',monospace}
+.pmeta{font-size:12px;color:#888;display:flex;gap:24px;font-weight:500;justify-content:center}
+.ptbl{width:100%;border-collapse:collapse;margin-bottom:26px;font-size:12px}
+.ptbl th{background:#e8edf5;color:#111;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.3px;border-bottom:2px solid #b0b8cc}
+.ptbl td{padding:7px 10px;text-align:center;border-bottom:1px solid #e8e8e8;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#111}
+.ptbl tr:nth-child(even) td{background:#f4f6fa}
+.ptbl td.nc{font-family:'Noto Sans KR',sans-serif;font-weight:600}
+.psum{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+.psbox{border:1.5px solid #ddd;border-radius:6px;padding:14px 16px;background:#fafafa}
+.psbox-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase}
+.psrow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;font-size:12px}
+.psrow:last-child{border-bottom:none}
+.pskey{color:#444;font-family:'Noto Sans KR',sans-serif;font-weight:500}
+.psval{font-family:'IBM Plex Mono',monospace;font-weight:700;color:#111}
+.ptotal{background:#e8edf5;border:1.5px solid #b0b8cc;border-radius:6px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center}
+.pt-label{font-size:14px;font-weight:700;color:#111}
+.pt-val{font-size:24px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#1752a8}
+.pfoot{margin-top:20px;text-align:center;font-size:10px;color:#bbb}
+
+@media(max-width:380px){.content{padding:10px}
+.stat-inline{display:flex;align-items:baseline;justify-content:center;gap:4px}
+.stat-val{font-size:17px}.chip{font-size:13px;padding:8px 13px}}
+
+/* 수정 팝업 컴팩트 */
+.popup-compact{padding:14px 16px 20px;max-height:96vh}
+.popup-compact .pop-handle-row{margin-bottom:10px}
+.popup-compact .pop-title{font-size:17px;margin-bottom:2px}
+.popup-compact .pop-sub{font-size:12px;margin-bottom:10px}
+.popup-compact .card-title{margin-bottom:6px;font-size:10px}
+.popup-compact .chip{padding:8px 6px;font-size:13px}
+.popup-compact .input-box{padding:10px 12px;font-size:16px}
+.popup-compact .calc-box{padding:10px 14px;margin:8px 0}
+.popup-compact .calc-num{font-size:28px}
+.popup-compact [style*="margin-bottom:11px"]{margin-bottom:8px!important}
+.popup-compact [style*="margin-bottom:14px"]{margin-bottom:10px!important}
+.popup-compact .btn-row{margin-bottom:6px!important}
+.popup-compact .divider{margin:8px 0}
+
+.pin-name-btn{
+  padding:16px 10px;border-radius:12px;
+  border:2px solid var(--border);
+  background:#fff;font-size:16px;font-weight:600;color:var(--text);
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:all .15s;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.pin-name-btn:active{transform:scale(.93)}
+.pin-name-btn.selected{
+  background:var(--blue);color:#fff;
+  border-color:var(--blue);
+  box-shadow:0 2px 8px rgba(23,82,168,.35);
+}
+
+/* 충전기 계량기 수치 */
+.chip-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.chip-wrap{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+.chip-wrap .chip{ width:100%; }
+.charger-meter{
+  font-size:11px; font-weight:700;
+  font-family:'IBM Plex Mono', monospace;
+  color:var(--green); background:var(--green-bg);
+  border:1px solid var(--green-bd);
+  border-radius:6px; padding:2px 6px;
+  min-height:18px; text-align:center;
+  width:100%; letter-spacing:-.3px;
+  transition:all .3s;
+}
+.charger-meter.empty{ color:var(--text3); background:transparent; border-color:transparent; }
+</style>
+</head>
+<body>
+
+<!-- PIN -->
+<div id="pin-screen">
+  <div id="login-inner" style="background:#fff;border-radius:20px;padding:28px 24px 24px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.12)">
+    <!-- Step 1: 이름 선택 -->
+    <div id="step-name">
+      <div class="pin-logo">EV 충전 기록</div>
+      <div class="pin-title">이름 선택</div>
+      <div class="pin-sub">본인 이름을 선택하세요</div>
+      <div id="name-btn-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;margin-bottom:12px">
+        <div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:13px;padding:24px 0">불러오는 중...</div>
+      </div>
+      <button class="pin-name-btn" style="width:100%;border:2px dashed var(--blue);color:var(--blue);font-weight:700" onclick="goRegister()">+ 신규 등록</button>
+    </div>
+    <!-- Step 2: PIN 입력 -->
+    <div id="step-pin" style="display:none">
+      <div class="pin-logo">EV 충전 기록</div>
+      <div class="pin-title" id="pin-greeting">안녕하세요</div>
+      <div class="pin-sub">4자리 PIN을 입력하세요</div>
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pi('1')">1</button><button class="pin-key" onclick="pi('2')">2</button><button class="pin-key" onclick="pi('3')">3</button>
+        <button class="pin-key" onclick="pi('4')">4</button><button class="pin-key" onclick="pi('5')">5</button><button class="pin-key" onclick="pi('6')">6</button>
+        <button class="pin-key" onclick="pi('7')">7</button><button class="pin-key" onclick="pi('8')">8</button><button class="pin-key" onclick="pi('9')">9</button>
+        <div></div><button class="pin-key" onclick="pi('0')">0</button><button class="pin-key del" onclick="pd()">⌫</button>
+      </div>
+      <div class="pin-err" id="pin-err"></div>
+      <button onclick="backToName()" style="margin-top:16px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">← 이름 다시 선택</button>
+    </div>
+    <!-- Step 3: 신규 등록 - 이름 입력 -->
+    <div id="step-reg-name" style="display:none">
+      <div class="pin-logo">EV 충전 기록</div>
+      <div class="pin-title">신규 등록</div>
+      <div class="pin-sub">본인 이름을 입력하세요</div>
+      <input id="reg-name-input" class="input-box" style="margin-bottom:14px;text-align:center;font-size:18px;width:100%" placeholder="이름" maxlength="10">
+      <div class="pin-err" id="reg-name-err"></div>
+      <button class="save-btn" style="margin-top:4px" onclick="regNameNext()">다음</button>
+      <button onclick="backToName()" style="margin-top:16px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">← 취소</button>
+    </div>
+    <!-- Step 4: 신규 등록 - PIN 설정 -->
+    <div id="step-reg-pin" style="display:none">
+      <div class="pin-logo">EV 충전 기록</div>
+      <div class="pin-title" id="reg-pin-title">PIN 설정</div>
+      <div class="pin-sub" id="reg-pin-sub">사용할 4자리 PIN을 입력하세요</div>
+      <div class="pin-dots" id="reg-pin-dots">
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="rpi('1')">1</button><button class="pin-key" onclick="rpi('2')">2</button><button class="pin-key" onclick="rpi('3')">3</button>
+        <button class="pin-key" onclick="rpi('4')">4</button><button class="pin-key" onclick="rpi('5')">5</button><button class="pin-key" onclick="rpi('6')">6</button>
+        <button class="pin-key" onclick="rpi('7')">7</button><button class="pin-key" onclick="rpi('8')">8</button><button class="pin-key" onclick="rpi('9')">9</button>
+        <div></div><button class="pin-key" onclick="rpi('0')">0</button><button class="pin-key del" onclick="rpd()">⌫</button>
+      </div>
+      <div class="pin-err" id="reg-pin-err"></div>
+      <button onclick="backToName()" style="margin-top:16px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">← 취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-size:28px;line-height:1">⚡</div>
+        <div>
+          <div class="hdr-title" style="margin:0">EV 충전 기록</div>
+          <div id="hdr-user" style="font-size:13px;font-weight:700;color:var(--blue);margin-top:2px;display:none"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="hdr-badge" id="hdr-date"></div>
+        <button onclick="manualRefresh()" id="refresh-btn"
+          style="background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--blue)">
+            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" data-tab="input" onclick="goTab('input')">입력</button>
+    <button class="tab" data-tab="log" onclick="goTab('log')">기록</button>
+    <button class="tab" data-tab="stats" onclick="goTab('stats')">월집계</button>
+    <button class="tab" data-tab="admin" id="tab-admin-btn" style="display:none" onclick="goTab('admin')">관리</button>
+  </div>
+  <div class="content" id="content">
+
+    <!-- 입력 탭 -->
+    <div id="sec-input">
+
+      <div class="card">
+        <div class="card-title">충전기</div>
+        <div class="chip-grid">
+          <div class="chip-wrap">
+            <div class="chip" onclick="selChip(this,'charger','1호기')">1호기</div>
+            <div class="charger-meter" id="meter-1호기"></div>
+          </div>
+          <div class="chip-wrap">
+            <div class="chip" onclick="selChip(this,'charger','2호기')">2호기</div>
+            <div class="charger-meter" id="meter-2호기"></div>
+          </div>
+          <div class="chip-wrap">
+            <div class="chip" onclick="selChip(this,'charger','고속')">고속</div>
+            <div class="charger-meter" id="meter-고속"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">차량번호</div>
+        <div class="chip-grid" style="grid-template-columns:repeat(3,1fr)" id="car-chip-grid">
+          <div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;padding:12px 0">불러오는 중...</div>
+        </div>
+        <input id="car-manual" class="input-box" style="margin-top:10px;display:none" placeholder="차량번호 입력" oninput="st.car=this.value;chkReady()">
+      </div>
+      <div class="card" id="meter-card">
+        <div class="card-title">계량기 수치 (kWh)</div>
+        <div class="input-row">
+          <div class="input-field"><div class="input-label">충전 시작</div><input class="input-box" id="inp-s" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()" onfocus="scrollMeterIntoView()" onblur="restoreContentPadding()"></div>
+          <div class="input-field"><div class="input-label">충전 종료</div><input class="input-box" id="inp-e" type="number" inputmode="decimal" step="0.1" placeholder="0.0" oninput="calcK()" onfocus="scrollMeterIntoView()" onblur="restoreContentPadding()"></div>
+        </div>
+        <div class="calc-box z" id="calc-box">
+          <div><div class="cl-lbl">충전량 자동계산</div><div class="cl-sub">종료 − 시작</div></div>
+          <div style="display:flex;align-items:baseline;gap:4px">
+            <div class="calc-num" id="calc-num">—</div>
+            <div class="calc-unit">kWh</div>
+          </div>
+        </div>
+      </div>
+      <!-- 임시저장 버튼 (충전 시작) -->
+      <button class="save-btn" id="start-btn" onclick="saveTempStart()"
+        style="background:var(--orange);margin-bottom:10px;display:none">
+        ⚡ 충전 시작 — 시작량 임시저장
+      </button>
+      <!-- 임시저장 안내 -->
+      <div id="temp-banner" style="display:none;background:var(--orange-bg);border:1.5px solid var(--orange-bd);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:4px">⏳ 충전 중 — 종료 후 최종저장</div>
+        <div style="font-size:12px;color:var(--text2)" id="temp-info"></div>
+      </div>
+      <!-- 최종저장 버튼 (충전 종료) -->
+      <button class="save-btn" id="save-btn" onclick="openSaveConfirm()" disabled>기록 저장</button>
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- 기록 탭 -->
+    <div id="sec-log" style="display:none">
+      <div class="sec-title" style="text-align:center;font-size:15px;font-weight:800;color:var(--text2);margin:0 0 10px;line-height:1.4">전체 충전 기록</div>
+      <div id="log-list"></div>
+    </div>
+
+    <!-- 월집계 탭 -->
+    <div id="sec-stats" style="display:none">
+      <div class="month-nav">
+        <button class="mnav-btn" onclick="changeMonth(-1)">‹</button>
+        <div class="mnav-label" id="month-label"></div>
+        <button class="mnav-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div id="stats-content"></div>
+      <!-- 연집계 토글 -->
+      <div style="margin:20px 0 12px">
+        <button id="yr-btn" onclick="toggleYear()" style="width:100%;padding:11px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">연간 집계 펼치기 ›</button>
+      </div>
+      <div id="yr-panel" style="display:none">
+        <div class="month-nav">
+          <button class="mnav-btn" onclick="changeYear(-1)">‹</button>
+          <div class="mnav-label" id="yr-label"></div>
+          <button class="mnav-btn" onclick="changeYear(1)">›</button>
+        </div>
+        <div id="yr-content"></div>
+      </div>
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- 관리 탭 (관리부 전용) -->
+    <div id="sec-admin" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="tab admin-subtab on" data-sub="staff" onclick="goAdminSub('staff')" style="flex:1;border:1.5px solid var(--border);border-bottom:1.5px solid var(--border);border-radius:8px 8px 0 0">직원 관리</button>
+        <button class="tab admin-subtab" data-sub="vehicle" onclick="goAdminSub('vehicle')" style="flex:1;border:1.5px solid var(--border);border-bottom:1.5px solid var(--border);border-radius:8px 8px 0 0">차량 관리</button>
+        <button class="tab admin-subtab" data-sub="history" onclick="goAdminSub('history')" style="flex:1;border:1.5px solid var(--border);border-bottom:1.5px solid var(--border);border-radius:8px 8px 0 0">이력</button>
+      </div>
+
+      <div id="admin-sub-staff">
+        <div class="card">
+          <div class="card-title">새 직원 추가</div>
+          <input id="adm-staff-name" class="input-box" style="margin-bottom:8px;font-size:16px" placeholder="이름">
+          <input id="adm-staff-pin" class="input-box" style="margin-bottom:10px;font-size:16px" placeholder="PIN 4자리" maxlength="4" inputmode="numeric">
+          <button class="save-btn" onclick="adminAddStaff()">추가</button>
+          <div class="pin-err" id="adm-staff-err" style="margin-top:6px;height:auto"></div>
+        </div>
+        <div class="sec-title" style="text-align:center">전체 직원 (재직/퇴사 이력)</div>
+        <div id="admin-staff-list"></div>
+      </div>
+
+      <div id="admin-sub-vehicle" style="display:none">
+        <div class="card">
+          <div class="card-title">새 차량 추가</div>
+          <input id="adm-vehicle-num" class="input-box" style="margin-bottom:10px;font-size:16px" placeholder="차량번호 (예: 1234)">
+          <button class="save-btn" onclick="adminAddVehicle()">추가</button>
+          <div class="pin-err" id="adm-vehicle-err" style="margin-top:6px;height:auto"></div>
+        </div>
+        <div class="sec-title" style="text-align:center">전체 차량 (운용/제외 이력)</div>
+        <div id="admin-vehicle-list"></div>
+      </div>
+
+      <div id="admin-sub-history" style="display:none">
+        <div class="sec-title" style="text-align:center">삭제된 기록 (복원 가능)</div>
+        <div id="admin-deleted-list"></div>
+        <div class="sec-title" style="text-align:center">최근 변경 이력</div>
+        <div id="admin-audit-list"></div>
+      </div>
+      <div style="height:20px"></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- 작성자 확인 팝업 -->
+<div class="overlay" id="pop-staff">
+  <div class="popup">
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-staff')">×</button></div>
+    <div class="pop-title">작성자 확인</div>
+    <div class="pop-sub">본인이 맞으면 확인을 눌러주세요.</div>
+    <div class="user-box"><div class="user-name" id="ps-name"></div></div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeP('pop-staff')">취소</button>
+      <button class="btn confirm" onclick="confirmStaff()">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 저장 확인 팝업 -->
+<div class="overlay" id="pop-save">
+  <div class="popup">
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-save')">×</button></div>
+    <div class="pop-title">저장 확인</div>
+    <div class="pop-sub">아래 내용으로 저장합니다.</div>
+    <div class="info-box" id="save-info"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeP('pop-save')">수정</button>
+      <button class="btn confirm" onclick="confirmSave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 수정 팝업 -->
+<div class="overlay" id="pop-edit">
+  <div class="popup popup-compact">
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-edit')">×</button></div>
+    <div class="pop-title">기록 수정</div>
+    <div class="pop-sub" id="edit-lbl"></div>
+    <div style="margin-bottom:8px">
+      <div class="card-title" style="margin-bottom:6px">날짜</div>
+      <input class="input-box" id="e-date" type="date" style="font-size:15px;padding:10px 12px">
+    </div>
+    <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">작성자</div><div class="chip-grid" id="e-staff"></div></div>
+    <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">충전기</div><div class="chip-grid" id="e-charger"></div></div>
+    <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">차량번호</div><div class="chip-grid" style="grid-template-columns:repeat(3,1fr)" id="e-car"></div></div>
+    <div class="input-row" style="margin-bottom:11px">
+      <div class="input-field"><div class="input-label">시작 (kWh)</div><input class="input-box" id="e-s" type="number" inputmode="decimal" step="0.1" oninput="calcEK()"></div>
+      <div class="input-field"><div class="input-label">종료 (kWh)</div><input class="input-box" id="e-e" type="number" inputmode="decimal" step="0.1" oninput="calcEK()"></div>
+    </div>
+    <div class="calc-box z" id="e-calc" style="margin-bottom:14px">
+      <div><div class="cl-lbl">충전량 자동계산</div><div class="cl-sub">종료 − 시작</div></div>
+      <div style="display:flex;align-items:baseline;gap:4px"><div class="calc-num" id="e-num">—</div><div class="calc-unit">kWh</div></div>
+    </div>
+    <div class="btn-row" style="margin-bottom:9px">
+      <button class="btn" onclick="closeP('pop-edit')">취소</button>
+      <button class="btn confirm" id="e-save-btn" onclick="confirmEdit()">저장</button>
+    </div>
+    <div class="divider"></div>
+    <button class="btn danger" style="width:100%" onclick="openDelConfirm()">이 기록 삭제</button>
+  </div>
+</div>
+
+<!-- 삭제 확인 팝업 -->
+<div class="overlay" id="pop-del">
+  <div class="popup">
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-del')">×</button></div>
+    <div class="pop-title">삭제 확인</div>
+    <div class="pop-sub">삭제 후 복구할 수 없습니다.</div>
+    <div class="info-box" id="del-info"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeP('pop-del')">취소</button>
+      <button class="btn danger" onclick="confirmDel()">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- 개인 상세 팝업 -->
+<div class="overlay" id="pop-detail">
+  <div class="detail-popup">
+    <div class="dp-header">
+      <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-detail')">×</button></div>
+      <div class="dp-name-row">
+        <div class="dp-dot" id="dp-dot"></div>
+        <div class="dp-name" id="dp-name"></div>
+        <div class="dp-period" id="dp-period"></div>
+      </div>
+      <div class="dp-stats" id="dp-stats"></div>
+      <div class="sec-title" style="margin-top:4px;margin-bottom:8px">일자별 사용내역</div>
+    </div>
+    <div class="dp-body" id="dp-body"></div>
+    <div class="dp-footer">
+      <div class="dl-row">
+        <button class="dl-btn pdf" onclick="dpPDF()">⬇ PDF</button>
+        <button class="dl-btn xls" onclick="dpCSV()">⬇ 엑셀</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 토스트/로딩/PDF렌더 -->
+<div class="toast" id="toast"></div>
+<div class="loading" id="loading"><div class="loading-box"><div class="spinner"></div><p id="loading-msg">처리 중...</p></div></div>
+<div id="parea"></div>
+
+<script>
+// ── Firebase ──
+const FBC = {
+  apiKey:"AIzaSyC2zEsABEWq8rlVajHQwP1ovkxdONiD5l8",
+  authDomain:"ev260818-697c0.firebaseapp.com",
+  databaseURL:"https://ev260818-697c0-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"ev260818-697c0",
+  storageBucket:"ev260818-697c0.firebasestorage.app",
+  messagingSenderId:"1045133080450",
+  appId:"1:1045133080450:web:0fc90b3f492a12164a019b"
+};
+let fbOK=false, DB=null;
+let fbInitialized = false; // 중복 리스너 방지
+
+function initFB(){
+  // firebase SDK가 아직 로드 안됐으면 잠시 후 재시도 (안전장치)
+  if(typeof firebase === 'undefined'){
+    setTimeout(initFB, 200);
+    return;
+  }
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(FBC);
+    DB=firebase.database();
+
+    // 이미 초기화됐으면 리스너 중복 등록 방지, auth 상태만 재확인
+    if(fbInitialized){
+      if(!firebase.auth().currentUser){
+        firebase.auth().signInAnonymously().catch(e=>console.warn('재인증 실패',e.message));
+      }
+      return;
+    }
+    fbInitialized = true;
+
+    firebase.auth().signInAnonymously().then(()=>{
+      fbOK=true;
+      // 기존 리스너 해제 후 재등록 (안전장치)
+      DB.ref('ev_charge').off();
+      DB.ref('ev_charge').on('value',snap=>{
+        records.length=0;
+        deletedRecords.length=0;
+        if(snap.exists()) Object.entries(snap.val()).forEach(([k,v])=>{
+          const rec = {...v, staff: normName(v.staff), fbKey:k};
+          if(v.deleted) deletedRecords.push(rec); else records.push(rec);
+        });
+        records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+        deletedRecords.sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0));
+        // 현재 보이는 탭과 무관하게 항상 최신 데이터로 갱신 (최초 로드 타이밍 이슈 방지)
+        renderLog();
+        renderStats();
+        updateChargerMeters();
+        if(curTab()==='admin') renderAdminHistory();
+      }, err=>{
+        console.warn('ev_charge 구독 오류', err.message);
+        fbOK = false;
+        fbInitialized = false;
+      });
+
+      DB.ref('ev_charging').off();
+      DB.ref('ev_charging').on('value', snap=>{
+        chargingState = snap.exists() ? snap.val() : {};
+        updateChargerMeters();
+      });
+
+      // 직원 명단(로그인/신규등록/전체이력) 실시간 구독
+      DB.ref('staff').off();
+      DB.ref('staff').on('value', snap=>{
+        STAFF_DATA = snap.exists() ? snap.val() : {};
+        renderNameButtons();
+        if(curTab()==='admin') renderAdminStaffList();
+      }, err=>{
+        console.warn('staff 구독 오류', err.message);
+      });
+
+      // 차량 명단(법인차량, 대수 변동 가능) 실시간 구독
+      DB.ref('vehicles').off();
+      DB.ref('vehicles').on('value', snap=>{
+        VEHICLE_DATA = snap.exists() ? snap.val() : {};
+        renderVehicleChips();
+        if(curTab()==='admin') renderAdminVehicleList();
+      }, err=>{
+        console.warn('vehicles 구독 오류', err.message);
+      });
+    }).catch(e=>{
+      console.warn('FB auth fail',e.message);
+      fbInitialized = false;
+      loadLocal();
+    });
+  }catch(e){
+    console.warn('FB init fail',e.message);
+    fbInitialized = false;
+    loadLocal();
+  }
+}
+function fbSave(rec){ const {fbKey,...d}=rec; return fbOK&&DB ? DB.ref('ev_charge').push(d) : (records.unshift(rec),saveLocal(),Promise.resolve()); }
+function fbUpd(fbKey,data){ const {fbKey:_,...d}=data; return fbOK&&DB&&fbKey ? DB.ref('ev_charge/'+fbKey).update(d) : (saveLocal(),Promise.resolve()); }
+// 데이터 보존 원칙: 실제 삭제(remove) 대신 deleted 플래그만 세운다. Firebase엔 계속 남아있고
+// 관리 탭 "이력"에서 관리자가 다시 복원할 수 있다.
+function fbSoftDelete(fbKey){ return fbOK&&DB&&fbKey ? DB.ref('ev_charge/'+fbKey).update({deleted:true, deletedAt:Date.now(), deletedBy:userName()}) : Promise.resolve(); }
+function fbRestore(fbKey){ return fbOK&&DB&&fbKey ? DB.ref('ev_charge/'+fbKey).update({deleted:false, deletedAt:null, deletedBy:null}) : Promise.resolve(); }
+function saveLocal(){ try{localStorage.setItem('ev',JSON.stringify(records));}catch(e){} }
+function loadLocal(){ try{const d=localStorage.getItem('ev');if(d){const a=JSON.parse(d);records.length=0;a.forEach(r=>records.push(r));}}catch(e){} }
+
+// ── 변경이력(감사로그) — 화면엔 안 보이고 "관리 > 이력" 탭에서만 확인 ──
+function logAudit(action, detail){
+  if(!fbOK||!DB) return;
+  DB.ref('audit_log').push({ ts:Date.now(), actor:userName()||'(알수없음)', action, detail }).catch(e=>console.warn('감사로그 기록 실패', e.message));
+}
+
+// ── 로그인 상태 ──
+let selectedLoginName = '';
+let loginStep = 'name'; // 'name' | 'pin' | 'reg-name' | 'reg-pin'
+let regName = '';
+let regPinStage = 1; // 1:최초입력 2:재확인
+let regPin1 = '';
+let regPinV = '';
+
+function renderLoginScreen(){
+  const steps = {'name':'step-name','pin':'step-pin','reg-name':'step-reg-name','reg-pin':'step-reg-pin'};
+  Object.entries(steps).forEach(([key,id])=>{
+    const el = document.getElementById(id);
+    el.style.display = loginStep===key ? 'flex' : 'none';
+    el.style.flexDirection='column';
+    el.style.alignItems='center';
+  });
+}
+function selectName(name){
+  selectedLoginName = name;
+  document.querySelectorAll('#name-btn-grid .pin-name-btn').forEach(b=>{
+    b.classList.toggle('selected', b.textContent===name);
+  });
+  setTimeout(()=>{
+    loginStep = 'pin';
+    document.getElementById('pin-greeting').textContent = name + ' 님';
+    pinV = ''; updateDots();
+    document.getElementById('pin-err').textContent='';
+    renderLoginScreen();
+  }, 180);
+}
+function backToName(){
+  loginStep='name'; pinV=''; selectedLoginName='';
+  regName=''; regPin1=''; regPinStage=1; regPinV='';
+  updateDots(); updateRegDots();
+  document.getElementById('pin-err').textContent='';
+  const rne=document.getElementById('reg-name-err'); if(rne) rne.textContent='';
+  const rni=document.getElementById('reg-name-input'); if(rni) rni.value='';
+  const rpe=document.getElementById('reg-pin-err'); if(rpe) rpe.textContent='';
+  renderLoginScreen();
+}
+
+// ── 신규 등록 ──
+function goRegister(){
+  regName=''; regPin1=''; regPinStage=1; regPinV='';
+  document.getElementById('reg-name-input').value='';
+  document.getElementById('reg-name-err').textContent='';
+  loginStep='reg-name';
+  renderLoginScreen();
+  setTimeout(()=>document.getElementById('reg-name-input')?.focus(),150);
+}
+function regNameNext(){
+  const name = document.getElementById('reg-name-input').value.trim();
+  const err = document.getElementById('reg-name-err');
+  if(!name){ err.textContent='이름을 입력하세요'; return; }
+  if(STAFF_DATA[name]){ err.textContent='이미 등록된 이름입니다'; return; }
+  regName = name; regPinStage = 1; regPin1=''; regPinV='';
+  document.getElementById('reg-pin-title').textContent='PIN 설정';
+  document.getElementById('reg-pin-sub').textContent='사용할 4자리 PIN을 입력하세요';
+  updateRegDots();
+  document.getElementById('reg-pin-err').textContent='';
+  loginStep='reg-pin';
+  renderLoginScreen();
+}
+function rpi(n){
+  if(regPinV.length>=4) return;
+  regPinV+=n; updateRegDots();
+  if(regPinV.length===4){
+    setTimeout(()=>{
+      if(regPinStage===1){
+        regPin1 = regPinV; regPinStage=2; regPinV='';
+        updateRegDots();
+        document.getElementById('reg-pin-title').textContent='PIN 확인';
+        document.getElementById('reg-pin-sub').textContent='다시 한번 입력하세요';
+      } else if(regPinV===regPin1){
+        submitRegistration(regName, regPin1);
+      } else {
+        document.querySelectorAll('#reg-pin-dots .pin-dot').forEach(d=>d.classList.add('err'));
+        document.getElementById('reg-pin-err').textContent='PIN이 일치하지 않습니다. 다시 입력하세요';
+        setTimeout(()=>{
+          regPinStage=1; regPin1=''; regPinV='';
+          updateRegDots();
+          document.querySelectorAll('#reg-pin-dots .pin-dot').forEach(d=>d.classList.remove('err'));
+          document.getElementById('reg-pin-err').textContent='';
+          document.getElementById('reg-pin-title').textContent='PIN 설정';
+          document.getElementById('reg-pin-sub').textContent='사용할 4자리 PIN을 입력하세요';
+        },900);
+      }
+    },80);
+  }
+}
+function rpd(){ regPinV=regPinV.slice(0,-1); updateRegDots(); }
+function updateRegDots(){ document.querySelectorAll('#reg-pin-dots .pin-dot').forEach((d,i)=>d.classList.toggle('on',i<regPinV.length)); }
+
+function submitRegistration(name, pinValue){
+  if(!fbOK || !DB){
+    document.getElementById('reg-pin-err').textContent='서버 연결 후 다시 시도해주세요';
+    return;
+  }
+  const entry={ pin:pinValue, role:'user', active:true, color:nextColor(), order:nextOrder(), createdAt:Date.now() };
+  DB.ref('staff/'+name).set(entry).then(()=>{
+    STAFF_DATA[name]=entry;
+    currentUser={name, role:'user'};
+    saveSession(name,'user');
+    document.getElementById('pin-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    autoSelectStaff(name);
+    renderStats(); setTimeout(loadTempStart,500);
+    if(window._initHistoryBase) window._initHistoryBase();
+    toast(`✓ ${name}님 등록 완료`);
+    logAudit('staff_self_register', {name});
+  }).catch(e=>{
+    document.getElementById('reg-pin-err').textContent='등록 실패 — 다시 시도해주세요';
+    console.warn('등록 실패', e.message);
+  });
+}
+
+// ── 직원 명단 (Firebase staff 노드 기반 — 코드 재배포 없이 입/퇴사 반영) ──
+let STAFF_DATA = {}; // {이름:{pin,role,active,color,order,createdAt}}
+const PALETTE=['#0EA96B','#1752A8','#E8871A','#9333EA','#DC2626','#0891B2','#65A30D','#D97706','#0F766E','#BE185D'];
+function allStaffList(){ // 전체 이력(퇴사자 포함) — 기록수정/집계용
+  return Object.keys(STAFF_DATA).sort((a,b)=>(STAFF_DATA[a].order||0)-(STAFF_DATA[b].order||0));
+}
+function activeStaffList(){ // 재직자만 — 로그인 화면용
+  return allStaffList().filter(n=>STAFF_DATA[n].active!==false);
+}
+function colorOf(name){ return STAFF_DATA[name]?.color || '#888'; }
+function nextOrder(){ const o=Object.values(STAFF_DATA).map(v=>v.order||0); return o.length?Math.max(...o)+1:1; }
+function nextColor(){
+  const used=new Set(activeStaffList().map(n=>STAFF_DATA[n].color));
+  return PALETTE.find(c=>!used.has(c)) || PALETTE[Object.keys(STAFF_DATA).length % PALETTE.length];
+}
+function renderNameButtons(){
+  const grid=document.getElementById('name-btn-grid'); if(!grid) return;
+  const list=activeStaffList();
+  if(!list.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:13px;padding:24px 0">불러오는 중...</div>'; return; }
+  grid.innerHTML=list.map(n=>`<button class="pin-name-btn" onclick="selectName('${n}')">${n}</button>`).join('');
+}
+
+// ── 차량 명단 (Firebase vehicles 노드 기반 — 법인차량, 대수 변동 가능) ──
+let VEHICLE_DATA = {}; // {번호:{active,order,createdAt,retiredAt}}
+function allVehicleList(){ return Object.keys(VEHICLE_DATA).sort((a,b)=>(VEHICLE_DATA[a].order||0)-(VEHICLE_DATA[b].order||0)); }
+function activeVehicleList(){ return allVehicleList().filter(v=>VEHICLE_DATA[v].active!==false); }
+function nextVehicleOrder(){ const o=Object.values(VEHICLE_DATA).map(v=>v.order||0); return o.length?Math.max(...o)+1:1; }
+function renderVehicleChips(){
+  const grid=document.getElementById('car-chip-grid'); if(!grid) return;
+  const list=activeVehicleList();
+  const prevSel = st.car;
+  grid.innerHTML = list.map(v=>`<div class="chip ${v===prevSel?'on':''}" onclick="selChip(this,'car','${v}')">${v}</div>`).join('')
+    + `<div class="chip ${prevSel==='직접입력'?'on':''}" onclick="selChip(this,'car','직접입력')">직접입력</div>`;
+}
+
+// ── 로그인/직원/차량 UI 갱신 (관리자 탭 노출 등) ──
+function applyAdminUI(){
+  const btn=document.getElementById('tab-admin-btn');
+  if(btn) btn.style.display = isAdmin() ? 'block' : 'none';
+}
+
+// ── 관리 탭: 직원/차량 관리 ──
+function goAdminSub(sub){
+  document.querySelectorAll('.admin-subtab').forEach(b=>b.classList.toggle('on', b.dataset.sub===sub));
+  document.getElementById('admin-sub-staff').style.display = sub==='staff' ? 'block':'none';
+  document.getElementById('admin-sub-vehicle').style.display = sub==='vehicle' ? 'block':'none';
+  document.getElementById('admin-sub-history').style.display = sub==='history' ? 'block':'none';
+  if(sub==='history') renderAdminHistory();
+}
+function renderAdminPanel(){
+  renderAdminStaffList();
+  renderAdminVehicleList();
+}
+function renderAdminStaffList(){
+  const el=document.getElementById('admin-staff-list'); if(!el) return;
+  const list=allStaffList();
+  el.innerHTML = list.map(n=>{
+    const s=STAFF_DATA[n]; const active=s.active!==false;
+    return `<div class="log-item" style="cursor:default">
+      <div class="log-bar" style="background:${colorOf(n)}"></div>
+      <div class="log-body">
+        <div class="log-top">${n}
+          <span class="log-car" style="background:${active?'var(--green-bg)':'var(--red-bg)'};color:${active?'var(--green)':'var(--red)'};border-color:${active?'var(--green-bd)':'var(--red-bd)'}">${active?'재직':'퇴사'}</span>
+        </div>
+        <div class="log-date">PIN ${s.pin} · ${s.role==='admin'?'관리자':'일반'}</div>
+      </div>
+      <button onclick="adminToggleStaffActive('${n}')" style="padding:9px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap">${active?'퇴사처리':'재직전환'}</button>
+    </div>`;
+  }).join('');
+}
+function renderAdminVehicleList(){
+  const el=document.getElementById('admin-vehicle-list'); if(!el) return;
+  const list=allVehicleList();
+  el.innerHTML = list.map(v=>{
+    const s=VEHICLE_DATA[v]; const active=s.active!==false;
+    return `<div class="log-item" style="cursor:default">
+      <div class="log-bar" style="background:${active?'var(--blue)':'var(--border2)'}"></div>
+      <div class="log-body">
+        <div class="log-top">${v}
+          <span class="log-car" style="background:${active?'var(--green-bg)':'var(--red-bg)'};color:${active?'var(--green)':'var(--red)'};border-color:${active?'var(--green-bd)':'var(--red-bd)'}">${active?'운용중':'제외됨'}</span>
+        </div>
+      </div>
+      <button onclick="adminToggleVehicleActive('${v}')" style="padding:9px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap">${active?'제외처리':'운용전환'}</button>
+    </div>`;
+  }).join('');
+}
+
+// ── 관리 탭: 이력 (삭제복원 + 감사로그) ──
+function fmtTs(ts){ if(!ts) return ''; const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+const AUDIT_LABEL = {
+  record_add:'기록 저장', record_edit:'기록 수정', record_delete:'기록 삭제', record_restore:'기록 복원',
+  staff_add:'직원 추가', staff_self_register:'신규 자가등록', staff_retire:'퇴사 처리', staff_reactivate:'재직 전환',
+  vehicle_add:'차량 추가', vehicle_retire:'차량 제외', vehicle_reactivate:'차량 운용전환'
+};
+function auditDetailText(a){
+  const d=a.detail||{};
+  if(a.action==='record_add') return `${d.date} ${d.staff} ${d.charger} ${d.car} ${d.kwh?.toFixed?.(1)??d.kwh}kWh`;
+  if(a.action==='record_delete') return `${d.date} ${d.staff} ${d.charger} ${d.kwh?.toFixed?.(1)??d.kwh}kWh`;
+  if(a.action==='record_edit') return `${d.before?.date??''} → ${d.after?.kwh?.toFixed?.(1)??''}kWh로 수정`;
+  if(a.action==='staff_add') return d.name;
+  if(a.action==='staff_retire'||a.action==='staff_reactivate') return d.name;
+  if(a.action==='vehicle_add'||a.action==='vehicle_retire'||a.action==='vehicle_reactivate') return d.num;
+  return '';
+}
+function renderAdminHistory(){
+  const delEl=document.getElementById('admin-deleted-list');
+  if(delEl){
+    delEl.innerHTML = deletedRecords.length ? deletedRecords.map(r=>`
+      <div class="log-item" style="cursor:default">
+        <div class="log-bar" style="background:var(--red)"></div>
+        <div class="log-body">
+          <div class="log-top">${r.staff} <span class="log-car">${r.charger}</span> <span class="log-car">${r.car}</span></div>
+          <div class="log-date">${r.date} · ${r.kwh?.toFixed?.(1)??r.kwh}kWh · ${fmtTs(r.deletedAt)} ${r.deletedBy||''} 삭제</div>
+        </div>
+        <button onclick="restoreRecord('${r.fbKey}')" style="padding:9px 14px;border-radius:8px;border:1.5px solid var(--blue-bd);background:var(--blue-bg);color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap">복원</button>
+      </div>`).join('')
+      : '<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">삭제된 기록 없음</div>';
+  }
+  const auditEl=document.getElementById('admin-audit-list');
+  if(!auditEl || !fbOK || !DB) return;
+  auditEl.innerHTML = '<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">불러오는 중...</div>';
+  DB.ref('audit_log').limitToLast(50).once('value').then(snap=>{
+    const items = snap.exists() ? Object.values(snap.val()) : [];
+    items.sort((a,b)=>b.ts-a.ts);
+    auditEl.innerHTML = items.length ? items.map(a=>`
+      <div class="log-item" style="cursor:default">
+        <div class="log-bar" style="background:var(--text3)"></div>
+        <div class="log-body">
+          <div class="log-top">${AUDIT_LABEL[a.action]||a.action} <span class="log-car">${a.actor}</span></div>
+          <div class="log-date">${fmtTs(a.ts)} · ${auditDetailText(a)}</div>
+        </div>
+      </div>`).join('')
+      : '<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">변경 이력 없음</div>';
+  }).catch(e=>{ auditEl.innerHTML = '<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">불러오기 실패</div>'; console.warn(e.message); });
+}
+
+function adminAddStaff(){
+  const name=document.getElementById('adm-staff-name').value.trim();
+  const pin=document.getElementById('adm-staff-pin').value.trim();
+  const err=document.getElementById('adm-staff-err');
+  err.textContent='';
+  if(!name){ err.textContent='이름을 입력하세요'; return; }
+  if(STAFF_DATA[name]){ err.textContent='이미 등록된 이름입니다'; return; }
+  if(!/^\d{4}$/.test(pin)){ err.textContent='PIN은 숫자 4자리로 입력하세요'; return; }
+  if(!fbOK||!DB){ err.textContent='서버 연결 후 다시 시도해주세요'; return; }
+  const entry={ pin, role:'user', active:true, color:nextColor(), order:nextOrder(), createdAt:Date.now() };
+  DB.ref('staff/'+name).set(entry).then(()=>{
+    STAFF_DATA[name]=entry;
+    document.getElementById('adm-staff-name').value='';
+    document.getElementById('adm-staff-pin').value='';
+    renderAdminStaffList();
+    toast(`✓ ${name}님 추가 완료`);
+    logAudit('staff_add', {name});
+  }).catch(e=>{ err.textContent='추가 실패 — 다시 시도해주세요'; console.warn(e.message); });
+}
+function adminToggleStaffActive(name){
+  const s=STAFF_DATA[name]; if(!s||!fbOK||!DB) return;
+  const nextActive = !(s.active!==false);
+  const patch = nextActive ? {active:true, retiredAt:null} : {active:false, retiredAt:Date.now()};
+  DB.ref('staff/'+name).update(patch).then(()=>{
+    Object.assign(STAFF_DATA[name], patch);
+    renderAdminStaffList();
+    toast(nextActive ? `${name}님 재직 전환` : `${name}님 퇴사 처리 완료`);
+    logAudit(nextActive?'staff_reactivate':'staff_retire', {name});
+  }).catch(e=>console.warn(e.message));
+}
+function adminAddVehicle(){
+  const num=document.getElementById('adm-vehicle-num').value.trim();
+  const err=document.getElementById('adm-vehicle-err');
+  err.textContent='';
+  if(!num){ err.textContent='차량번호를 입력하세요'; return; }
+  if(VEHICLE_DATA[num]){ err.textContent='이미 등록된 차량번호입니다'; return; }
+  if(!fbOK||!DB){ err.textContent='서버 연결 후 다시 시도해주세요'; return; }
+  const entry={ active:true, order:nextVehicleOrder(), createdAt:Date.now() };
+  DB.ref('vehicles/'+num).set(entry).then(()=>{
+    VEHICLE_DATA[num]=entry;
+    document.getElementById('adm-vehicle-num').value='';
+    renderAdminVehicleList();
+    toast(`✓ 차량 ${num} 추가 완료`);
+    logAudit('vehicle_add', {num});
+  }).catch(e=>{ err.textContent='추가 실패 — 다시 시도해주세요'; console.warn(e.message); });
+}
+function adminToggleVehicleActive(num){
+  const v=VEHICLE_DATA[num]; if(!v||!fbOK||!DB) return;
+  const nextActive = !(v.active!==false);
+  const patch = nextActive ? {active:true, retiredAt:null} : {active:false, retiredAt:Date.now()};
+  DB.ref('vehicles/'+num).update(patch).then(()=>{
+    Object.assign(VEHICLE_DATA[num], patch);
+    renderAdminVehicleList();
+    toast(nextActive ? `차량 ${num} 운용 전환` : `차량 ${num} 제외 처리 완료`);
+    logAudit(nextActive?'vehicle_reactivate':'vehicle_retire', {num});
+  }).catch(e=>console.warn(e.message));
+}
+
+let currentUser = null; // {name, role}
+
+function loadSession(){
+  try{
+    const s = localStorage.getItem('ev_session');
+    if(!s) return false;
+    const {name, role, exp} = JSON.parse(s);
+    if(Date.now() > exp){ localStorage.removeItem('ev_session'); return false; }
+    currentUser = {name, role};
+    return true;
+  }catch(e){ return false; }
+}
+function saveSession(name, role){
+  const exp = Date.now() + 5*24*60*60*1000; // 5일
+  localStorage.setItem('ev_session', JSON.stringify({name, role, exp}));
+}
+
+// 구 이름 → 현재 이름 매핑 (Firebase 기존 데이터 호환)
+const NAME_MAP = {
+  '사장님': '송승훈',
+  '부회장님': '송상훈',
+};
+function normName(name){ return NAME_MAP[name] || name; }
+function isAdmin(){ return currentUser?.role==='admin'; }
+function userName(){ return currentUser?.name||''; }
+
+const now=new Date();
+// 로컬 날짜 (UTC 버그 방지)
+function getLocalDate(d){
+  const t = d || new Date();
+  const y = t.getFullYear();
+  const m = String(t.getMonth()+1).padStart(2,'0');
+  const day = String(t.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+const DAYS=['일','월','화','수','목','금','토'];
+
+// ── 상태 ──
+let records=[];
+let deletedRecords=[]; // 소프트삭제된 기록 (관리 탭 "이력"에서만 노출, 복원 가능)
+let st={staff:'',charger:'',car:'',start:0,end:0,kwh:0};
+let pendStaff='';
+let editId=null, editSt={};
+let vm={y:now.getFullYear(),m:now.getMonth()+1};
+let vy={y:now.getFullYear()};
+let dpPerson='';
+let chargingState={}; // {charger: {staff, start, date}}
+
+// ── 헤더 날짜 ──
+document.getElementById('hdr-date').textContent=`${now.getMonth()+1}/${now.getDate()}(${DAYS[now.getDay()]})`;
+// Firebase 인증 + staff/ev_charge 구독을 로그인 여부와 무관하게 즉시 시작
+// (이름선택 화면에 뿌릴 재직자 명단을 로그인 전에 먼저 읽어와야 하므로)
+initFB();
+// 세션 복원
+if(loadSession()){
+  document.getElementById('pin-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  autoSelectStaff(currentUser.name);
+  setTimeout(loadTempStart,500);
+  if(window._initHistoryBase) window._initHistoryBase();
+} else {
+  renderLoginScreen();
+}
+
+// ── PIN ──
+let pinV='';
+function pi(n){
+  if(pinV.length>=4) return;
+  pinV+=n; updateDots();
+  if(pinV.length===4){
+    setTimeout(()=>{
+      const user = STAFF_DATA[selectedLoginName];
+      if(user && pinV===user.pin){
+        currentUser = {name:selectedLoginName, role:user.role};
+        saveSession(selectedLoginName, user.role);
+        document.getElementById('pin-screen').style.display='none';
+        document.getElementById('app').style.display='flex';
+        // hdr-user로 표시하므로 hdr-sub 변경 불필요
+        autoSelectStaff(selectedLoginName);
+        renderStats(); setTimeout(loadTempStart,500);
+        if(window._initHistoryBase) window._initHistoryBase();
+      } else {
+        document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('err'));
+        document.getElementById('pin-err').textContent='PIN이 맞지 않습니다';
+        setTimeout(()=>{
+          pinV=''; updateDots();
+          document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('err'));
+          document.getElementById('pin-err').textContent='';
+        },700);
+      }
+    },80);
+  }
+}
+function pd(){ pinV=pinV.slice(0,-1); updateDots(); }
+function updateDots(){ document.querySelectorAll('.pin-dot').forEach((d,i)=>d.classList.toggle('on',i<pinV.length)); }
+function autoSelectStaff(name){
+  st.staff = name;
+  applyAdminUI();
+  // DOM 준비 후 실행 보장
+  const setUser = ()=>{
+    const el = document.getElementById('hdr-user');
+    if(el){ el.textContent = name + ' 님'; el.style.display='block'; }
+  };
+  setUser();
+  setTimeout(setUser, 100); // 세션복원 시 타이밍 보장
+  chkReady();
+}
+
+// ── 탭 ──
+function curTab(){ const b=document.querySelector('.tabs > .tab.on'); return b ? b.dataset.tab : 'input'; }
+function goTab(t){
+  document.querySelectorAll('.tabs > .tab').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
+  ['input','log','stats','admin'].forEach(id=>{ const el=document.getElementById('sec-'+id); if(el) el.style.display = id===t?'block':'none'; });
+  document.getElementById('content').scrollTop=0;
+  if(t==='log') renderLog();
+  if(t==='stats') renderStats();
+  if(t==='admin') renderAdminPanel();
+}
+
+// ── 입력 ──
+function selStaff(el,name){ pendStaff=name; document.getElementById('ps-name').textContent=name; openP('pop-staff'); }
+function confirmStaff(){
+  st.staff=pendStaff;
+  document.querySelectorAll('#sec-input .chip-grid:first-child .chip, #sec-input .card:first-child .chip').forEach(c=>c.classList.toggle('on',c.textContent===pendStaff));
+  // 첫번째 card의 chip
+  document.querySelectorAll('#sec-input .card').forEach((card,ci)=>{ if(ci===0) card.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===pendStaff)); });
+  closeP('pop-staff'); chkReady();
+}
+function selChip(el,key,val){
+  el.closest('.chip-grid').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); st[key]=val;
+  document.getElementById('car-manual').style.display=(val==='직접입력')?'block':'none';
+  if(val==='직접입력') st.car=''; chkReady();
+}
+function calcK(){
+  const s=parseFloat(document.getElementById('inp-s').value);
+  const e=parseFloat(document.getElementById('inp-e').value);
+  st.start=s; st.end=e;
+  const box=document.getElementById('calc-box');
+  const num=document.getElementById('calc-num');
+  if(!isNaN(s)&&!isNaN(e)&&e>s){
+    const k=Math.round((e-s)*10)/10;
+    st.kwh=k; num.textContent=k.toFixed(1); box.classList.remove('z');
+  } else {
+    st.kwh=0; num.textContent='—'; box.classList.add('z');
+  }
+  // 임시저장 버튼: 충전기+차량 선택됐고 시작값만 있고 종료 없을 때
+  const startBtn=document.getElementById('start-btn');
+  const eVal = document.getElementById('inp-e').value;
+  const tempOk = st.charger && st.car && !isNaN(s) && s>0 && (!eVal || eVal==='');
+  if(startBtn) startBtn.style.display = tempOk ? 'block' : 'none';
+  chkReady();
+}
+function chkReady(){
+  // staff는 로그인 시 자동 세팅, 별도 체크 불필요
+  if(!st.staff) st.staff = userName();
+  document.getElementById('save-btn').disabled=!(st.charger&&st.car&&st.kwh>0);
+}
+
+// ── 저장 ──
+function openSaveConfirm(){
+  if(!st.staff) st.staff = userName(); // 로그인 사용자 자동
+  const d=getLocalDate();
+  document.getElementById('save-info').innerHTML=`
+    <div class="info-row"><span class="info-key">날짜</span><span class="info-val">${d}</span></div>
+    <div class="info-row"><span class="info-key">작성자</span><span class="info-val">${st.staff}</span></div>
+    <div class="info-row"><span class="info-key">충전기</span><span class="info-val">${st.charger}</span></div>
+    <div class="info-row"><span class="info-key">차량번호</span><span class="info-val">${st.car}</span></div>
+    <div class="info-row"><span class="info-key">시작</span><span class="info-val">${st.start} kWh</span></div>
+    <div class="info-row"><span class="info-key">종료</span><span class="info-val">${st.end} kWh</span></div>
+    <div class="info-row"><span class="info-key">충전량</span><span class="info-val big">${st.kwh.toFixed(1)} kWh</span></div>`;
+  openP('pop-save');
+}
+function confirmSave(){
+  const rec={id:Date.now(),date:getLocalDate(),...st};
+  const savedKwh = st.kwh;      // resetForm 전에 미리 저장
+  const chargerKey = st.charger;
+  closeP('pop-save');
+  clearTemp();
+  resetForm();
+  fbSave(rec).then(()=>{
+    toast(`✓ ${savedKwh.toFixed(1)} kWh 저장 완료`);
+    if(fbOK && DB) DB.ref('ev_charging/' + chargerKey).remove();
+    updateChargerMeters();
+    logAudit('record_add', {date:rec.date, staff:rec.staff, charger:rec.charger, car:rec.car, kwh:savedKwh});
+  }).catch(()=>toast('저장 실패'));
+}
+function resetForm(){
+  st={staff:'',charger:'',car:'',start:0,end:0,kwh:0};
+  document.querySelectorAll('#sec-input .chip').forEach(c=>c.classList.remove('on'));
+  document.getElementById('inp-s').value='';
+  document.getElementById('inp-e').value='';
+  document.getElementById('car-manual').style.display='none';
+  document.getElementById('calc-num').textContent='—';
+  document.getElementById('calc-box').classList.add('z');
+  document.getElementById('save-btn').disabled=true;
+}
+
+// ── 기록 ──
+function renderLog(){
+  const el=document.getElementById('log-list');
+  if(!records.length){ el.innerHTML='<div style="text-align:center;color:var(--text3);padding:40px;font-size:14px">기록이 없습니다</div>'; return; }
+  el.innerHTML=records.map(r=>{
+    const col=colorOf(r.staff);
+    const cc=chargerColor(r.charger);
+    return `<div class="log-item" onclick="openEdit(${r.id})">
+      <div class="log-bar" style="background:${col}"></div>
+      <div class="log-body">
+        <div class="log-top">${r.staff}
+          <span class="log-car" style="background:${col};color:#fff;border-color:${col};font-weight:800">${r.charger}</span>
+          <span class="log-car">${r.car}</span>
+        </div>
+        <div class="log-date">${r.date}</div>
+        <div class="log-meter">${r.start} → ${r.end}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="log-kwh" style="color:${col}">${r.kwh.toFixed(1)} kWh</div>
+        <div class="edit-tag">수정</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── 수정 ──
+function openEdit(id){
+  const r=records.find(x=>x.id===id); if(!r)return;
+  editId=id; editSt={...r};
+  document.getElementById('edit-lbl').textContent=`${r.date} · ${r.charger} · ${r.car}`;
+  document.getElementById('e-date').value=r.date;
+  document.getElementById('e-staff').innerHTML=allStaffList().map(n=>`<div class="chip ${n===r.staff?'on':''}" onclick="eChip(this,'staff','${n}')">${n}</div>`).join('');
+  document.getElementById('e-charger').innerHTML=['1호기','2호기','고속'].map(c=>`<div class="chip ${c===r.charger?'on':''}" onclick="eChip(this,'charger','${c}')">${c}</div>`).join('');
+  document.getElementById('e-car').innerHTML=allVehicleList().map(c=>`<div class="chip ${c===r.car?'on':''}" onclick="eChip(this,'car','${c}')">${c}</div>`).join('');
+  document.getElementById('e-s').value=r.start;
+  document.getElementById('e-e').value=r.end;
+  calcEK(); openP('pop-edit');
+}
+function eChip(el,key,val){ el.closest('.chip-grid').querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); editSt[key]=val; }
+function calcEK(){
+  const s=parseFloat(document.getElementById('e-s').value);
+  const e=parseFloat(document.getElementById('e-e').value);
+  editSt.start=s; editSt.end=e;
+  const box=document.getElementById('e-calc'), num=document.getElementById('e-num');
+  if(!isNaN(s)&&!isNaN(e)&&e>s){ const k=Math.round((e-s)*10)/10; editSt.kwh=k; num.textContent=k.toFixed(1); box.classList.remove('z'); document.getElementById('e-save-btn').disabled=false; }
+  else { editSt.kwh=0; num.textContent='—'; box.classList.add('z'); document.getElementById('e-save-btn').disabled=true; }
+}
+function confirmEdit(){
+  const idx=records.findIndex(r=>r.id===editId); if(idx===-1)return;
+  const before={...records[idx]};
+  const s=document.querySelector('#e-staff .on'), ch=document.querySelector('#e-charger .on'), ca=document.querySelector('#e-car .on');
+  if(s) editSt.staff=s.textContent; if(ch) editSt.charger=ch.textContent; if(ca) editSt.car=ca.textContent;
+  const editDate=document.getElementById('e-date').value;
+  if(editDate) editSt.date=editDate;
+  const upd={...records[idx],...editSt};
+  closeP('pop-edit');
+  fbUpd(upd.fbKey,upd).then(()=>{
+    toast('수정 완료');
+    logAudit('record_edit', {
+      before:{date:before.date,staff:before.staff,charger:before.charger,car:before.car,start:before.start,end:before.end,kwh:before.kwh},
+      after:{date:upd.date,staff:upd.staff,charger:upd.charger,car:upd.car,start:upd.start,end:upd.end,kwh:upd.kwh}
+    });
+  }).catch(()=>{ records[idx]=upd; renderLog(); toast('수정 완료'); });
+}
+function openDelConfirm(){
+  const r=records.find(x=>x.id===editId); if(!r)return;
+  document.getElementById('del-info').innerHTML=`
+    <div class="info-row"><span class="info-key">날짜</span><span class="info-val">${r.date}</span></div>
+    <div class="info-row"><span class="info-key">작성자</span><span class="info-val">${r.staff}</span></div>
+    <div class="info-row"><span class="info-key">충전기</span><span class="info-val">${r.charger}</span></div>
+    <div class="info-row"><span class="info-key">충전량</span><span class="info-val" style="color:var(--red)">${r.kwh.toFixed(1)} kWh</span></div>`;
+  openP('pop-del');
+}
+function confirmDel(){
+  const r=records.find(x=>x.id===editId);
+  closeP('pop-del'); closeP('pop-edit');
+  fbSoftDelete(r?.fbKey).then(()=>{
+    toast('삭제 완료');
+    if(r) logAudit('record_delete', {date:r.date, staff:r.staff, charger:r.charger, car:r.car, kwh:r.kwh, fbKey:r.fbKey});
+  }).catch(()=>{ records=records.filter(x=>x.id!==editId); renderLog(); toast('삭제 완료'); });
+}
+function restoreRecord(fbKey){
+  fbRestore(fbKey).then(()=>{
+    toast('✓ 기록 복원 완료');
+    logAudit('record_restore', {fbKey});
+  }).catch(()=>toast('복원 실패'));
+}
+
+// ── 월집계 ──
+function changeMonth(d){ vm.m+=d; if(vm.m>12){vm.m=1;vm.y++;} if(vm.m<1){vm.m=12;vm.y--;} renderStats(); }
+function renderStats(){
+  const {y,m}=vm;
+  document.getElementById('month-label').textContent=`${y}년 ${m}월`;
+  const pref=`${y}-${String(m).padStart(2,'0')}`;
+  const rows=records.filter(r=>r.date.startsWith(pref));
+  const total=rows.reduce((s,r)=>s+r.kwh,0);
+  const sMap={};
+  rows.forEach(r=>{ sMap[r.staff]=(sMap[r.staff]||0)+r.kwh; });
+  const staffNames = allStaffList().filter(n=>STAFF_DATA[n].active!==false || (sMap[n]||0)>0);
+  const cMap={'1호기':0,'2호기':0,'고속':0};
+  rows.forEach(r=>{ cMap[r.charger]=(cMap[r.charger]||0)+r.kwh; });
+  const maxC=Math.max(...Object.values(cMap),0.1);
+  document.getElementById('stats-content').innerHTML=`
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">총충전량</div><div class="stat-inline"><span class="stat-val" style="color:var(--green)">${total.toFixed(1)}</span><span class="stat-unit">kWh</span></div></div>
+      <div class="stat-card"><div class="stat-label">충전횟수</div><div class="stat-inline"><span class="stat-val">${rows.length}</span><span class="stat-unit">회</span></div></div>
+      <div class="stat-card"><div class="stat-label">평균/회</div><div class="stat-inline"><span class="stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</span><span class="stat-unit">kWh</span></div></div>
+    </div>
+    <div class="sec-title" style="text-align:center;font-size:13px;font-weight:800">사용자별 <span style="font-size:11px;color:var(--blue);margin-left:4px;font-weight:700">클릭 → 상세</span></div>
+    <div class="staff-card">
+      ${staffNames.map(n=>{ const k=sMap[n]||0,w=total?Math.round(k/total*100):0;
+        return `<div class="staff-row" onclick="openDetail('${n}')">
+          <div class="sname">${n}</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${w}%;background:${colorOf(n)}"></div></div>
+          <div class="skwh">${k.toFixed(1)} kWh</div>
+          <div class="spct">${w}%</div>
+          <div class="s-arrow">›</div>
+        </div>`; }).join('')}
+    </div>
+    <div class="sec-title" style="text-align:center;font-size:13px;font-weight:800;color:var(--text2)">충전기별</div>
+    <div class="charger-row">
+      ${['1호기','2호기','고속'].map(c=>{ const k=cMap[c]||0,w=Math.round(k/maxC*100);
+        return `<div class="charger-card"><div class="cno">${c}</div><div class="stat-inline" style="justify-content:center"><span class="ckwh">${k.toFixed(1)}</span><span class="cunit" style="margin-top:0">kWh</span></div><div class="cbar"><div class="cbar-fill" style="width:${w}%"></div></div></div>`; }).join('')}
+    </div>
+    <div class="dl-row">
+      <button class="dl-btn pdf" onclick="statsPDF()">⬇ PDF</button>
+      <button class="dl-btn xls" onclick="statsCSV()">⬇ 엑셀</button>
+    </div>
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
+      <button onclick="logout()" style="background:var(--red-bg);border:1.5px solid var(--red-bd);border-radius:8px;padding:12px 28px;font-size:14px;font-weight:700;color:var(--red);cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;justify-content:center;line-height:1">로그아웃</button>
+    </div>`;
+}
+
+// ── 개인 상세 ──
+function openDetail(name){
+  const {y,m}=vm;
+  const pref=`${y}-${String(m).padStart(2,'0')}`;
+  const rows=records.filter(r=>r.date.startsWith(pref)&&r.staff===name);
+  const total=rows.reduce((s,r)=>s+r.kwh,0);
+  const col=colorOf(name);
+  dpPerson=name;
+  document.getElementById('dp-dot').style.background=col;
+  document.getElementById('dp-name').textContent=name;
+  document.getElementById('dp-period').textContent=`${y}년 ${m}월`;
+  document.getElementById('dp-stats').innerHTML=`
+    <div class="dp-stat"><div class="dp-stat-label">충전량</div><div class="stat-inline" style="justify-content:center"><span class="dp-stat-val" style="color:${col}">${total.toFixed(1)}</span><span class="dp-stat-unit" style="margin-top:0">kWh</span></div></div>
+    <div class="dp-stat"><div class="dp-stat-label">횟수</div><div class="stat-inline" style="justify-content:center"><span class="dp-stat-val">${rows.length}</span><span class="dp-stat-unit" style="margin-top:0">회</span></div></div>
+    <div class="dp-stat"><div class="dp-stat-label">평균/회</div><div class="stat-inline" style="justify-content:center"><span class="dp-stat-val">${rows.length?(total/rows.length).toFixed(1):'—'}</span><span class="dp-stat-unit" style="margin-top:0">kWh</span></div></div>`;
+  document.getElementById('dp-body').innerHTML=rows.length
+    ? rows.map(r=>`<div class="dp-row">
+        <div class="dp-date">${r.date.slice(5).replace('-','.')}</div>
+        <div class="dp-info"><div class="dp-car">${r.car} · ${r.charger}</div><div class="dp-meter">${r.start.toFixed(1)} → ${r.end.toFixed(1)}</div></div>
+        <div class="dp-kwh" style="color:${col}">${r.kwh.toFixed(1)} kWh</div>
+      </div>`).join('')
+    : '<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">기록 없음</div>';
+  openP('pop-detail');
+}
+async function dpPDF(){
+  const {y,m}=vm; const name=dpPerson;
+  const rows=records.filter(r=>r.date.startsWith(`${y}-${String(m).padStart(2,'0')}`)&&r.staff===name);
+  const total=rows.reduce((s,r)=>s+r.kwh,0);
+  const cars=[...new Set(rows.map(r=>r.car))].join(', ')||'-';
+  showLoad('PDF 생성 중...');
+  const area=document.getElementById('parea');
+  area.innerHTML=`<div class="ppage"><div class="phdr" style="padding-top:22px"><div class="ph1">${y}년 ${m}월 충전 내역</div><div class="psub">차량번호 : ${cars} &nbsp;&nbsp;&nbsp; 성명 : ${name}</div><div class="pmeta"><span>총 ${rows.length}회</span><span>${total.toFixed(1)} kWh</span></div></div>
+    <table class="ptbl"><thead><tr><th>순번</th><th>충전일</th><th>충전기</th><th>차량번호</th><th>시작kWh</th><th>종료kWh</th><th>충전량</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td>${r.charger}</td><td>${r.car}</td><td>${r.start.toFixed(1)}</td><td>${r.end.toFixed(1)}</td><td><strong>${r.kwh.toFixed(1)}</strong></td></tr>`).join('')}</tbody></table>
+    <div class="ptotal"><div class="pt-label">${name} ${y}년 ${m}월 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
+    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
+  await new Promise(r=>setTimeout(r,200));
+  const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
+  doc.save(`${y}년_${m}월_${name}_충전내역.pdf`);
+  area.innerHTML=''; hideLoad(); toast('PDF 저장 완료');
+}
+function dpCSV(){
+  const {y,m}=vm; const name=dpPerson;
+  const rows=records.filter(r=>r.date.startsWith(`${y}-${String(m).padStart(2,'0')}`)&&r.staff===name);
+  const total=rows.reduce((s,r)=>s+r.kwh,0);
+  let csv=`\uFEFF${name} · ${y}년 ${m}월 충전 내역\n순번,충전일자,충전기,차량번호,시작(kWh),종료(kWh),충전량(kWh)\n`;
+  rows.forEach((r,i)=>{ csv+=`${i+1},${r.date},${r.charger},${r.car},${r.start},${r.end},${r.kwh.toFixed(1)}\n`; });
+  csv+=`\n합계,,,,,,${total.toFixed(1)}\n`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${y}년_${m}월_${name}_충전내역.csv`; a.click(); toast('엑셀 저장 완료');
+}
+
+// ── 월집계 PDF/CSV/캡처 ──
+async function statsPDF(){
+  const {y,m}=vm; const pref=`${y}-${String(m).padStart(2,'0')}`;
+  const rows=records.filter(r=>r.date.startsWith(pref)); const total=rows.reduce((s,r)=>s+r.kwh,0);
+  const sMap={}; allStaffList().forEach(n=>sMap[n]=0); rows.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  const cMap={'1호기':0,'2호기':0,'고속':0}; rows.forEach(r=>{cMap[r.charger]=(cMap[r.charger]||0)+r.kwh;});
+  showLoad('PDF 생성 중...');
+  const area=document.getElementById('parea');
+  area.innerHTML=`<div class="ppage"><div class="phdr"><div class="ph1">전기차량 충전 기록 — ${y}년 ${m}월</div><div class="pmeta"><span>충전기 1·2호기·고속</span><span>총 ${rows.length}건</span></div></div>
+    <table class="ptbl"><thead><tr><th>순번</th><th>충전일</th><th>작성자</th><th>충전기</th><th>차량번호</th><th>시작kWh</th><th>종료kWh</th><th>충전량</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td class="nc">${r.staff}</td><td>${r.charger}</td><td>${r.car}</td><td>${r.start.toFixed(1)}</td><td>${r.end.toFixed(1)}</td><td><strong>${r.kwh.toFixed(1)}</strong></td></tr>`).join('')}</tbody></table>
+    <div class="psum">
+      <div class="psbox"><div class="psbox-title">사용자별</div>${allStaffList().filter(n=>sMap[n]>0).map(n=>`<div class="psrow"><span class="pskey">${n}</span><span class="psval">${sMap[n].toFixed(1)} kWh</span></div>`).join('')}</div>
+      <div class="psbox"><div class="psbox-title">충전기별</div>${Object.entries(cMap).map(([k,v])=>`<div class="psrow"><span class="pskey">${k}</span><span class="psval">${v.toFixed(1)} kWh</span></div>`).join('')}</div>
+    </div>
+    <div class="ptotal"><div class="pt-label">${y}년 ${m}월 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
+    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
+  await new Promise(r=>setTimeout(r,200));
+  const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  // A4 한 장 강제 - 캔버스 비율에 맞게 축소
+  const ratio = canvas.height/canvas.width;
+  const pw=210, ph=Math.min(297, pw*ratio);
+  const py=(297-ph)/2; // 세로 중앙
+  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,py,pw,ph);
+  doc.save(`${y}년_${m}월_EV충전기록.pdf`);
+  area.innerHTML=''; hideLoad(); toast('PDF 저장 완료');
+}
+function statsCSV(){
+  const {y,m}=vm; const pref=`${y}-${String(m).padStart(2,'0')}`;
+  const rows=records.filter(r=>r.date.startsWith(pref)); const total=rows.reduce((s,r)=>s+r.kwh,0);
+  const sMap={}; allStaffList().forEach(n=>sMap[n]=0); rows.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  let csv=`\uFEFF${y}년 ${m}월 EV 충전 기록\n순번,충전일자,작성자,충전기,차량번호,시작(kWh),종료(kWh),충전량(kWh)\n`;
+  rows.forEach((r,i)=>{ csv+=`${i+1},${r.date},${r.staff},${r.charger},${r.car},${r.start},${r.end},${r.kwh.toFixed(1)}\n`; });
+  csv+=`\n사용자별 집계\n`; allStaffList().forEach(n=>{ if(sMap[n]>0) csv+=`${n},${sMap[n].toFixed(1)}\n`; });
+  csv+=`\n합계,${total.toFixed(1)}\n`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${y}년_${m}월_EV충전기록.csv`; a.click(); toast('엑셀 저장 완료');
+}
+
+
+// ── 연집계 ──
+function toggleYear(){
+  const p=document.getElementById('yr-panel'), b=document.getElementById('yr-btn');
+  const open=p.style.display==='none';
+  p.style.display=open?'block':'none';
+  b.textContent=open?'연간 집계 접기 ∧':'연간 집계 펼치기 ›';
+  if(open) renderYear();
+}
+function changeYear(d){ vy.y+=d; renderYear(); }
+function renderYear(){
+  const y=vy.y; document.getElementById('yr-label').textContent=y+'년';
+  const yr=records.filter(r=>r.date.startsWith(String(y)));
+  const total=yr.reduce((s,r)=>s+r.kwh,0);
+  const mMap={}; for(let m=1;m<=12;m++) mMap[m]={kwh:0,cnt:0};
+  yr.forEach(r=>{ const m=parseInt(r.date.slice(5,7)); mMap[m].kwh+=r.kwh; mMap[m].cnt+=1; });
+  const sMap={}; yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  const yrStaffNames = allStaffList().filter(n=>STAFF_DATA[n].active!==false || (sMap[n]||0)>0);
+  const maxM=Math.max(...Object.values(mMap).map(v=>v.kwh),0.1);
+  document.getElementById('yr-content').innerHTML=`
+    <div class="stat-row" style="margin-bottom:12px">
+      <div class="stat-card"><div class="stat-label">연간충전</div><div class="stat-inline"><span class="stat-val" style="color:var(--blue)">${total.toFixed(1)}</span><span class="stat-unit">kWh</span></div></div>
+      <div class="stat-card"><div class="stat-label">총횟수</div><div class="stat-inline"><span class="stat-val">${yr.length}</span><span class="stat-unit">회</span></div></div>
+      <div class="stat-card"><div class="stat-label">월평균</div><div class="stat-inline"><span class="stat-val">${(total/12).toFixed(1)}</span><span class="stat-unit">kWh</span></div></div>
+    </div>
+    <div class="sec-title" style="text-align:center;font-size:13px;font-weight:800;color:var(--text2)">월별 충전량</div>
+    ${Array.from({length:12},(_,i)=>{ const m=i+1,{kwh,cnt}=mMap[m],w=Math.round(kwh/maxM*100);
+      return `<div class="month-row" onclick="jumpMonth(${m})"><div class="mbadge">${m}월</div><div class="mbar-wrap"><div class="mbar-fill" style="width:${w}%"></div></div><div class="mkwh">${kwh>0?kwh.toFixed(1)+' kWh':'—'}</div><div class="mcnt">${cnt>0?cnt+'회':''}</div></div>`; }).join('')}
+    <div class="sec-title" style="margin-top:14px;text-align:center;font-size:13px;font-weight:800;color:var(--text2)">사용자별 연간</div>
+    <div class="staff-card">
+      ${yrStaffNames.map(n=>{ const k=sMap[n]||0,w=total?Math.round(k/total*100):0;
+        return `<div class="staff-row" style="cursor:default">
+          <div class="sname">${n}</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${w}%;background:${colorOf(n)}"></div></div>
+          <div class="skwh">${k.toFixed(1)} kWh</div>
+          <div class="spct">${w}%</div>
+        </div>`; }).join('')}
+    </div>
+    <div class="dl-row" style="margin-bottom:8px">
+      <button class="dl-btn pdf" onclick="yearPDF()">⬇ PDF</button>
+      <button class="dl-btn xls" onclick="yearCSV()">⬇ 엑셀</button>
+    </div>`;
+}
+function jumpMonth(m){ vy.y&&(vm.y=vy.y); vm.m=m; goTab('stats'); document.getElementById('yr-panel').style.display='none'; document.getElementById('yr-btn').textContent='연간 집계 펼치기 ›'; }
+async function yearPDF(){
+  const y=vy.y; const yr=records.filter(r=>r.date.startsWith(String(y)));
+  const total=yr.reduce((s,r)=>s+r.kwh,0);
+  const mMap={}; for(let m=1;m<=12;m++) mMap[m]={kwh:0,cnt:0};
+  yr.forEach(r=>{ const m=parseInt(r.date.slice(5,7)); mMap[m].kwh+=r.kwh; mMap[m].cnt+=1; });
+  const sMap={}; allStaffList().forEach(n=>sMap[n]=0); yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  showLoad('PDF 생성 중...');
+  const area=document.getElementById('parea');
+  area.innerHTML=`<div class="ppage"><div class="phdr"><div class="ph1">전기차량 충전 기록 — ${y}년 연간</div><div class="pmeta"><span>충전기 1·2호기·고속</span><span>총 ${yr.length}회 · ${total.toFixed(1)} kWh</span></div></div>
+    <table class="ptbl"><thead><tr><th>월</th><th>충전횟수</th><th>충전량(kWh)</th><th>비율</th></tr></thead>
+    <tbody>${Array.from({length:12},(_,i)=>{ const m=i+1,{kwh,cnt}=mMap[m],pct=total?Math.round(kwh/total*100):0;
+      return `<tr><td>${m}월</td><td>${cnt}회</td><td><strong>${kwh.toFixed(1)}</strong></td><td>${pct}%</td></tr>`; }).join('')}</tbody></table>
+    <div class="psum">
+      <div class="psbox"><div class="psbox-title">사용자별</div>${allStaffList().filter(n=>sMap[n]>0).map(n=>`<div class="psrow"><span class="pskey">${n}</span><span class="psval">${sMap[n].toFixed(1)} kWh</span></div>`).join('')}</div>
+      <div class="psbox"><div class="psbox-title">충전기별</div>${['1호기','2호기','고속'].map(c=>{ const k=yr.filter(r=>r.charger===c).reduce((s,r)=>s+r.kwh,0); return `<div class="psrow"><span class="pskey">${c}</span><span class="psval">${k.toFixed(1)} kWh</span></div>`; }).join('')}</div>
+    </div>
+    <div class="ptotal"><div class="pt-label">${y}년 연간 총 충전량</div><div class="pt-val">${total.toFixed(1)} kWh</div></div>
+    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
+  await new Promise(r=>setTimeout(r,200));
+  const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
+  doc.save(`${y}년_연간_EV충전기록.pdf`); area.innerHTML=''; hideLoad(); toast('PDF 저장 완료');
+}
+function yearCSV(){
+  const y=vy.y; const yr=records.filter(r=>r.date.startsWith(String(y)));
+  const mMap={}; for(let m=1;m<=12;m++) mMap[m]={kwh:0,cnt:0};
+  yr.forEach(r=>{ const m=parseInt(r.date.slice(5,7)); mMap[m].kwh+=r.kwh; mMap[m].cnt+=1; });
+  const sMap={}; allStaffList().forEach(n=>sMap[n]=0); yr.forEach(r=>{sMap[r.staff]=(sMap[r.staff]||0)+r.kwh;});
+  let csv=`\uFEFF${y}년 연간 EV 충전 기록\n월,충전횟수,충전량(kWh)\n`;
+  for(let m=1;m<=12;m++) csv+=`${m}월,${mMap[m].cnt},${mMap[m].kwh.toFixed(1)}\n`;
+  csv+=`\n사용자별\n`; allStaffList().forEach(n=>{ if(sMap[n]>0) csv+=`${n},${sMap[n].toFixed(1)}\n`; });
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${y}년_연간_EV충전기록.csv`; a.click(); toast('엑셀 저장 완료');
+}
+
+// ── 팝업 ──
+function openP(id){ document.getElementById(id).classList.add('on'); }
+function closeP(id){ document.getElementById(id).classList.remove('on'); }
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('on'); });
+});
+
+// ── 스와이프: 하단 탭 스와이프 코드로 통합 ──
+
+// ── 유틸 ──
+function toast(msg,dur=2200){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),dur); }
+function showLoad(msg){ document.getElementById('loading-msg').textContent=msg||'처리 중...'; document.getElementById('loading').classList.add('on'); }
+function hideLoad(){ document.getElementById('loading').classList.remove('on'); }
+
+/* 팝업 아래로 당기면 닫기 */
+(()=>{
+  let startY=0, startX=0, dragging=false;
+  document.querySelectorAll('.popup, .popup-compact, .detail-popup').forEach(popup=>{
+    popup.addEventListener('touchstart', e=>{
+      // 스크롤 가능한 내부 요소면 무시
+      const scrollable = e.target.closest('.dp-body');
+      if(scrollable && scrollable.scrollTop > 0) return;
+      startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
+      dragging = true;
+    },{passive:true});
+    popup.addEventListener('touchmove', e=>{
+      if(!dragging) return;
+      const dy = e.touches[0].clientY - startY;
+      const dx = e.touches[0].clientX - startX;
+      if(Math.abs(dy) > Math.abs(dx) && dy > 10){
+        popup.style.transition = 'none';
+        popup.style.transform = `translateY(${Math.max(0,dy)}px)`;
+      }
+    },{passive:true});
+    popup.addEventListener('touchend', e=>{
+      if(!dragging) return;
+      dragging = false;
+      const dy = e.changedTouches[0].clientY - startY;
+      popup.style.transition = 'transform .25s ease';
+      if(dy > 80){
+        popup.style.transform = 'translateY(100%)';
+        setTimeout(()=>{
+          const overlay = popup.closest('.overlay');
+          if(overlay) overlay.classList.remove('on');
+          popup.style.transform = '';
+          popup.style.transition = '';
+        },250);
+      } else {
+        popup.style.transform = '';
+        setTimeout(()=>{ popup.style.transition=''; },300);
+      }
+    },{passive:true});
+  });
+})();
+
+
+/* ══ 충전 시작 임시저장 ══ */
+function saveTempStart(){
+  if(!st.charger||!st.car||!st.start) return;
+  st.staff = userName();
+  const temp = {
+    staff:st.staff, charger:st.charger, car:st.car,
+    start:st.start, date:getLocalDate()
+  };
+  localStorage.setItem('ev_temp_start', JSON.stringify(temp));
+  // Firebase ev_charging 에 충전중 상태 기록
+  if(fbOK && DB){
+    DB.ref('ev_charging/' + st.charger).set({
+      staff: st.staff,
+      car: st.car,
+      start: st.start,
+      date: getLocalDate(),
+      ts: Date.now()
+    });
+  }
+  document.getElementById('start-btn').style.display='none';
+  document.getElementById('temp-banner').style.display='block';
+  document.getElementById('temp-info').textContent=
+    `${temp.staff} · ${temp.charger} · ${temp.car} · 시작: ${temp.start} kWh · ${temp.date}`;
+  toast('⚡ 충전 시작 임시저장 완료');
+}
+function loadTempStart(){
+  try{
+    const t=localStorage.getItem('ev_temp_start');
+    if(!t) return;
+    const temp=JSON.parse(t);
+    // 오늘 날짜 것만 복원
+    if(temp.date!==getLocalDate()){ localStorage.removeItem('ev_temp_start'); return; }
+    // 폼에 복원
+    st.staff=temp.staff; st.charger=temp.charger; st.car=temp.car; st.start=temp.start;
+    // 칩 선택 복원 (작성자 카드 없음: ci===0=충전기, ci===1=차량번호)
+    document.querySelectorAll('#sec-input .card').forEach((card,ci)=>{
+      if(ci===0) card.querySelectorAll('.chip').forEach(ch=>ch.classList.toggle('on',ch.textContent===temp.charger));
+      if(ci===1) card.querySelectorAll('.chip').forEach(ch=>ch.classList.toggle('on',ch.textContent===temp.car));
+    });
+    document.getElementById('inp-s').value=temp.start;
+    document.getElementById('temp-banner').style.display='block';
+    document.getElementById('temp-info').textContent=
+      `${temp.staff} · ${temp.charger} · ${temp.car} · 시작: ${temp.start} kWh · ${temp.date}`;
+    toast('이전 충전 시작 기록 복원됨');
+  }catch(e){}
+}
+function clearTemp(){ localStorage.removeItem('ev_temp_start'); document.getElementById('temp-banner').style.display='none'; }
+
+
+
+/* ══ 탭 스와이프 (전체 화면) ══ */
+(()=>{
+  const TABS = ['input','log','stats'];
+  let tx=0, ty=0, dir=null;
+
+  document.addEventListener('touchstart', e=>{
+    if(document.querySelector('.overlay.on')) return;
+    tx = e.touches[0].clientX;
+    ty = e.touches[0].clientY;
+    dir = null;
+  },{passive:true});
+
+  document.addEventListener('touchmove', e=>{
+    if(document.querySelector('.overlay.on')) return;
+    if(dir==='v') return;
+    const dx = e.touches[0].clientX - tx;
+    const dy = e.touches[0].clientY - ty;
+    if(dir===null && (Math.abs(dx)>8 || Math.abs(dy)>8)){
+      dir = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+    }
+  },{passive:true});
+
+  document.addEventListener('touchend', e=>{
+    if(document.querySelector('.overlay.on')) return;
+    if(dir !== 'h') return;
+    const dx = e.changedTouches[0].clientX - tx;
+    const dy = e.changedTouches[0].clientY - ty;
+    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)*1.5) return;
+    // 현재 탭 감지: goTab이 관리하는 on 클래스 기준
+    const cur = TABS.findIndex(t=>
+      document.querySelector(`.tab:nth-child(${TABS.indexOf(t)+1})`)?.classList.contains('on')
+    );
+    if(cur === -1) return;
+    if(dx < 0 && cur < TABS.length-1) goTab(TABS[cur+1]);
+    if(dx > 0 && cur > 0)             goTab(TABS[cur-1]);
+  },{passive:true});
+})();
+
+
+/* ══ 충전기별 색상 ══ */
+function chargerColor(ch){
+  if(ch==='1호기') return {bg:'#e8eefc',color:'#1752a8',border:'#a0b8ef'};
+  if(ch==='2호기') return {bg:'#e6f5ee',color:'#0f7a45',border:'#a8d9be'};
+  if(ch==='고속')  return {bg:'#fff0e6',color:'#c45c00',border:'#f5c49a'};
+  return {bg:'var(--surface2)',color:'var(--text3)',border:'var(--border)'};
+}
+
+/* ══ 수동 새로고침 ══ */
+function manualRefresh(){
+  const btn = document.getElementById('refresh-btn');
+  const svg = btn.querySelector('svg');
+  svg.style.transition = 'transform .6s ease';
+  svg.style.transform = 'rotate(360deg)';
+  setTimeout(()=>{ svg.style.transform = 'rotate(0deg)'; svg.style.transition=''; }, 600);
+
+  // Firebase 재연결 강제
+  if(DB){
+    DB.ref('ev_charge').once('value').then(snap=>{
+      records.length=0;
+      if(snap.exists()) Object.entries(snap.val()).forEach(([k,v])=>{
+        records.push({...v, staff: normName(v.staff), fbKey:k});
+      });
+      records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+      const t = curTab();
+      if(t==='log') renderLog();
+      if(t==='stats') renderStats();
+      updateChargerMeters();
+      fbOK = true;
+      toast('새로고침 완료');
+    }).catch(()=>{
+      toast('연결 실패 - 재시도 중...');
+      fbInitialized = false;
+      initFB();
+    });
+  } else {
+    // Firebase 미연결 상태면 재초기화 시도
+    toast('재연결 중...');
+    fbInitialized = false;
+    initFB();
+  }
+}
+
+/* ══ 키보드 시 계량기 카드 자동 스크롤 ══ */
+function scrollMeterIntoView(){
+  if(!window.visualViewport) return;
+  window.visualViewport.addEventListener('resize', function onVVResize(){
+    const kbHeight = window.innerHeight - window.visualViewport.height;
+    const content = document.getElementById('content');
+    const saveBtn = document.getElementById('save-btn');
+    if(!content || !saveBtn) return;
+    if(kbHeight > 100){
+      content.style.paddingBottom = kbHeight + 'px';
+      const btnRect = saveBtn.getBoundingClientRect();
+      const diff = btnRect.bottom - window.visualViewport.height;
+      content.scrollTop = content.scrollTop + diff;
+    } else {
+      content.style.paddingBottom = '';
+      content.scrollTop = 0;
+    }
+  });
+}
+function restoreContentPadding(){
+  const content = document.getElementById('content');
+  if(content) content.scrollTop = 0;
+}
+/* ══ 로그아웃 ══ */
+function logout(){
+  localStorage.removeItem('ev_session');
+  localStorage.removeItem('ev_temp_start');
+  currentUser = null;
+  selectedLoginName = '';
+  loginStep = 'name';
+  pinV = '';
+  const adminBtn=document.getElementById('tab-admin-btn');
+  if(adminBtn) adminBtn.style.display='none';
+  goTab('input');
+  document.getElementById('app').style.display='none';
+  document.getElementById('pin-screen').style.display='flex';
+  renderLoginScreen();
+}
+
+/* ══ 충전기 계량기 수치 업데이트 ══ */
+function updateChargerMeters(){
+  ['1호기','2호기','고속'].forEach(charger=>{
+    const el = document.getElementById('meter-' + charger);
+    if(!el) return;
+    const key = charger;
+    // 충전중 상태 확인
+    const charging = chargingState[key];
+    if(charging){
+      const staffName = charging.staff || '사용자';
+      el.textContent = `⚡ ${staffName} 충전중`;
+      el.style.color = 'var(--orange)';
+      el.style.background = 'var(--orange-bg)';
+      el.style.borderColor = 'var(--orange-bd)';
+      el.classList.remove('empty');
+      return;
+    }
+    // 최근 종료값 표시
+    const recs = records.filter(r=>r.charger===charger && r.end);
+    if(recs.length === 0){
+      el.textContent = '';
+      el.classList.add('empty');
+      return;
+    }
+    const latest = recs[0];
+    el.textContent = latest.end.toFixed(1) + ' kWh';
+    el.style.color = 'var(--green)';
+    el.style.background = 'var(--green-bg)';
+    el.style.borderColor = 'var(--green-bd)';
+    el.classList.remove('empty');
+  });
+}
+
+
+/* ══ 뒤로가기 단계별 처리 ══ */
+(()=>{
+  const TABS = ['input','log','stats'];
+
+  // 히스토리 스택 초기화 (탭 전환마다 push)
+  function pushTabHistory(tab){
+    history.pushState({tab}, '', location.href);
+  }
+
+  // 앱 로그인 후 최초 진입 시 히스토리 기준점 생성
+  function initHistoryBase(){
+    history.replaceState({tab:'input'}, '', location.href);
+  }
+
+  // goTab 호출될 때마다 히스토리에 쌓기 (원래 goTab 감싸기)
+  const originalGoTab = window.goTab;
+  window.goTab = function(t){
+    originalGoTab(t);
+    pushTabHistory(t);
+  };
+
+  // 뒤로가기 이벤트 처리
+  window.addEventListener('popstate', (e)=>{
+    // 열려있는 팝업 있으면 팝업만 닫기
+    const openPopup = document.querySelector('.overlay.on');
+    if(openPopup){
+      closeP(openPopup.id);
+      pushTabHistory(curTab()); // 히스토리 유지 (한번 더 뒤로가야 앱 종료)
+      return;
+    }
+
+    // 현재 탭이 input이 아니면 input 탭으로 이동
+    const cur = curTab();
+    if(cur !== 'input'){
+      originalGoTab('input');
+      pushTabHistory('input');
+      return;
+    }
+    // input 탭에서 한번 더 뒤로가기 누르면 → 브라우저 기본 동작(앱 종료/이전 페이지)으로 흘러가게 둠
+  });
+
+  // PIN 통과 후 히스토리 기준점 설정 (기존 로그인 성공 지점들에 연결)
+  window._initHistoryBase = initHistoryBase;
+})();
+
+</script>
+</body>
+</html>

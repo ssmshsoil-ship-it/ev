@@ -673,7 +673,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="card-title" style="margin-bottom:6px">날짜</div>
       <input class="input-box" id="te-date" type="date" style="font-size:15px;padding:10px 12px">
     </div>
-    <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">차량</div><div class="chip-grid" style="grid-template-columns:repeat(3,1fr)" id="te-car"></div></div>
+    <div style="margin-bottom:11px" id="te-car-section"><div class="card-title" style="margin-bottom:8px">차량</div><div class="chip-grid" style="grid-template-columns:repeat(3,1fr)" id="te-car"></div></div>
     <div style="margin-bottom:11px">
       <div class="card-title" style="margin-bottom:6px">운행구간</div>
       <input class="input-box" id="te-route" style="font-size:15px">
@@ -1592,7 +1592,14 @@ function openTripEdit(fbKey){
   editTripId=fbKey; editTripSt={...r};
   document.getElementById('tripedit-lbl').textContent=`${r.date} · ${r.car}`;
   document.getElementById('te-date').value=r.date;
-  document.getElementById('te-car').innerHTML=allVehicleList().map(v=>`<div class="chip ${v===r.car?'on':''}" onclick="eTripChip(this,'${v}')">${v}</div>`).join('');
+  const carSection=document.getElementById('te-car-section');
+  if(isAdmin()){
+    carSection.style.display='block';
+    document.getElementById('te-car').innerHTML=allVehicleList().map(v=>`<div class="chip ${v===r.car?'on':''}" onclick="eTripChip(this,'${v}')">${v}</div>`).join('');
+  } else {
+    // 일반직원은 차량 선택칩을 없애고(공간 절약), 위 부제목(날짜 · 차량번호)에 이미 표시됨
+    carSection.style.display='none';
+  }
   document.getElementById('te-route').value=r.route||'';
   document.getElementById('te-km-biz').value=r.kmBiz||0;
   document.getElementById('te-km-personal').value=r.kmPersonal||0;
@@ -1975,9 +1982,11 @@ function hideLoad(){ document.getElementById('loading').classList.remove('on'); 
   let startY=0, startX=0, dragging=false;
   document.querySelectorAll('.popup, .popup-compact, .detail-popup').forEach(popup=>{
     popup.addEventListener('touchstart', e=>{
-      // 스크롤 가능한 내부 요소면 무시
+      // 스크롤 가능한 내부 요소(개인상세 팝업)나, 팝업 자체가 이미 스크롤된 상태면
+      // 드래그-닫기를 시작하지 않음 (긴 폼 스크롤 중에 팝업이 같이 밀려 내려가는 문제 방지)
       const scrollable = e.target.closest('.dp-body');
       if(scrollable && scrollable.scrollTop > 0) return;
+      if(!scrollable && popup.scrollTop > 0) return;
       startY = e.touches[0].clientY;
       startX = e.touches[0].clientX;
       dragging = true;

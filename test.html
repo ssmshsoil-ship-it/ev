@@ -350,6 +350,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="pin-title">신규 등록</div>
       <div class="pin-sub">본인 이름을 입력하세요</div>
       <input id="reg-name-input" class="input-box" style="margin-bottom:14px;text-align:center;font-size:18px;width:100%" placeholder="이름" maxlength="10">
+      <div style="display:flex;gap:10px;width:100%;margin-bottom:6px">
+        <button type="button" class="pin-name-btn" id="reg-company-daedong" style="flex:1;padding:12px 0;font-size:14px" onclick="selRegCompany('대동산업')">대동산업</button>
+        <button type="button" class="pin-name-btn" id="reg-company-sunghwa" style="flex:1;padding:12px 0;font-size:14px" onclick="selRegCompany('성화')">성화</button>
+      </div>
       <div class="pin-err" id="reg-name-err"></div>
       <button class="save-btn" style="margin-top:4px" onclick="regNameNext()">다음</button>
       <button onclick="backToName()" style="margin-top:16px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">← 취소</button>
@@ -401,6 +405,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <div class="tabs">
     <button class="tab on" data-tab="input" onclick="goTab('input')">입력</button>
     <button class="tab" data-tab="log" onclick="goTab('log')">기록</button>
+    <button class="tab" data-tab="trip" onclick="goTab('trip')">운행</button>
     <button class="tab" data-tab="stats" onclick="goTab('stats')">월집계</button>
     <button class="tab" data-tab="admin" id="tab-admin-btn" style="display:none" onclick="goTab('admin')">관리</button>
   </div>
@@ -468,6 +473,52 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div id="log-list"></div>
     </div>
 
+    <!-- 운행 탭 -->
+    <div id="sec-trip" style="display:none">
+      <div class="card">
+        <div class="card-title">날짜</div>
+        <div class="input-box" id="trip-date-display" style="font-family:'IBM Plex Mono',monospace"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">차량</div>
+        <div class="chip-grid" style="grid-template-columns:repeat(3,1fr)" id="trip-car-grid">
+          <div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;padding:12px 0">불러오는 중...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">운행구간</div>
+        <input id="trip-route" class="input-box" placeholder="예: 내근, 순창, 광주" style="font-size:15px">
+      </div>
+      <div class="card">
+        <div class="card-title">주행거리 (km)</div>
+        <div class="input-row">
+          <div class="input-field"><div class="input-label">업무용</div><input id="trip-km-biz" class="input-box" type="number" inputmode="decimal" placeholder="0"></div>
+          <div class="input-field"><div class="input-label">비업무용</div><input id="trip-km-personal" class="input-box" type="number" inputmode="decimal" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">통행료 (원)</div>
+        <input id="trip-toll" class="input-box" type="number" inputmode="numeric" placeholder="0">
+      </div>
+      <div class="card" style="background:var(--surface2)">
+        <div class="card-title">외부(공용) 충전 — 결제한 경우만</div>
+        <div class="input-row">
+          <div class="input-field"><div class="input-label">충전량(kWh)</div><input id="trip-ext-kwh" class="input-box" type="number" inputmode="decimal" placeholder="0"></div>
+          <div class="input-field"><div class="input-label">결제금액(원)</div><input id="trip-ext-cost" class="input-box" type="number" inputmode="numeric" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">주차/기타 (원)</div>
+        <input id="trip-parking" class="input-box" type="number" inputmode="numeric" placeholder="0">
+      </div>
+      <button class="save-btn" id="trip-save-btn" onclick="openTripSaveConfirm()">저장</button>
+      <div class="pin-err" id="trip-err" style="text-align:center;margin-top:6px"></div>
+
+      <div class="sec-title" style="text-align:center;font-size:15px;font-weight:800;color:var(--text2);margin:20px 0 10px;line-height:1.4">내 운행기록 (이번 달)</div>
+      <div id="trip-list"></div>
+      <div style="height:20px"></div>
+    </div>
+
     <!-- 월집계 탭 -->
     <div id="sec-stats" style="display:none">
       <div class="month-nav">
@@ -503,7 +554,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <div class="card">
           <div class="card-title">새 직원 추가</div>
           <input id="adm-staff-name" class="input-box" style="margin-bottom:8px;font-size:16px" placeholder="이름">
-          <input id="adm-staff-pin" class="input-box" style="margin-bottom:10px;font-size:16px" placeholder="PIN 4자리" maxlength="4" inputmode="numeric">
+          <input id="adm-staff-pin" class="input-box" style="margin-bottom:8px;font-size:16px" placeholder="PIN 4자리" maxlength="4" inputmode="numeric">
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div class="chip" id="adm-company-daedong" onclick="selAdmCompany('대동산업')" style="flex:1;text-align:center">대동산업</div>
+            <div class="chip" id="adm-company-sunghwa" onclick="selAdmCompany('성화')" style="flex:1;text-align:center">성화</div>
+          </div>
           <button class="save-btn" onclick="adminAddStaff()">추가</button>
           <div class="pin-err" id="adm-staff-err" style="margin-top:6px;height:auto"></div>
         </div>
@@ -523,8 +578,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </div>
 
       <div id="admin-sub-history" style="display:none">
-        <div class="sec-title" style="text-align:center">삭제된 기록 (복원 가능)</div>
+        <div class="sec-title" style="text-align:center">삭제된 충전기록 (복원 가능)</div>
         <div id="admin-deleted-list"></div>
+        <div class="sec-title" style="text-align:center">삭제된 운행기록 (복원 가능)</div>
+        <div id="admin-deleted-trip-list"></div>
         <div class="sec-title" style="text-align:center">최근 변경 이력</div>
         <div id="admin-audit-list"></div>
       </div>
@@ -592,16 +649,102 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
+<!-- 운행기록 저장 확인 팝업 -->
+<div class="overlay" id="pop-tripsave">
+  <div class="popup">
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-tripsave')">×</button></div>
+    <div class="pop-title">운행기록 저장 확인</div>
+    <div class="pop-sub">아래 내용으로 저장합니다.</div>
+    <div class="info-box" id="tripsave-info"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeP('pop-tripsave')">수정</button>
+      <button class="btn confirm" onclick="confirmTripSave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 운행기록 수정 팝업 -->
+<div class="overlay" id="pop-tripedit">
+  <div class="popup popup-compact">
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-tripedit')">×</button></div>
+    <div class="pop-title">운행기록 수정</div>
+    <div class="pop-sub" id="tripedit-lbl"></div>
+    <div style="margin-bottom:8px">
+      <div class="card-title" style="margin-bottom:6px">날짜</div>
+      <input class="input-box" id="te-date" type="date" style="font-size:15px;padding:10px 12px">
+    </div>
+    <div style="margin-bottom:11px"><div class="card-title" style="margin-bottom:8px">차량</div><div class="chip-grid" style="grid-template-columns:repeat(3,1fr)" id="te-car"></div></div>
+    <div style="margin-bottom:11px">
+      <div class="card-title" style="margin-bottom:6px">운행구간</div>
+      <input class="input-box" id="te-route" style="font-size:15px">
+    </div>
+    <div class="input-row" style="margin-bottom:11px">
+      <div class="input-field"><div class="input-label">업무km</div><input class="input-box" id="te-km-biz" type="number" inputmode="decimal"></div>
+      <div class="input-field"><div class="input-label">비업무km</div><input class="input-box" id="te-km-personal" type="number" inputmode="decimal"></div>
+    </div>
+    <div class="input-row" style="margin-bottom:11px">
+      <div class="input-field"><div class="input-label">통행료</div><input class="input-box" id="te-toll" type="number" inputmode="numeric"></div>
+      <div class="input-field"><div class="input-label">주차/기타</div><input class="input-box" id="te-parking" type="number" inputmode="numeric"></div>
+    </div>
+    <div class="input-row" style="margin-bottom:14px">
+      <div class="input-field"><div class="input-label">외부충전kWh</div><input class="input-box" id="te-ext-kwh" type="number" inputmode="decimal"></div>
+      <div class="input-field"><div class="input-label">외부충전원</div><input class="input-box" id="te-ext-cost" type="number" inputmode="numeric"></div>
+    </div>
+    <div class="btn-row" style="margin-bottom:9px">
+      <button class="btn" onclick="closeP('pop-tripedit')">취소</button>
+      <button class="btn confirm" onclick="confirmTripEdit()">저장</button>
+    </div>
+    <div class="divider"></div>
+    <button class="btn danger" style="width:100%" onclick="openTripDelConfirm()">이 기록 삭제</button>
+  </div>
+</div>
+
+<!-- 운행기록 삭제 확인 팝업 -->
+<div class="overlay" id="pop-tripdel">
+  <div class="popup">
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-tripdel')">×</button></div>
+    <div class="pop-title">삭제 확인</div>
+    <div class="pop-sub">기록탭에서 사라집니다. (관리자가 관리&gt;이력에서 복원 가능)</div>
+    <div class="info-box" id="tripdel-info"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeP('pop-tripdel')">취소</button>
+      <button class="btn danger" onclick="confirmTripDel()">삭제</button>
+    </div>
+  </div>
+</div>
+
 <!-- 삭제 확인 팝업 -->
 <div class="overlay" id="pop-del">
   <div class="popup">
     <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeP('pop-del')">×</button></div>
     <div class="pop-title">삭제 확인</div>
-    <div class="pop-sub">삭제 후 복구할 수 없습니다.</div>
+    <div class="pop-sub">기록탭에서 사라집니다. (관리자가 관리&gt;이력에서 복원 가능)</div>
     <div class="info-box" id="del-info"></div>
     <div class="btn-row">
       <button class="btn" onclick="closeP('pop-del')">취소</button>
       <button class="btn danger" onclick="confirmDel()">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN 변경 팝업 -->
+<div class="overlay" id="pop-changepin">
+  <div class="popup">
+    <div class="pop-handle-row"><div class="pop-handle"></div><button class="pop-close" onclick="closeChangePin()">×</button></div>
+    <div class="pop-title" id="cp-title">현재 PIN 확인</div>
+    <div class="pop-sub" id="cp-sub">지금 사용 중인 PIN 4자리를 입력하세요</div>
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="pin-dots" id="cp-dots" style="margin-bottom:20px">
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div class="pin-pad" style="width:100%;max-width:280px">
+        <button class="pin-key" onclick="cpi('1')">1</button><button class="pin-key" onclick="cpi('2')">2</button><button class="pin-key" onclick="cpi('3')">3</button>
+        <button class="pin-key" onclick="cpi('4')">4</button><button class="pin-key" onclick="cpi('5')">5</button><button class="pin-key" onclick="cpi('6')">6</button>
+        <button class="pin-key" onclick="cpi('7')">7</button><button class="pin-key" onclick="cpi('8')">8</button><button class="pin-key" onclick="cpi('9')">9</button>
+        <div></div><button class="pin-key" onclick="cpi('0')">0</button><button class="pin-key del" onclick="cpd()">⌫</button>
+      </div>
+      <div class="pin-err" id="cp-err"></div>
     </div>
   </div>
 </div>
@@ -716,6 +859,22 @@ function initFB(){
       }, err=>{
         console.warn('vehicles 구독 오류', err.message);
       });
+
+      // 운행기록(주행거리·업무구분·통행료·외부충전) 실시간 구독
+      DB.ref('trip_log').off();
+      DB.ref('trip_log').on('value', snap=>{
+        tripRecords.length=0; deletedTripRecords.length=0;
+        if(snap.exists()) Object.entries(snap.val()).forEach(([k,v])=>{
+          const rec={...v, fbKey:k};
+          if(v.deleted) deletedTripRecords.push(rec); else tripRecords.push(rec);
+        });
+        tripRecords.sort((a,b)=>b.date.localeCompare(a.date)||(b.id||0)-(a.id||0));
+        deletedTripRecords.sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0));
+        if(curTab()==='trip') renderTripSection();
+        if(curTab()==='admin') renderAdminHistory();
+      }, err=>{
+        console.warn('trip_log 구독 오류', err.message);
+      });
     }).catch(e=>{
       console.warn('FB auth fail',e.message);
       fbInitialized = false;
@@ -746,6 +905,7 @@ function logAudit(action, detail){
 let selectedLoginName = '';
 let loginStep = 'name'; // 'name' | 'pin' | 'reg-name' | 'reg-pin'
 let regName = '';
+let regCompany = '';
 let regPinStage = 1; // 1:최초입력 2:재확인
 let regPin1 = '';
 let regPinV = '';
@@ -774,29 +934,38 @@ function selectName(name){
 }
 function backToName(){
   loginStep='name'; pinV=''; selectedLoginName='';
-  regName=''; regPin1=''; regPinStage=1; regPinV='';
+  regName=''; regPin1=''; regPinStage=1; regPinV=''; regCompany='';
   updateDots(); updateRegDots();
   document.getElementById('pin-err').textContent='';
   const rne=document.getElementById('reg-name-err'); if(rne) rne.textContent='';
   const rni=document.getElementById('reg-name-input'); if(rni) rni.value='';
   const rpe=document.getElementById('reg-pin-err'); if(rpe) rpe.textContent='';
+  document.querySelectorAll('#reg-company-daedong,#reg-company-sunghwa').forEach(b=>b?.classList.remove('selected'));
   renderLoginScreen();
 }
 
 // ── 신규 등록 ──
 function goRegister(){
-  regName=''; regPin1=''; regPinStage=1; regPinV='';
+  regName=''; regPin1=''; regPinStage=1; regPinV=''; regCompany='';
   document.getElementById('reg-name-input').value='';
   document.getElementById('reg-name-err').textContent='';
+  document.querySelectorAll('#reg-company-daedong,#reg-company-sunghwa').forEach(b=>b.classList.remove('selected'));
   loginStep='reg-name';
   renderLoginScreen();
   setTimeout(()=>document.getElementById('reg-name-input')?.focus(),150);
+}
+function selRegCompany(c){
+  regCompany = c;
+  document.getElementById('reg-company-daedong').classList.toggle('selected', c==='대동산업');
+  document.getElementById('reg-company-sunghwa').classList.toggle('selected', c==='성화');
+  document.getElementById('reg-name-err').textContent='';
 }
 function regNameNext(){
   const name = document.getElementById('reg-name-input').value.trim();
   const err = document.getElementById('reg-name-err');
   if(!name){ err.textContent='이름을 입력하세요'; return; }
   if(STAFF_DATA[name]){ err.textContent='이미 등록된 이름입니다'; return; }
+  if(!regCompany){ err.textContent='소속 회사를 선택하세요'; return; }
   regName = name; regPinStage = 1; regPin1=''; regPinV='';
   document.getElementById('reg-pin-title').textContent='PIN 설정';
   document.getElementById('reg-pin-sub').textContent='사용할 4자리 PIN을 입력하세요';
@@ -835,12 +1004,74 @@ function rpi(n){
 function rpd(){ regPinV=regPinV.slice(0,-1); updateRegDots(); }
 function updateRegDots(){ document.querySelectorAll('#reg-pin-dots .pin-dot').forEach((d,i)=>d.classList.toggle('on',i<regPinV.length)); }
 
+// ── 본인 PIN 변경 (월집계 탭에서 진입) ──
+let cpStage=1; // 1:현재PIN확인 2:새PIN입력 3:새PIN재확인
+let cpVal='';
+let cpNew1='';
+function openChangePin(){
+  cpStage=1; cpVal=''; cpNew1='';
+  document.getElementById('cp-title').textContent='현재 PIN 확인';
+  document.getElementById('cp-sub').textContent='지금 사용 중인 PIN 4자리를 입력하세요';
+  document.getElementById('cp-err').textContent='';
+  updateCpDots();
+  openP('pop-changepin');
+}
+function closeChangePin(){ closeP('pop-changepin'); }
+function updateCpDots(){ document.querySelectorAll('#cp-dots .pin-dot').forEach((d,i)=>{ d.classList.toggle('on',i<cpVal.length); d.classList.remove('err'); }); }
+function cpi(n){
+  if(cpVal.length>=4) return;
+  cpVal+=n; updateCpDots();
+  if(cpVal.length===4){
+    setTimeout(()=>{
+      if(cpStage===1){
+        const my = STAFF_DATA[userName()];
+        if(my && cpVal===my.pin){
+          cpStage=2; cpVal='';
+          document.getElementById('cp-title').textContent='새 PIN 입력';
+          document.getElementById('cp-sub').textContent='새로 사용할 PIN 4자리를 입력하세요';
+          updateCpDots();
+        } else {
+          document.querySelectorAll('#cp-dots .pin-dot').forEach(d=>d.classList.add('err'));
+          document.getElementById('cp-err').textContent='현재 PIN이 맞지 않습니다';
+          setTimeout(()=>{ cpVal=''; updateCpDots(); document.getElementById('cp-err').textContent=''; },700);
+        }
+      } else if(cpStage===2){
+        cpNew1=cpVal; cpStage=3; cpVal='';
+        document.getElementById('cp-title').textContent='새 PIN 확인';
+        document.getElementById('cp-sub').textContent='다시 한번 입력하세요';
+        updateCpDots();
+      } else {
+        if(cpVal===cpNew1){
+          if(!fbOK||!DB){ document.getElementById('cp-err').textContent='서버 연결 후 다시 시도해주세요'; return; }
+          DB.ref('staff/'+userName()).update({pin:cpNew1}).then(()=>{
+            STAFF_DATA[userName()].pin=cpNew1;
+            closeChangePin();
+            toast('✓ PIN이 변경되었습니다');
+            logAudit('pin_change', {name:userName()});
+          }).catch(e=>{ document.getElementById('cp-err').textContent='변경 실패 — 다시 시도해주세요'; console.warn(e.message); });
+        } else {
+          document.querySelectorAll('#cp-dots .pin-dot').forEach(d=>d.classList.add('err'));
+          document.getElementById('cp-err').textContent='PIN이 일치하지 않습니다. 다시 입력하세요';
+          setTimeout(()=>{
+            cpStage=2; cpNew1=''; cpVal='';
+            updateCpDots();
+            document.getElementById('cp-err').textContent='';
+            document.getElementById('cp-title').textContent='새 PIN 입력';
+            document.getElementById('cp-sub').textContent='새로 사용할 PIN 4자리를 입력하세요';
+          },900);
+        }
+      }
+    },80);
+  }
+}
+function cpd(){ cpVal=cpVal.slice(0,-1); updateCpDots(); }
+
 function submitRegistration(name, pinValue){
   if(!fbOK || !DB){
     document.getElementById('reg-pin-err').textContent='서버 연결 후 다시 시도해주세요';
     return;
   }
-  const entry={ pin:pinValue, role:'user', active:true, color:nextColor(), order:nextOrder(), createdAt:Date.now() };
+  const entry={ pin:pinValue, role:'user', active:true, company:regCompany, color:nextColor(), order:nextOrder(), createdAt:Date.now() };
   DB.ref('staff/'+name).set(entry).then(()=>{
     STAFF_DATA[name]=entry;
     currentUser={name, role:'user'};
@@ -891,6 +1122,7 @@ function renderVehicleChips(){
   const prevSel = st.car;
   grid.innerHTML = list.map(v=>`<div class="chip ${v===prevSel?'on':''}" onclick="selChip(this,'car','${v}')">${v}</div>`).join('')
     + `<div class="chip ${prevSel==='직접입력'?'on':''}" onclick="selChip(this,'car','직접입력')">직접입력</div>`;
+  renderTripCarChips();
 }
 
 // ── 로그인/직원/차량 UI 갱신 (관리자 탭 노출 등) ──
@@ -922,7 +1154,7 @@ function renderAdminStaffList(){
         <div class="log-top">${n}
           <span class="log-car" style="background:${active?'var(--green-bg)':'var(--red-bg)'};color:${active?'var(--green)':'var(--red)'};border-color:${active?'var(--green-bd)':'var(--red-bd)'}">${active?'재직':'퇴사'}</span>
         </div>
-        <div class="log-date">PIN ${s.pin} · ${s.role==='admin'?'관리자':'일반'}</div>
+        <div class="log-date">PIN ${s.pin} · ${s.role==='admin'?'관리자':'일반'} · ${s.company||'소속미지정'}</div>
       </div>
       <button onclick="adminToggleStaffActive('${n}')" style="padding:9px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap">${active?'퇴사처리':'재직전환'}</button>
     </div>`;
@@ -949,7 +1181,9 @@ function renderAdminVehicleList(){
 function fmtTs(ts){ if(!ts) return ''; const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 const AUDIT_LABEL = {
   record_add:'기록 저장', record_edit:'기록 수정', record_delete:'기록 삭제', record_restore:'기록 복원',
+  trip_add:'운행기록 저장', trip_edit:'운행기록 수정', trip_delete:'운행기록 삭제', trip_restore:'운행기록 복원',
   staff_add:'직원 추가', staff_self_register:'신규 자가등록', staff_retire:'퇴사 처리', staff_reactivate:'재직 전환',
+  pin_change:'관리부 PIN 변경',
   vehicle_add:'차량 추가', vehicle_retire:'차량 제외', vehicle_reactivate:'차량 운용전환'
 };
 function auditDetailText(a){
@@ -957,8 +1191,11 @@ function auditDetailText(a){
   if(a.action==='record_add') return `${d.date} ${d.staff} ${d.charger} ${d.car} ${d.kwh?.toFixed?.(1)??d.kwh}kWh`;
   if(a.action==='record_delete') return `${d.date} ${d.staff} ${d.charger} ${d.kwh?.toFixed?.(1)??d.kwh}kWh`;
   if(a.action==='record_edit') return `${d.before?.date??''} → ${d.after?.kwh?.toFixed?.(1)??''}kWh로 수정`;
+  if(a.action==='trip_add'||a.action==='trip_delete') return `${d.date} ${d.car||''} ${d.route||''}`;
+  if(a.action==='trip_edit') return `${d.before?.date??''} → ${d.after?.route??''}로 수정`;
   if(a.action==='staff_add') return d.name;
   if(a.action==='staff_retire'||a.action==='staff_reactivate') return d.name;
+  if(a.action==='pin_change') return d.name;
   if(a.action==='vehicle_add'||a.action==='vehicle_retire'||a.action==='vehicle_reactivate') return d.num;
   return '';
 }
@@ -975,6 +1212,19 @@ function renderAdminHistory(){
         <button onclick="restoreRecord('${r.fbKey}')" style="padding:9px 14px;border-radius:8px;border:1.5px solid var(--blue-bd);background:var(--blue-bg);color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap">복원</button>
       </div>`).join('')
       : '<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">삭제된 기록 없음</div>';
+  }
+  const delTripEl=document.getElementById('admin-deleted-trip-list');
+  if(delTripEl){
+    delTripEl.innerHTML = deletedTripRecords.length ? deletedTripRecords.map(r=>`
+      <div class="log-item" style="cursor:default">
+        <div class="log-bar" style="background:var(--red)"></div>
+        <div class="log-body">
+          <div class="log-top">${r.staff} <span class="log-car">${r.car}</span></div>
+          <div class="log-date">${r.date} · ${r.route} · ${fmtTs(r.deletedAt)} ${r.deletedBy||''} 삭제</div>
+        </div>
+        <button onclick="restoreTripRecord('${r.fbKey}')" style="padding:9px 14px;border-radius:8px;border:1.5px solid var(--blue-bd);background:var(--blue-bg);color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap">복원</button>
+      </div>`).join('')
+      : '<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">삭제된 운행기록 없음</div>';
   }
   const auditEl=document.getElementById('admin-audit-list');
   if(!auditEl || !fbOK || !DB) return;
@@ -994,6 +1244,12 @@ function renderAdminHistory(){
   }).catch(e=>{ auditEl.innerHTML = '<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">불러오기 실패</div>'; console.warn(e.message); });
 }
 
+let admCompany = '';
+function selAdmCompany(c){
+  admCompany = c;
+  document.getElementById('adm-company-daedong').classList.toggle('on', c==='대동산업');
+  document.getElementById('adm-company-sunghwa').classList.toggle('on', c==='성화');
+}
 function adminAddStaff(){
   const name=document.getElementById('adm-staff-name').value.trim();
   const pin=document.getElementById('adm-staff-pin').value.trim();
@@ -1002,12 +1258,15 @@ function adminAddStaff(){
   if(!name){ err.textContent='이름을 입력하세요'; return; }
   if(STAFF_DATA[name]){ err.textContent='이미 등록된 이름입니다'; return; }
   if(!/^\d{4}$/.test(pin)){ err.textContent='PIN은 숫자 4자리로 입력하세요'; return; }
+  if(!admCompany){ err.textContent='소속 회사를 선택하세요'; return; }
   if(!fbOK||!DB){ err.textContent='서버 연결 후 다시 시도해주세요'; return; }
-  const entry={ pin, role:'user', active:true, color:nextColor(), order:nextOrder(), createdAt:Date.now() };
+  const entry={ pin, role:'user', active:true, company:admCompany, color:nextColor(), order:nextOrder(), createdAt:Date.now() };
   DB.ref('staff/'+name).set(entry).then(()=>{
     STAFF_DATA[name]=entry;
     document.getElementById('adm-staff-name').value='';
     document.getElementById('adm-staff-pin').value='';
+    admCompany='';
+    document.querySelectorAll('#adm-company-daedong,#adm-company-sunghwa').forEach(b=>b.classList.remove('on'));
     renderAdminStaffList();
     toast(`✓ ${name}님 추가 완료`);
     logAudit('staff_add', {name});
@@ -1092,6 +1351,10 @@ const DAYS=['일','월','화','수','목','금','토'];
 // ── 상태 ──
 let records=[];
 let deletedRecords=[]; // 소프트삭제된 기록 (관리 탭 "이력"에서만 노출, 복원 가능)
+let tripRecords=[]; // 운행기록 (전체 인원, 활성)
+let deletedTripRecords=[]; // 소프트삭제된 운행기록
+let tst={car:'',route:'',kmBiz:0,kmPersonal:0,toll:0,extKwh:0,extCost:0,parking:0}; // 운행 입력 staging
+let editTripId=null, editTripSt={};
 let st={staff:'',charger:'',car:'',start:0,end:0,kwh:0};
 let pendStaff='';
 let editId=null, editSt={};
@@ -1164,9 +1427,10 @@ function autoSelectStaff(name){
 function curTab(){ const b=document.querySelector('.tabs > .tab.on'); return b ? b.dataset.tab : 'input'; }
 function goTab(t){
   document.querySelectorAll('.tabs > .tab').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
-  ['input','log','stats','admin'].forEach(id=>{ const el=document.getElementById('sec-'+id); if(el) el.style.display = id===t?'block':'none'; });
+  ['input','log','trip','stats','admin'].forEach(id=>{ const el=document.getElementById('sec-'+id); if(el) el.style.display = id===t?'block':'none'; });
   document.getElementById('content').scrollTop=0;
   if(t==='log') renderLog();
+  if(t==='trip') renderTripSection();
   if(t==='stats') renderStats();
   if(t==='admin') renderAdminPanel();
 }
@@ -1248,6 +1512,140 @@ function resetForm(){
   document.getElementById('calc-num').textContent='—';
   document.getElementById('calc-box').classList.add('z');
   document.getElementById('save-btn').disabled=true;
+}
+
+// ── 운행(주행거리) 기록 ──
+function renderTripSection(){
+  const now2=new Date();
+  const dd=document.getElementById('trip-date-display');
+  if(dd) dd.textContent = `${getLocalDate()} (${DAYS[now2.getDay()]})`;
+  renderTripCarChips();
+  renderTripList();
+}
+function renderTripCarChips(){
+  const grid=document.getElementById('trip-car-grid'); if(!grid) return;
+  const list=activeVehicleList();
+  if(!list.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;padding:12px 0">등록된 차량 없음</div>'; return; }
+  grid.innerHTML=list.map(v=>`<div class="chip ${v===tst.car?'on':''}" onclick="selTripCar(this,'${v}')">${v}</div>`).join('');
+}
+function selTripCar(el,val){
+  el.closest('.chip-grid').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); tst.car=val;
+}
+function readTripForm(){
+  tst.route=document.getElementById('trip-route').value.trim();
+  tst.kmBiz=parseFloat(document.getElementById('trip-km-biz').value)||0;
+  tst.kmPersonal=parseFloat(document.getElementById('trip-km-personal').value)||0;
+  tst.toll=parseFloat(document.getElementById('trip-toll').value)||0;
+  tst.extKwh=parseFloat(document.getElementById('trip-ext-kwh').value)||0;
+  tst.extCost=parseFloat(document.getElementById('trip-ext-cost').value)||0;
+  tst.parking=parseFloat(document.getElementById('trip-parking').value)||0;
+}
+function openTripSaveConfirm(){
+  readTripForm();
+  const err=document.getElementById('trip-err'); err.textContent='';
+  if(!tst.car){ err.textContent='차량을 선택하세요'; return; }
+  if(!tst.route){ err.textContent='운행구간을 입력하세요'; return; }
+  if(tst.kmBiz<=0 && tst.kmPersonal<=0){ err.textContent='주행거리를 입력하세요'; return; }
+  document.getElementById('tripsave-info').innerHTML=`
+    <div class="info-row"><span class="info-key">날짜</span><span class="info-val">${getLocalDate()}</span></div>
+    <div class="info-row"><span class="info-key">차량</span><span class="info-val">${tst.car}</span></div>
+    <div class="info-row"><span class="info-key">운행구간</span><span class="info-val">${tst.route}</span></div>
+    <div class="info-row"><span class="info-key">업무용/비업무용</span><span class="info-val">${tst.kmBiz} / ${tst.kmPersonal} km</span></div>
+    <div class="info-row"><span class="info-key">통행료</span><span class="info-val">${tst.toll.toLocaleString()}원</span></div>
+    <div class="info-row"><span class="info-key">외부충전</span><span class="info-val">${tst.extKwh}kWh / ${tst.extCost.toLocaleString()}원</span></div>
+    <div class="info-row"><span class="info-key">주차/기타</span><span class="info-val">${tst.parking.toLocaleString()}원</span></div>`;
+  openP('pop-tripsave');
+}
+function confirmTripSave(){
+  const rec={ id:Date.now(), date:getLocalDate(), staff:userName(), company:STAFF_DATA[userName()]?.company||'', ...tst };
+  closeP('pop-tripsave');
+  if(!fbOK||!DB){ toast('저장 실패 — 서버 연결 확인'); return; }
+  DB.ref('trip_log').push(rec).then(()=>{
+    toast('✓ 운행기록 저장 완료');
+    logAudit('trip_add', {date:rec.date, car:rec.car, route:rec.route, kmBiz:rec.kmBiz, kmPersonal:rec.kmPersonal});
+    resetTripForm();
+  }).catch(e=>{ toast('저장 실패'); console.warn(e.message); });
+}
+function resetTripForm(){
+  tst={car:'',route:'',kmBiz:0,kmPersonal:0,toll:0,extKwh:0,extCost:0,parking:0};
+  document.querySelectorAll('#trip-car-grid .chip').forEach(c=>c.classList.remove('on'));
+  ['trip-route','trip-km-biz','trip-km-personal','trip-toll','trip-ext-kwh','trip-ext-cost','trip-parking'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+}
+function renderTripList(){
+  const el=document.getElementById('trip-list'); if(!el) return;
+  const pref=getLocalDate().slice(0,7); // YYYY-MM
+  const mine=tripRecords.filter(r=>r.staff===userName() && r.date.startsWith(pref));
+  if(!mine.length){ el.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">이번 달 운행기록이 없습니다</div>'; return; }
+  el.innerHTML=mine.map(r=>`
+    <div class="log-item" onclick="openTripEdit('${r.fbKey}')">
+      <div class="log-bar" style="background:${colorOf(r.staff)}"></div>
+      <div class="log-body">
+        <div class="log-top">${r.date.slice(5)} <span class="log-car">${r.car}</span></div>
+        <div class="log-bot">${r.route} · 업무${r.kmBiz}km 비업무${r.kmPersonal}km</div>
+      </div>
+      <div class="edit-tag">수정</div>
+    </div>`).join('');
+}
+function openTripEdit(fbKey){
+  const r=tripRecords.find(x=>x.fbKey===fbKey); if(!r) return;
+  editTripId=fbKey; editTripSt={...r};
+  document.getElementById('tripedit-lbl').textContent=`${r.date} · ${r.car}`;
+  document.getElementById('te-date').value=r.date;
+  document.getElementById('te-car').innerHTML=allVehicleList().map(v=>`<div class="chip ${v===r.car?'on':''}" onclick="eTripChip(this,'${v}')">${v}</div>`).join('');
+  document.getElementById('te-route').value=r.route||'';
+  document.getElementById('te-km-biz').value=r.kmBiz||0;
+  document.getElementById('te-km-personal').value=r.kmPersonal||0;
+  document.getElementById('te-toll').value=r.toll||0;
+  document.getElementById('te-parking').value=r.parking||0;
+  document.getElementById('te-ext-kwh').value=r.extKwh||0;
+  document.getElementById('te-ext-cost').value=r.extCost||0;
+  openP('pop-tripedit');
+}
+function eTripChip(el,val){ el.closest('.chip-grid').querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); editTripSt.car=val; }
+function confirmTripEdit(){
+  const idx=tripRecords.findIndex(r=>r.fbKey===editTripId); if(idx===-1) return;
+  const before={...tripRecords[idx]};
+  const carChip=document.querySelector('#te-car .on'); if(carChip) editTripSt.car=carChip.textContent;
+  const editDate=document.getElementById('te-date').value; if(editDate) editTripSt.date=editDate;
+  editTripSt.route=document.getElementById('te-route').value.trim();
+  editTripSt.kmBiz=parseFloat(document.getElementById('te-km-biz').value)||0;
+  editTripSt.kmPersonal=parseFloat(document.getElementById('te-km-personal').value)||0;
+  editTripSt.toll=parseFloat(document.getElementById('te-toll').value)||0;
+  editTripSt.parking=parseFloat(document.getElementById('te-parking').value)||0;
+  editTripSt.extKwh=parseFloat(document.getElementById('te-ext-kwh').value)||0;
+  editTripSt.extCost=parseFloat(document.getElementById('te-ext-cost').value)||0;
+  const upd={...tripRecords[idx],...editTripSt};
+  closeP('pop-tripedit');
+  if(!fbOK||!DB){ toast('수정 실패'); return; }
+  DB.ref('trip_log/'+upd.fbKey).update(upd).then(()=>{
+    toast('수정 완료');
+    logAudit('trip_edit', { before:{date:before.date,car:before.car,route:before.route}, after:{date:upd.date,car:upd.car,route:upd.route} });
+  }).catch(e=>{ toast('수정 실패'); console.warn(e.message); });
+}
+function openTripDelConfirm(){
+  const r=tripRecords.find(x=>x.fbKey===editTripId); if(!r) return;
+  document.getElementById('tripdel-info').innerHTML=`
+    <div class="info-row"><span class="info-key">날짜</span><span class="info-val">${r.date}</span></div>
+    <div class="info-row"><span class="info-key">차량</span><span class="info-val">${r.car}</span></div>
+    <div class="info-row"><span class="info-key">운행구간</span><span class="info-val">${r.route}</span></div>`;
+  openP('pop-tripdel');
+}
+function confirmTripDel(){
+  const r=tripRecords.find(x=>x.fbKey===editTripId);
+  closeP('pop-tripdel'); closeP('pop-tripedit');
+  if(!r||!fbOK||!DB) return;
+  DB.ref('trip_log/'+r.fbKey).update({deleted:true, deletedAt:Date.now(), deletedBy:userName()}).then(()=>{
+    toast('삭제 완료');
+    logAudit('trip_delete', {date:r.date, car:r.car, route:r.route, fbKey:r.fbKey});
+  }).catch(e=>{ toast('삭제 실패'); console.warn(e.message); });
+}
+function restoreTripRecord(fbKey){
+  if(!fbOK||!DB) return;
+  DB.ref('trip_log/'+fbKey).update({deleted:false, deletedAt:null, deletedBy:null}).then(()=>{
+    toast('✓ 운행기록 복원 완료');
+    logAudit('trip_restore', {fbKey});
+  }).catch(e=>{ toast('복원 실패'); console.warn(e.message); });
 }
 
 // ── 기록 ──
@@ -1379,6 +1777,7 @@ function renderStats(){
       <button class="dl-btn xls" onclick="statsCSV()">⬇ 엑셀</button>
     </div>
     <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
+      ${isAdmin() ? `<button onclick="openChangePin()" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:12px 24px;font-size:14px;font-weight:700;color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;justify-content:center;line-height:1;margin-right:8px">PIN 변경</button>` : ''}
       <button onclick="logout()" style="background:var(--red-bg);border:1.5px solid var(--red-bd);border-radius:8px;padding:12px 28px;font-size:14px;font-weight:700;color:var(--red);cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;justify-content:center;line-height:1">로그아웃</button>
     </div>`;
 }

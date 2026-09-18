@@ -303,10 +303,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   font-family:'IBM Plex Mono', monospace;
   color:var(--green); background:var(--green-bg);
   border:1px solid var(--green-bd);
-  border-radius:6px; padding:2px 6px;
+  border-radius:6px; padding:2px 4px;
   min-height:18px; text-align:center;
   width:100%; letter-spacing:-.3px;
   transition:all .3s;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .charger-meter.empty{ color:var(--text3); background:transparent; border-color:transparent; }
 </style>
@@ -1462,12 +1463,22 @@ function calcK(){
   } else {
     st.kwh=0; num.textContent='—'; box.classList.add('z');
   }
+  // 이미 "임시저장(충전중)" 상태인데 충전 시작 수치를 다시 고치면(잘못 입력했던 경우 등)
+  // 기존 임시저장을 취소하고 처음(주황 버튼 누르기 전) 상태로 되돌림
+  const tempBanner=document.getElementById('temp-banner');
+  if(tempBanner && tempBanner.style.display==='block'){
+    cancelTempStart();
+  }
   // 임시저장 버튼: 충전기+차량 선택됐고 시작값만 있고 종료 없을 때
   const startBtn=document.getElementById('start-btn');
   const eVal = document.getElementById('inp-e').value;
   const tempOk = st.charger && st.car && !isNaN(s) && s>0 && (!eVal || eVal==='');
   if(startBtn) startBtn.style.display = tempOk ? 'block' : 'none';
   chkReady();
+}
+function cancelTempStart(){
+  if(fbOK && DB && st.charger) DB.ref('ev_charging/' + st.charger).remove();
+  clearTemp();
 }
 function chkReady(){
   // staff는 로그인 시 자동 세팅, 별도 체크 불필요
@@ -2074,7 +2085,7 @@ function clearTemp(){ localStorage.removeItem('ev_temp_start'); document.getElem
 
 /* ══ 탭 스와이프 (전체 화면) ══ */
 (()=>{
-  const TABS = ['input','log','stats'];
+  const TABS = () => [...document.querySelectorAll('.tabs > .tab')].filter(b=>b.style.display!=='none').map(b=>b.dataset.tab);
   let tx=0, ty=0, dir=null;
 
   document.addEventListener('touchstart', e=>{
@@ -2100,13 +2111,11 @@ function clearTemp(){ localStorage.removeItem('ev_temp_start'); document.getElem
     const dx = e.changedTouches[0].clientX - tx;
     const dy = e.changedTouches[0].clientY - ty;
     if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)*1.5) return;
-    // 현재 탭 감지: goTab이 관리하는 on 클래스 기준
-    const cur = TABS.findIndex(t=>
-      document.querySelector(`.tab:nth-child(${TABS.indexOf(t)+1})`)?.classList.contains('on')
-    );
+    const tabs = TABS(); // 로그인 상태(관리자 여부)에 따라 매번 실제 보이는 탭만 다시 계산
+    const cur = tabs.indexOf(curTab());
     if(cur === -1) return;
-    if(dx < 0 && cur < TABS.length-1) goTab(TABS[cur+1]);
-    if(dx > 0 && cur > 0)             goTab(TABS[cur-1]);
+    if(dx < 0 && cur < tabs.length-1) goTab(tabs[cur+1]);
+    if(dx > 0 && cur > 0)             goTab(tabs[cur-1]);
   },{passive:true});
 })();
 
@@ -2229,7 +2238,7 @@ function updateChargerMeters(){
 
 /* ══ 뒤로가기 단계별 처리 ══ */
 (()=>{
-  const TABS = ['input','log','stats'];
+  const TABS = () => [...document.querySelectorAll('.tabs > .tab')].filter(b=>b.style.display!=='none').map(b=>b.dataset.tab);
 
   // 히스토리 스택 초기화 (탭 전환마다 push)
   function pushTabHistory(tab){

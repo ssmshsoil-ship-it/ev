@@ -1608,14 +1608,14 @@ function renderTripList(){
   }
   const s=tripSummary(mine);
   if(statsRow) statsRow.innerHTML=`
-    <div class="stat-card"><div class="stat-label">총주행</div><div class="stat-inline"><span class="stat-val">${s.totKm.toFixed(0)}</span><span class="stat-unit">km</span></div></div>
-    <div class="stat-card"><div class="stat-label">통행료</div><div class="stat-inline"><span class="stat-val">${s.totToll.toLocaleString()}</span><span class="stat-unit">원</span></div></div>
-    <div class="stat-card"><div class="stat-label">주차/기타</div><div class="stat-inline"><span class="stat-val">${s.totParking.toLocaleString()}</span><span class="stat-unit">원</span></div></div>`;
+    <div class="stat-card"><div class="stat-label">업무거리</div><div class="stat-inline"><span class="stat-val">${s.kmBiz.toFixed(0)}</span><span class="stat-unit">km</span></div></div>
+    <div class="stat-card"><div class="stat-label">비업무거리</div><div class="stat-inline"><span class="stat-val">${s.kmPersonal.toFixed(0)}</span><span class="stat-unit">km</span></div></div>
+    <div class="stat-card"><div class="stat-label">통행료</div><div class="stat-inline"><span class="stat-val">${s.totToll.toLocaleString()}</span><span class="stat-unit">원</span></div></div>`;
   if(dlRow) dlRow.style.display='flex';
   if(claimBox){
     claimBox.classList.remove('z');
     claimBox.style.display='flex';
-    document.querySelector('#trip-claim-box .cl-sub').textContent = `외부충전비 ${s.totExtCost.toLocaleString()}원×업무비율 + 통행료 + 주차료`;
+    document.querySelector('#trip-claim-box .cl-sub').textContent = `외부충전비 ${s.totExtCost.toLocaleString()}원×업무비율 + 통행료 + 주차료 ${s.totParking.toLocaleString()}원`;
     document.getElementById('trip-claim-num').textContent = Math.round(s.claim).toLocaleString();
   }
   el.innerHTML=mine.map(r=>`

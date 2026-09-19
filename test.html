@@ -516,7 +516,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="pin-err" id="trip-err" style="text-align:center;margin-top:6px"></div>
 
       <div class="sec-title" style="text-align:center;font-size:15px;font-weight:800;color:var(--text2);margin:20px 0 10px;line-height:1.4">내 운행기록 (이번 달)</div>
+      <div class="stat-row" id="trip-stats-row"></div>
       <div id="trip-list"></div>
+      <div class="dl-row" id="trip-dl-row" style="display:none;margin-top:4px">
+        <button class="dl-btn pdf" onclick="tripPDF()">⬇ PDF</button>
+        <button class="dl-btn xls" onclick="tripCSV()">⬇ 엑셀</button>
+      </div>
       <div style="height:20px"></div>
     </div>
 
@@ -1585,9 +1590,24 @@ function resetTripForm(){
 }
 function renderTripList(){
   const el=document.getElementById('trip-list'); if(!el) return;
+  const statsRow=document.getElementById('trip-stats-row');
+  const dlRow=document.getElementById('trip-dl-row');
   const pref=getLocalDate().slice(0,7); // YYYY-MM
   const mine=tripRecords.filter(r=>r.staff===userName() && r.date.startsWith(pref));
-  if(!mine.length){ el.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">이번 달 운행기록이 없습니다</div>'; return; }
+  if(!mine.length){
+    el.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">이번 달 운행기록이 없습니다</div>';
+    if(statsRow) statsRow.innerHTML='';
+    if(dlRow) dlRow.style.display='none';
+    return;
+  }
+  const totKm=mine.reduce((s,r)=>s+(r.kmBiz||0)+(r.kmPersonal||0),0);
+  const totToll=mine.reduce((s,r)=>s+(r.toll||0),0);
+  const totExtCost=mine.reduce((s,r)=>s+(r.extCost||0),0);
+  if(statsRow) statsRow.innerHTML=`
+    <div class="stat-card"><div class="stat-label">총주행</div><div class="stat-inline"><span class="stat-val">${totKm.toFixed(0)}</span><span class="stat-unit">km</span></div></div>
+    <div class="stat-card"><div class="stat-label">통행료</div><div class="stat-inline"><span class="stat-val">${totToll.toLocaleString()}</span><span class="stat-unit">원</span></div></div>
+    <div class="stat-card"><div class="stat-label">외부충전비</div><div class="stat-inline"><span class="stat-val">${totExtCost.toLocaleString()}</span><span class="stat-unit">원</span></div></div>`;
+  if(dlRow) dlRow.style.display='flex';
   el.innerHTML=mine.map(r=>`
     <div class="log-item" onclick="openTripEdit('${r.fbKey}')">
       <div class="log-bar" style="background:${colorOf(r.staff)}"></div>
@@ -1597,6 +1617,44 @@ function renderTripList(){
       </div>
       <div class="edit-tag">수정</div>
     </div>`).join('');
+}
+async function tripPDF(){
+  const pref=getLocalDate().slice(0,7);
+  const name=userName();
+  const rows=tripRecords.filter(r=>r.staff===name && r.date.startsWith(pref)).sort((a,b)=>a.date.localeCompare(b.date));
+  const totKm=rows.reduce((s,r)=>s+(r.kmBiz||0)+(r.kmPersonal||0),0);
+  const totToll=rows.reduce((s,r)=>s+(r.toll||0),0);
+  const totExtCost=rows.reduce((s,r)=>s+(r.extCost||0),0);
+  const [y,m]=pref.split('-').map(Number);
+  showLoad('PDF 생성 중...');
+  const area=document.getElementById('parea');
+  area.innerHTML=`<div class="ppage"><div class="phdr" style="padding-top:22px"><div class="ph1">${y}년 ${m}월 운행 내역</div><div class="psub">성명 : ${name} &nbsp;&nbsp;&nbsp; 참고용 요약본(회사 공식양식 아님)</div><div class="pmeta"><span>총 ${rows.length}건</span><span>${totKm.toFixed(0)} km</span></div></div>
+    <table class="ptbl"><thead><tr><th>순번</th><th>날짜</th><th>차량</th><th>운행구간</th><th>업무km</th><th>비업무km</th><th>통행료</th><th>외부충전</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td>${r.car}</td><td class="nc">${r.route||''}</td><td>${r.kmBiz||0}</td><td>${r.kmPersonal||0}</td><td>${(r.toll||0).toLocaleString()}</td><td>${(r.extCost||0).toLocaleString()}</td></tr>`).join('')}</tbody></table>
+    <div class="psum">
+      <div class="psbox"><div class="psbox-title">주행거리</div><div class="psrow"><span class="pskey">총 주행</span><span class="psval">${totKm.toFixed(0)} km</span></div></div>
+      <div class="psbox"><div class="psbox-title">비용</div><div class="psrow"><span class="pskey">통행료</span><span class="psval">${totToll.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">외부충전비</span><span class="psval">${totExtCost.toLocaleString()}원</span></div></div>
+    </div>
+    <div class="ptotal"><div class="pt-label">${name} ${y}년 ${m}월 총 주행거리</div><div class="pt-val">${totKm.toFixed(0)} km</div></div>
+    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')} · 참고용 요약본 — 회사 제출용 공식 운행경비신청서는 별도 발급됩니다</div></div>`;
+  await new Promise(r=>setTimeout(r,200));
+  const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
+  doc.save(`${y}년_${m}월_${name}_운행내역.pdf`);
+  area.innerHTML=''; hideLoad(); toast('PDF 저장 완료');
+}
+function tripCSV(){
+  const pref=getLocalDate().slice(0,7);
+  const name=userName();
+  const rows=tripRecords.filter(r=>r.staff===name && r.date.startsWith(pref)).sort((a,b)=>a.date.localeCompare(b.date));
+  const totKm=rows.reduce((s,r)=>s+(r.kmBiz||0)+(r.kmPersonal||0),0);
+  const [y,m]=pref.split('-').map(Number);
+  let csv=`\uFEFF${name} · ${y}년 ${m}월 운행 내역 (참고용, 회사 공식양식 아님)\n순번,날짜,차량,운행구간,업무km,비업무km,통행료,외부충전kWh,외부충전원,주차기타\n`;
+  rows.forEach((r,i)=>{ csv+=`${i+1},${r.date},${r.car},${r.route||''},${r.kmBiz||0},${r.kmPersonal||0},${r.toll||0},${r.extKwh||0},${r.extCost||0},${r.parking||0}\n`; });
+  csv+=`\n합계 주행거리(km),${totKm.toFixed(0)}\n`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${y}년_${m}월_${name}_운행내역.csv`; a.click(); toast('엑셀 저장 완료');
 }
 function openTripEdit(fbKey){
   const r=tripRecords.find(x=>x.fbKey===fbKey); if(!r) return;

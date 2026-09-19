@@ -533,7 +533,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <button class="save-btn" id="trip-save-btn" onclick="openTripSaveConfirm()">저장</button>
       <div class="pin-err" id="trip-err" style="text-align:center;margin-top:6px"></div>
 
-      <div class="sec-title" style="text-align:center;font-size:15px;font-weight:800;color:var(--text2);margin:20px 0 10px;line-height:1.4">내 운행기록 (이번 달)</div>
+      <div class="chip-grid" id="trip-dev-car-filter" style="display:none;grid-template-columns:repeat(3,1fr);margin:16px 0 4px"></div>
+      <div class="sec-title" id="trip-list-title" style="text-align:center;font-size:15px;font-weight:800;color:var(--text2);margin:20px 0 10px;line-height:1.4">내 운행기록 (이번 달)</div>
       <div class="stat-row" id="trip-stats-row"></div>
       <div class="calc-box z" id="trip-claim-box" style="display:none">
         <div><div class="cl-lbl">청구액</div><div class="cl-sub">외부충전비×업무비율 + 통행료 + 주차료</div></div>
@@ -1664,15 +1665,36 @@ function resetTripForm(){
   document.querySelectorAll('#trip-car-grid .chip').forEach(c=>c.classList.remove('on'));
   ['trip-route','trip-km-biz','trip-km-personal','trip-toll','trip-ext-kwh','trip-ext-cost','trip-parking'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
 }
+let devSelectedCar='';
+function renderDevCarFilter(){
+  const el=document.getElementById('trip-dev-car-filter'); if(!el) return;
+  if(!isDeveloper()){ el.style.display='none'; return; }
+  el.style.display='grid';
+  el.innerHTML=allVehicleList().map(v=>`<div class="chip ${v===devSelectedCar?'on':''}" onclick="selDevCar(this,'${v}')">${v}</div>`).join('');
+}
+function selDevCar(el,car){
+  el.closest('.chip-grid').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  devSelectedCar=car;
+  renderTripList();
+}
 function renderTripList(){
   const el=document.getElementById('trip-list'); if(!el) return;
   const statsRow=document.getElementById('trip-stats-row');
   const dlRow=document.getElementById('trip-dl-row');
   const claimBox=document.getElementById('trip-claim-box');
+  const titleEl=document.getElementById('trip-list-title');
   const pref=getLocalDate().slice(0,7); // YYYY-MM
-  const mine=tripRecords.filter(r=>r.staff===userName() && r.date.startsWith(pref));
+  renderDevCarFilter();
+  const dev=isDeveloper();
+  if(titleEl) titleEl.textContent = dev ? '차량별 운행기록 (이번 달)' : '내 운행기록 (이번 달)';
+  const mine = dev
+    ? (devSelectedCar ? tripRecords.filter(r=>r.car===devSelectedCar && r.date.startsWith(pref)) : [])
+    : tripRecords.filter(r=>r.staff===userName() && r.date.startsWith(pref));
   if(!mine.length){
-    el.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">이번 달 운행기록이 없습니다</div>';
+    el.innerHTML = dev && !devSelectedCar
+      ? '<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">위에서 차량을 선택하세요</div>'
+      : '<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px">이번 달 운행기록이 없습니다</div>';
     if(statsRow) statsRow.innerHTML='';
     if(dlRow) dlRow.style.display='none';
     if(claimBox) claimBox.style.display='none';
@@ -1683,7 +1705,7 @@ function renderTripList(){
     <div class="stat-card"><div class="stat-label">업무거리</div><div class="stat-inline"><span class="stat-val">${s.kmBiz.toFixed(0)}</span><span class="stat-unit">km</span></div></div>
     <div class="stat-card"><div class="stat-label">비업무거리</div><div class="stat-inline"><span class="stat-val">${s.kmPersonal.toFixed(0)}</span><span class="stat-unit">km</span></div></div>
     <div class="stat-card"><div class="stat-label">통행료</div><div class="stat-inline"><span class="stat-val">${s.totToll.toLocaleString()}</span><span class="stat-unit">원</span></div></div>`;
-  if(dlRow) dlRow.style.display='flex';
+  if(dlRow) dlRow.style.display= dev ? 'none' : 'flex'; // 개발자 차량별 조회는 확인용 — 개인 청구서 다운로드는 본인계정에서만
   if(claimBox){
     claimBox.classList.remove('z');
     claimBox.style.display='flex';
@@ -1694,7 +1716,7 @@ function renderTripList(){
     <div class="log-item" onclick="openTripEdit('${r.fbKey}')">
       <div class="log-bar" style="background:${colorOf(r.staff)}"></div>
       <div class="log-body">
-        <div class="log-top">${r.date.slice(5)} <span class="log-car">${r.car}</span></div>
+        <div class="log-top">${r.date.slice(5)} <span class="log-car">${r.car}</span>${dev?` <span class="log-car">${r.staff}</span>`:''}</div>
         <div class="log-bot">${r.route} · 업무${r.kmBiz}km 비업무${r.kmPersonal}km</div>
       </div>
       <div class="edit-tag">수정</div>

@@ -319,13 +319,31 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <div id="login-inner" style="background:#fff;border-radius:20px;padding:28px 24px 24px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.12)">
     <!-- Step 1: 이름 선택 -->
     <div id="step-name">
-      <div class="pin-logo">EV 충전 기록</div>
+      <div class="pin-logo" onclick="devTapLogo()" style="cursor:default;user-select:none">EV 충전 기록</div>
       <div class="pin-title">이름 선택</div>
       <div class="pin-sub">본인 이름을 선택하세요</div>
       <div id="name-btn-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;margin-bottom:12px">
         <div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:13px;padding:24px 0">불러오는 중...</div>
       </div>
       <button class="pin-name-btn" style="width:100%;border:2px dashed var(--blue);color:var(--blue);font-weight:700" onclick="goRegister()">+ 신규 등록</button>
+    </div>
+    <!-- Step 2-D: 개발자 전용 (숨김 진입, 로고 5회 탭) -->
+    <div id="step-dev-pin" style="display:none">
+      <div class="pin-logo">EV 충전 기록</div>
+      <div class="pin-title">개발자 확인</div>
+      <div class="pin-sub">PIN을 입력하세요</div>
+      <div class="pin-dots" id="dev-pin-dots">
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="devpi('1')">1</button><button class="pin-key" onclick="devpi('2')">2</button><button class="pin-key" onclick="devpi('3')">3</button>
+        <button class="pin-key" onclick="devpi('4')">4</button><button class="pin-key" onclick="devpi('5')">5</button><button class="pin-key" onclick="devpi('6')">6</button>
+        <button class="pin-key" onclick="devpi('7')">7</button><button class="pin-key" onclick="devpi('8')">8</button><button class="pin-key" onclick="devpi('9')">9</button>
+        <div></div><button class="pin-key" onclick="devpi('0')">0</button><button class="pin-key del" onclick="devpd()">⌫</button>
+      </div>
+      <div class="pin-err" id="dev-pin-err"></div>
+      <button onclick="backToName()" style="margin-top:16px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">← 취소</button>
     </div>
     <!-- Step 2: PIN 입력 -->
     <div id="step-pin" style="display:none">
@@ -921,7 +939,7 @@ let regPin1 = '';
 let regPinV = '';
 
 function renderLoginScreen(){
-  const steps = {'name':'step-name','pin':'step-pin','reg-name':'step-reg-name','reg-pin':'step-reg-pin'};
+  const steps = {'name':'step-name','pin':'step-pin','reg-name':'step-reg-name','reg-pin':'step-reg-pin','dev-pin':'step-dev-pin'};
   Object.entries(steps).forEach(([key,id])=>{
     const el = document.getElementById(id);
     el.style.display = loginStep===key ? 'flex' : 'none';
@@ -945,14 +963,55 @@ function selectName(name){
 function backToName(){
   loginStep='name'; pinV=''; selectedLoginName='';
   regName=''; regPin1=''; regPinStage=1; regPinV=''; regCompany='';
-  updateDots(); updateRegDots();
+  devPinV='';
+  updateDots(); updateRegDots(); updateDevDots();
   document.getElementById('pin-err').textContent='';
   const rne=document.getElementById('reg-name-err'); if(rne) rne.textContent='';
   const rni=document.getElementById('reg-name-input'); if(rni) rni.value='';
   const rpe=document.getElementById('reg-pin-err'); if(rpe) rpe.textContent='';
+  const dpe=document.getElementById('dev-pin-err'); if(dpe) dpe.textContent='';
   document.querySelectorAll('#reg-company-daedong,#reg-company-sunghwa').forEach(b=>b?.classList.remove('selected'));
   renderLoginScreen();
 }
+
+// ── 개발자 전용 숨김 진입 (로고 5회 탭, 일반/관리자 계정엔 노출 안 됨) ──
+let devTapCount=0, devTapTimer=null, devPinV='';
+const DEV_PIN='7410'; // 개발자 본인만 아는 값 — 바꾸고 싶으면 이 상수만 수정
+function devTapLogo(){
+  devTapCount++;
+  clearTimeout(devTapTimer);
+  devTapTimer=setTimeout(()=>{ devTapCount=0; }, 1500);
+  if(devTapCount>=5){
+    devTapCount=0; clearTimeout(devTapTimer);
+    devPinV=''; updateDevDots();
+    document.getElementById('dev-pin-err').textContent='';
+    loginStep='dev-pin';
+    renderLoginScreen();
+  }
+}
+function updateDevDots(){ document.querySelectorAll('#dev-pin-dots .pin-dot').forEach((d,i)=>{ d.classList.toggle('on',i<devPinV.length); d.classList.remove('err'); }); }
+function devpi(n){
+  if(devPinV.length>=4) return;
+  devPinV+=n; updateDevDots();
+  if(devPinV.length===4){
+    setTimeout(()=>{
+      if(devPinV===DEV_PIN){
+        currentUser={name:'개발자', role:'developer'};
+        saveSession('개발자','developer');
+        document.getElementById('pin-screen').style.display='none';
+        document.getElementById('app').style.display='flex';
+        autoSelectStaff('개발자');
+        renderStats(); setTimeout(loadTempStart,500);
+        if(window._initHistoryBase) window._initHistoryBase();
+      } else {
+        document.querySelectorAll('#dev-pin-dots .pin-dot').forEach(d=>d.classList.add('err'));
+        document.getElementById('dev-pin-err').textContent='PIN이 맞지 않습니다';
+        setTimeout(()=>{ devPinV=''; updateDevDots(); document.getElementById('dev-pin-err').textContent=''; },700);
+      }
+    },80);
+  }
+}
+function devpd(){ devPinV=devPinV.slice(0,-1); updateDevDots(); }
 
 // ── 신규 등록 ──
 function goRegister(){
@@ -1138,11 +1197,14 @@ function renderVehicleChips(){
 // ── 로그인/직원/차량 UI 갱신 (관리자 탭 노출 등) ──
 function applyAdminUI(){
   const btn=document.getElementById('tab-admin-btn');
-  if(btn) btn.style.display = isAdmin() ? 'block' : 'none';
+  if(btn) btn.style.display = (isAdmin()||isDeveloper()) ? 'block' : 'none';
+  const histBtn=document.querySelector('.admin-subtab[data-sub="history"]');
+  if(histBtn) histBtn.style.display = isDeveloper() ? 'block' : 'none';
 }
 
 // ── 관리 탭: 직원/차량 관리 ──
 function goAdminSub(sub){
+  if(sub==='history' && !isDeveloper()) sub='staff'; // 이력은 개발자 전용 — 우회 접근 방지
   document.querySelectorAll('.admin-subtab').forEach(b=>b.classList.toggle('on', b.dataset.sub===sub));
   document.getElementById('admin-sub-staff').style.display = sub==='staff' ? 'block':'none';
   document.getElementById('admin-sub-vehicle').style.display = sub==='vehicle' ? 'block':'none';
@@ -1345,6 +1407,7 @@ const NAME_MAP = {
 };
 function normName(name){ return NAME_MAP[name] || name; }
 function isAdmin(){ return currentUser?.role==='admin'; }
+function isDeveloper(){ return currentUser?.role==='developer'; }
 function userName(){ return currentUser?.name||''; }
 
 const now=new Date();
@@ -1639,10 +1702,12 @@ function tripSummary(rows){
   const totExtCost=rows.reduce((s,r)=>s+(r.extCost||0),0);
   const totExtKwh=rows.reduce((s,r)=>s+(r.extKwh||0),0);
   const bizRatio = totKm>0 ? kmBiz/totKm : 0;
-  const claim = totExtCost*bizRatio + totToll + totParking;
+  const bizChargeCost = totExtCost*bizRatio;         // 업무용충전금액
+  const personalChargeCost = totExtCost-bizChargeCost; // 비업무용충전금액(-)
+  const claim = bizChargeCost + totToll + totParking;
   const carsUsed = rows.map(r=>r.car).filter(Boolean);
   const mainCar = carsUsed.length ? [...new Set(carsUsed)].sort((a,b)=>carsUsed.filter(x=>x===b).length-carsUsed.filter(x=>x===a).length)[0] : '';
-  return {kmBiz,kmPersonal,totKm,totToll,totParking,totExtCost,totExtKwh,claim,mainCar};
+  return {kmBiz,kmPersonal,totKm,totToll,totParking,totExtCost,totExtKwh,bizChargeCost,personalChargeCost,claim,mainCar};
 }
 async function tripPDF(){
   const pref=getLocalDate().slice(0,7);
@@ -1652,15 +1717,15 @@ async function tripPDF(){
   const [y,m]=pref.split('-').map(Number);
   showLoad('PDF 생성 중...');
   const area=document.getElementById('parea');
-  area.innerHTML=`<div class="ppage"><div class="phdr" style="padding-top:22px"><div class="ph1">${y}년 ${m}월 운행 내역</div><div class="psub">차량번호 : ${s.mainCar||'-'} &nbsp;&nbsp;&nbsp; 성명 : ${name} &nbsp;&nbsp;&nbsp; 참고용 요약본(회사 공식양식 아님)</div><div class="pmeta"><span>총 ${rows.length}건</span><span>${s.totKm.toFixed(0)} km</span></div></div>
-    <table class="ptbl"><thead><tr><th>순번</th><th>날짜</th><th>차량</th><th>운행구간</th><th>업무km</th><th>비업무km</th><th>통행료</th><th>외부충전</th></tr></thead>
-    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td>${r.car}</td><td class="nc">${r.route||''}</td><td>${r.kmBiz||0}</td><td>${r.kmPersonal||0}</td><td>${(r.toll||0).toLocaleString()}</td><td>${(r.extCost||0).toLocaleString()}</td></tr>`).join('')}</tbody></table>
+  area.innerHTML=`<div class="ppage"><div class="phdr" style="padding-top:22px"><div class="ph1">${y}년 ${m}월 운행 내역</div><div class="psub">차량번호 : ${s.mainCar||'-'} &nbsp;&nbsp;&nbsp; 성명 : ${name} &nbsp;&nbsp;&nbsp; 참고용 요약본(회사 공식양식 아님)</div><div class="pmeta"><span>총 ${rows.length}건</span><span>${s.totKm.toLocaleString()} km</span></div></div>
+    <table class="ptbl"><thead><tr><th>순번</th><th>날짜</th><th>차량</th><th>운행구간</th><th>업무용 주행km</th><th>비업무용 주행km</th><th>통행료</th><th>외부 충전량(kWh)</th><th>외부 충전 금액</th><th>주차비</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td>${r.car}</td><td class="nc">${r.route||''}</td><td>${(r.kmBiz||0).toLocaleString()}</td><td>${(r.kmPersonal||0).toLocaleString()}</td><td>${(r.toll||0).toLocaleString()}</td><td>${r.extKwh||0}</td><td>${(r.extCost||0).toLocaleString()}</td><td>${(r.parking||0).toLocaleString()}</td></tr>`).join('')}</tbody></table>
     <div class="psum">
-      <div class="psbox"><div class="psbox-title">주행거리</div><div class="psrow"><span class="pskey">업무용</span><span class="psval">${s.kmBiz.toFixed(0)} km</span></div><div class="psrow"><span class="pskey">비업무용</span><span class="psval">${s.kmPersonal.toFixed(0)} km</span></div></div>
-      <div class="psbox"><div class="psbox-title">비용</div><div class="psrow"><span class="pskey">통행료</span><span class="psval">${s.totToll.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">외부충전비</span><span class="psval">${s.totExtCost.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">주차/기타</span><span class="psval">${s.totParking.toLocaleString()}원</span></div></div>
+      <div class="psbox"><div class="psbox-title">주행거리</div><div class="psrow"><span class="pskey">업무용 주행km</span><span class="psval">${s.kmBiz.toLocaleString()} km</span></div><div class="psrow"><span class="pskey">비업무용 주행km</span><span class="psval">${s.kmPersonal.toLocaleString()} km</span></div></div>
+      <div class="psbox"><div class="psbox-title">비용</div><div class="psrow"><span class="pskey">통행료</span><span class="psval">${s.totToll.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">외부 충전 금액</span><span class="psval">${s.totExtCost.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">업무용 충전금액</span><span class="psval">${Math.round(s.bizChargeCost).toLocaleString()}원</span></div><div class="psrow"><span class="pskey">비업무용 충전금액(-)</span><span class="psval">${Math.round(s.personalChargeCost).toLocaleString()}원</span></div><div class="psrow"><span class="pskey">주차비</span><span class="psval">${s.totParking.toLocaleString()}원</span></div></div>
     </div>
     <div class="ptotal"><div class="pt-label">${name} ${y}년 ${m}월 예상 청구액</div><div class="pt-val">${Math.round(s.claim).toLocaleString()} 원</div></div>
-    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')} · 참고용 요약본(외부충전비×업무비율+통행료+주차료) — 회사 제출용 공식 운행경비신청서는 별도 발급됩니다</div></div>`;
+    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')} · 참고용 요약본(업무용 충전금액+통행료+주차비) — 회사 제출용 공식 운행경비신청서는 별도 발급됩니다</div></div>`;
   await new Promise(r=>setTimeout(r,200));
   const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
   const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -1674,9 +1739,9 @@ function tripCSV(){
   const rows=tripRecords.filter(r=>r.staff===name && r.date.startsWith(pref)).sort((a,b)=>a.date.localeCompare(b.date));
   const s=tripSummary(rows);
   const [y,m]=pref.split('-').map(Number);
-  let csv=`\uFEFF차량번호 : ${s.mainCar||'-'} · 성명 : ${name} · ${y}년 ${m}월 운행 내역 (참고용, 회사 공식양식 아님)\n순번,날짜,차량,운행구간,업무km,비업무km,통행료,외부충전kWh,외부충전원,주차기타\n`;
+  let csv=`\uFEFF차량번호 : ${s.mainCar||'-'} · 성명 : ${name} · ${y}년 ${m}월 운행 내역 (참고용, 회사 공식양식 아님)\n순번,날짜,차량,운행구간,업무용 주행km,비업무용 주행km,통행료,외부 충전량(kWh),외부 충전 금액,주차비\n`;
   rows.forEach((r,i)=>{ csv+=`${i+1},${r.date},${r.car},${r.route||''},${r.kmBiz||0},${r.kmPersonal||0},${r.toll||0},${r.extKwh||0},${r.extCost||0},${r.parking||0}\n`; });
-  csv+=`\n합계 업무km,${s.kmBiz.toFixed(0)}\n합계 비업무km,${s.kmPersonal.toFixed(0)}\n합계 통행료,${s.totToll}\n합계 외부충전비,${s.totExtCost}\n합계 주차기타,${s.totParking}\n예상 청구액(외부충전비x업무비율+통행료+주차료),${Math.round(s.claim)}\n`;
+  csv+=`\n합계 업무용 주행km,${s.kmBiz.toFixed(0)}\n합계 비업무용 주행km,${s.kmPersonal.toFixed(0)}\n합계 통행료,${s.totToll}\n합계 외부 충전 금액,${s.totExtCost}\n업무용 충전금액,${Math.round(s.bizChargeCost)}\n비업무용 충전금액(-),${Math.round(s.personalChargeCost)}\n합계 주차비,${s.totParking}\n예상 청구액(업무용 충전금액+통행료+주차비),${Math.round(s.claim)}\n`;
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   a.download=`${y}년_${m}월_${name}_운행내역.csv`; a.click(); toast('엑셀 저장 완료');
 }

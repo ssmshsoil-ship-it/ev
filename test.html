@@ -1705,7 +1705,7 @@ function renderTripList(){
     <div class="stat-card"><div class="stat-label">업무거리</div><div class="stat-inline"><span class="stat-val">${s.kmBiz.toFixed(0)}</span><span class="stat-unit">km</span></div></div>
     <div class="stat-card"><div class="stat-label">비업무거리</div><div class="stat-inline"><span class="stat-val">${s.kmPersonal.toFixed(0)}</span><span class="stat-unit">km</span></div></div>
     <div class="stat-card"><div class="stat-label">통행료</div><div class="stat-inline"><span class="stat-val">${s.totToll.toLocaleString()}</span><span class="stat-unit">원</span></div></div>`;
-  if(dlRow) dlRow.style.display= dev ? 'none' : 'flex'; // 개발자 차량별 조회는 확인용 — 개인 청구서 다운로드는 본인계정에서만
+  if(dlRow) dlRow.style.display='flex'; // 개인: 본인기록만 / 개발자: 선택한 차량 기록만 (둘 다 섞이지 않음)
   if(claimBox){
     claimBox.classList.remove('z');
     claimBox.style.display='flex';
@@ -1751,16 +1751,23 @@ function formatRouteHtml(route){
 async function tripPDF(){
   const pref=getLocalDate().slice(0,7);
   const name=userName();
-  const rows=tripRecords.filter(r=>r.staff===name && r.date.startsWith(pref)).sort((a,b)=>a.date.localeCompare(b.date));
+  const dev=isDeveloper();
+  const rows = (dev
+    ? tripRecords.filter(r=>r.car===devSelectedCar && r.date.startsWith(pref))
+    : tripRecords.filter(r=>r.staff===name && r.date.startsWith(pref))
+  ).sort((a,b)=>a.date.localeCompare(b.date));
   const s=tripSummary(rows);
   const [y,m]=pref.split('-').map(Number);
   showLoad('PDF 생성 중...');
   const area=document.getElementById('parea');
-  area.innerHTML=`<div class="ppage"><div class="phdr" style="padding-top:22px"><div class="ph1">${y}년 ${m}월 운행 내역</div><div class="psub">차량번호 : ${s.mainCar||'-'} &nbsp;&nbsp;&nbsp; 성명 : ${name}</div><div class="pmeta"><span>총 ${rows.length}건</span><span>${s.totKm.toLocaleString()} km</span></div></div>
+  const headLine = dev
+    ? `차량번호 : ${devSelectedCar||'-'} &nbsp;&nbsp;&nbsp; (전 직원 통합)`
+    : `차량번호 : ${s.mainCar||'-'} &nbsp;&nbsp;&nbsp; 성명 : ${name}`;
+  area.innerHTML=`<div class="ppage"><div class="phdr" style="padding-top:22px"><div class="ph1">${y}년 ${m}월 운행 내역</div><div class="psub">${headLine}</div><div class="pmeta"><span>총 ${rows.length}건</span><span>${s.totKm.toLocaleString()} km</span></div></div>
     <table class="ptbl" style="font-size:10px"><thead><tr>
       <th style="white-space:nowrap">순번</th>
       <th style="white-space:nowrap">날짜</th>
-      <th style="white-space:nowrap">차량</th>
+      ${dev?'<th style="white-space:nowrap">작성자</th>':''}
       <th>운행구간</th>
       <th style="white-space:nowrap">업무용<br>주행km</th>
       <th style="white-space:nowrap">비업무용<br>주행km</th>
@@ -1769,31 +1776,42 @@ async function tripPDF(){
       <th style="white-space:nowrap">외부<br>충전금액</th>
       <th style="white-space:nowrap">주차비</th>
     </tr></thead>
-    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td style="white-space:nowrap">${r.date.slice(5)}</td><td style="white-space:nowrap">${r.car}</td><td class="nc" style="line-height:1.6">${formatRouteHtml(r.route)}</td><td>${(r.kmBiz||0).toLocaleString()}</td><td>${(r.kmPersonal||0).toLocaleString()}</td><td>${(r.toll||0).toLocaleString()}</td><td>${r.extKwh||0}</td><td style="white-space:nowrap">${(r.extCost||0).toLocaleString()}</td><td>${(r.parking||0).toLocaleString()}</td></tr>`).join('')}</tbody></table>
+    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td style="white-space:nowrap">${r.date.slice(5)}</td>${dev?`<td style="white-space:nowrap">${r.staff}</td>`:''}<td class="nc" style="line-height:1.6">${formatRouteHtml(r.route)}</td><td>${(r.kmBiz||0).toLocaleString()}</td><td>${(r.kmPersonal||0).toLocaleString()}</td><td>${(r.toll||0).toLocaleString()}</td><td>${r.extKwh||0}</td><td style="white-space:nowrap">${(r.extCost||0).toLocaleString()}</td><td>${(r.parking||0).toLocaleString()}</td></tr>`).join('')}</tbody></table>
     <div class="psum">
       <div class="psbox"><div class="psbox-title">주행거리(km)</div><div class="psrow"><span class="pskey">업무용 주행km</span><span class="psval">${s.kmBiz.toLocaleString()} km</span></div><div class="psrow"><span class="pskey">비업무용 주행km</span><span class="psval">${s.kmPersonal.toLocaleString()} km</span></div></div>
       <div class="psbox"><div class="psbox-title">비용</div><div class="psrow"><span class="pskey">통행료</span><span class="psval">${s.totToll.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">외부충전금액</span><span class="psval">${s.totExtCost.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">업무용 충전금액</span><span class="psval">${Math.round(s.bizChargeCost).toLocaleString()}원</span></div><div class="psrow"><span class="pskey">비업무용 충전금액(-)</span><span class="psval">${Math.round(s.personalChargeCost).toLocaleString()}원</span></div><div class="psrow"><span class="pskey">주차비</span><span class="psval">${s.totParking.toLocaleString()}원</span></div></div>
     </div>
-    <div class="ptotal"><div class="pt-label">${name} ${y}년 ${m}월 청구액</div><div class="pt-val">${Math.round(s.claim).toLocaleString()} 원</div></div>
+    <div class="ptotal"><div class="pt-label">${dev?devSelectedCar:name} ${y}년 ${m}월 청구액</div><div class="pt-val">${Math.round(s.claim).toLocaleString()} 원</div></div>
     <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
   await new Promise(r=>setTimeout(r,200));
   const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
   const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,210,297);
-  doc.save(`${y}년_${m}월_${name}_운행내역.pdf`);
+  doc.save(dev ? `${y}년_${m}월_${devSelectedCar}_전직원_운행내역.pdf` : `${y}년_${m}월_${name}_운행내역.pdf`);
   area.innerHTML=''; hideLoad(); toast('PDF 저장 완료');
 }
 function tripCSV(){
   const pref=getLocalDate().slice(0,7);
   const name=userName();
-  const rows=tripRecords.filter(r=>r.staff===name && r.date.startsWith(pref)).sort((a,b)=>a.date.localeCompare(b.date));
+  const dev=isDeveloper();
+  const rows = (dev
+    ? tripRecords.filter(r=>r.car===devSelectedCar && r.date.startsWith(pref))
+    : tripRecords.filter(r=>r.staff===name && r.date.startsWith(pref))
+  ).sort((a,b)=>a.date.localeCompare(b.date));
   const s=tripSummary(rows);
   const [y,m]=pref.split('-').map(Number);
-  let csv=`\uFEFF차량번호 : ${s.mainCar||'-'} · 성명 : ${name} · ${y}년 ${m}월 운행 내역\n순번,날짜,차량,운행구간,업무용 주행km,비업무용 주행km,통행료,외부 충전량(kWh),외부 충전 금액,주차비\n`;
-  rows.forEach((r,i)=>{ csv+=`${i+1},${r.date},${r.car},${r.route||''},${r.kmBiz||0},${r.kmPersonal||0},${r.toll||0},${r.extKwh||0},${r.extCost||0},${r.parking||0}\n`; });
+  let csv = dev
+    ? `\uFEFF차량번호 : ${devSelectedCar||'-'} (전 직원 통합) · ${y}년 ${m}월 운행 내역\n순번,날짜,작성자,운행구간,업무용 주행km,비업무용 주행km,통행료,외부 충전량(kWh),외부 충전 금액,주차비\n`
+    : `\uFEFF차량번호 : ${s.mainCar||'-'} · 성명 : ${name} · ${y}년 ${m}월 운행 내역\n순번,날짜,차량,운행구간,업무용 주행km,비업무용 주행km,통행료,외부 충전량(kWh),외부 충전 금액,주차비\n`;
+  rows.forEach((r,i)=>{
+    csv += dev
+      ? `${i+1},${r.date},${r.staff},${r.route||''},${r.kmBiz||0},${r.kmPersonal||0},${r.toll||0},${r.extKwh||0},${r.extCost||0},${r.parking||0}\n`
+      : `${i+1},${r.date},${r.car},${r.route||''},${r.kmBiz||0},${r.kmPersonal||0},${r.toll||0},${r.extKwh||0},${r.extCost||0},${r.parking||0}\n`;
+  });
   csv+=`\n합계 업무용 주행km,${s.kmBiz.toFixed(0)}\n합계 비업무용 주행km,${s.kmPersonal.toFixed(0)}\n합계 통행료,${s.totToll}\n합계 외부 충전 금액,${s.totExtCost}\n업무용 충전금액,${Math.round(s.bizChargeCost)}\n비업무용 충전금액(-),${Math.round(s.personalChargeCost)}\n합계 주차비,${s.totParking}\n청구액(업무용 충전금액+통행료+주차비),${Math.round(s.claim)}\n`;
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
-  a.download=`${y}년_${m}월_${name}_운행내역.csv`; a.click(); toast('엑셀 저장 완료');
+  a.download = dev ? `${y}년_${m}월_${devSelectedCar}_전직원_운행내역.csv` : `${y}년_${m}월_${name}_운행내역.csv`;
+  a.click(); toast('엑셀 저장 완료');
 }
 function openTripEdit(fbKey){
   const r=tripRecords.find(x=>x.fbKey===fbKey); if(!r) return;

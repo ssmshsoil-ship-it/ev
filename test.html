@@ -517,18 +517,18 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </div>
       <div class="card">
         <div class="card-title">통행료 (원)</div>
-        <input id="trip-toll" class="input-box" type="number" inputmode="numeric" placeholder="0">
+        <input id="trip-toll" class="input-box" type="text" inputmode="numeric" placeholder="0" oninput="formatNumInput(this)">
       </div>
       <div class="card" style="background:var(--surface2)">
         <div class="card-title">외부(공용) 충전 — 결제한 경우만</div>
         <div class="input-row">
           <div class="input-field"><div class="input-label">충전량(kWh)</div><input id="trip-ext-kwh" class="input-box" type="number" inputmode="decimal" placeholder="0"></div>
-          <div class="input-field"><div class="input-label">결제금액(원)</div><input id="trip-ext-cost" class="input-box" type="number" inputmode="numeric" placeholder="0"></div>
+          <div class="input-field"><div class="input-label">결제금액(원)</div><input id="trip-ext-cost" class="input-box" type="text" inputmode="numeric" placeholder="0" oninput="formatNumInput(this)"></div>
         </div>
       </div>
       <div class="card">
         <div class="card-title">주차/기타 (원)</div>
-        <input id="trip-parking" class="input-box" type="number" inputmode="numeric" placeholder="0">
+        <input id="trip-parking" class="input-box" type="text" inputmode="numeric" placeholder="0" oninput="formatNumInput(this)">
       </div>
       <button class="save-btn" id="trip-save-btn" onclick="openTripSaveConfirm()">저장</button>
       <div class="pin-err" id="trip-err" style="text-align:center;margin-top:6px"></div>
@@ -536,7 +536,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="sec-title" style="text-align:center;font-size:15px;font-weight:800;color:var(--text2);margin:20px 0 10px;line-height:1.4">내 운행기록 (이번 달)</div>
       <div class="stat-row" id="trip-stats-row"></div>
       <div class="calc-box z" id="trip-claim-box" style="display:none">
-        <div><div class="cl-lbl">예상 청구액</div><div class="cl-sub">외부충전비×업무비율 + 통행료 + 주차료</div></div>
+        <div><div class="cl-lbl">청구액</div><div class="cl-sub">외부충전비×업무비율 + 통행료 + 주차료</div></div>
         <div style="display:flex;align-items:baseline;gap:4px"><div class="calc-num" id="trip-claim-num">—</div><div class="calc-unit">원</div></div>
       </div>
       <div id="trip-list"></div>
@@ -711,12 +711,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="input-field"><div class="input-label">비업무km</div><input class="input-box" id="te-km-personal" type="number" inputmode="decimal"></div>
     </div>
     <div class="input-row" style="margin-bottom:11px">
-      <div class="input-field"><div class="input-label">통행료</div><input class="input-box" id="te-toll" type="number" inputmode="numeric"></div>
-      <div class="input-field"><div class="input-label">주차/기타</div><input class="input-box" id="te-parking" type="number" inputmode="numeric"></div>
+      <div class="input-field"><div class="input-label">통행료</div><input class="input-box" id="te-toll" type="text" inputmode="numeric" oninput="formatNumInput(this)"></div>
+      <div class="input-field"><div class="input-label">주차/기타</div><input class="input-box" id="te-parking" type="text" inputmode="numeric" oninput="formatNumInput(this)"></div>
     </div>
     <div class="input-row" style="margin-bottom:14px">
       <div class="input-field"><div class="input-label">외부충전kWh</div><input class="input-box" id="te-ext-kwh" type="number" inputmode="decimal"></div>
-      <div class="input-field"><div class="input-label">외부충전원</div><input class="input-box" id="te-ext-cost" type="number" inputmode="numeric"></div>
+      <div class="input-field"><div class="input-label">외부충전원</div><input class="input-box" id="te-ext-cost" type="text" inputmode="numeric" oninput="formatNumInput(this)"></div>
     </div>
     <div class="btn-row" style="margin-bottom:9px">
       <button class="btn" onclick="closeP('pop-tripedit')">취소</button>
@@ -1615,14 +1615,23 @@ function selTripCar(el,val){
   el.closest('.chip-grid').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
   el.classList.add('on'); tst.car=val;
 }
+// 금액 입력칸 실시간 천단위 쉼표 포맷 (통행료/주차/외부충전원 공용)
+function formatNumInput(el){
+  const digits = el.value.replace(/[^\d]/g,'');
+  el.value = digits ? Number(digits).toLocaleString() : '';
+}
+function numVal(id){
+  const raw=(document.getElementById(id).value||'').replace(/,/g,'');
+  return raw ? parseFloat(raw) : 0;
+}
 function readTripForm(){
   tst.route=document.getElementById('trip-route').value.trim();
   tst.kmBiz=parseFloat(document.getElementById('trip-km-biz').value)||0;
   tst.kmPersonal=parseFloat(document.getElementById('trip-km-personal').value)||0;
-  tst.toll=parseFloat(document.getElementById('trip-toll').value)||0;
+  tst.toll=numVal('trip-toll');
   tst.extKwh=parseFloat(document.getElementById('trip-ext-kwh').value)||0;
-  tst.extCost=parseFloat(document.getElementById('trip-ext-cost').value)||0;
-  tst.parking=parseFloat(document.getElementById('trip-parking').value)||0;
+  tst.extCost=numVal('trip-ext-cost');
+  tst.parking=numVal('trip-parking');
 }
 function openTripSaveConfirm(){
   readTripForm();
@@ -1709,6 +1718,14 @@ function tripSummary(rows){
   const mainCar = carsUsed.length ? [...new Set(carsUsed)].sort((a,b)=>carsUsed.filter(x=>x===b).length-carsUsed.filter(x=>x===a).length)[0] : '';
   return {kmBiz,kmPersonal,totKm,totToll,totParking,totExtCost,totExtKwh,bizChargeCost,personalChargeCost,claim,mainCar};
 }
+function formatRouteHtml(route){
+  if(!route) return '';
+  const parts = route.split(',').map(x=>x.trim()).filter(Boolean);
+  if(parts.length<=3) return parts.join(', ');
+  const lines=[];
+  for(let i=0;i<parts.length;i+=3) lines.push(parts.slice(i,i+3).join(', '));
+  return lines.join('<br>');
+}
 async function tripPDF(){
   const pref=getLocalDate().slice(0,7);
   const name=userName();
@@ -1717,15 +1734,26 @@ async function tripPDF(){
   const [y,m]=pref.split('-').map(Number);
   showLoad('PDF 생성 중...');
   const area=document.getElementById('parea');
-  area.innerHTML=`<div class="ppage"><div class="phdr" style="padding-top:22px"><div class="ph1">${y}년 ${m}월 운행 내역</div><div class="psub">차량번호 : ${s.mainCar||'-'} &nbsp;&nbsp;&nbsp; 성명 : ${name} &nbsp;&nbsp;&nbsp; 참고용 요약본(회사 공식양식 아님)</div><div class="pmeta"><span>총 ${rows.length}건</span><span>${s.totKm.toLocaleString()} km</span></div></div>
-    <table class="ptbl"><thead><tr><th>순번</th><th>날짜</th><th>차량</th><th>운행구간</th><th>업무용 주행km</th><th>비업무용 주행km</th><th>통행료</th><th>외부 충전량(kWh)</th><th>외부 충전 금액</th><th>주차비</th></tr></thead>
-    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.date.slice(5)}</td><td>${r.car}</td><td class="nc">${r.route||''}</td><td>${(r.kmBiz||0).toLocaleString()}</td><td>${(r.kmPersonal||0).toLocaleString()}</td><td>${(r.toll||0).toLocaleString()}</td><td>${r.extKwh||0}</td><td>${(r.extCost||0).toLocaleString()}</td><td>${(r.parking||0).toLocaleString()}</td></tr>`).join('')}</tbody></table>
+  area.innerHTML=`<div class="ppage"><div class="phdr" style="padding-top:22px"><div class="ph1">${y}년 ${m}월 운행 내역</div><div class="psub">차량번호 : ${s.mainCar||'-'} &nbsp;&nbsp;&nbsp; 성명 : ${name}</div><div class="pmeta"><span>총 ${rows.length}건</span><span>${s.totKm.toLocaleString()} km</span></div></div>
+    <table class="ptbl" style="font-size:10px"><thead><tr>
+      <th style="white-space:nowrap">순번</th>
+      <th style="white-space:nowrap">날짜</th>
+      <th style="white-space:nowrap">차량</th>
+      <th>운행구간</th>
+      <th style="white-space:nowrap">업무용<br>주행km</th>
+      <th style="white-space:nowrap">비업무용<br>주행km</th>
+      <th style="white-space:nowrap">통행료</th>
+      <th style="white-space:nowrap">외부<br>충전량(kWh)</th>
+      <th style="white-space:nowrap">외부<br>충전금액</th>
+      <th style="white-space:nowrap">주차비</th>
+    </tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td style="white-space:nowrap">${r.date.slice(5)}</td><td style="white-space:nowrap">${r.car}</td><td class="nc" style="line-height:1.6">${formatRouteHtml(r.route)}</td><td>${(r.kmBiz||0).toLocaleString()}</td><td>${(r.kmPersonal||0).toLocaleString()}</td><td>${(r.toll||0).toLocaleString()}</td><td>${r.extKwh||0}</td><td style="white-space:nowrap">${(r.extCost||0).toLocaleString()}</td><td>${(r.parking||0).toLocaleString()}</td></tr>`).join('')}</tbody></table>
     <div class="psum">
-      <div class="psbox"><div class="psbox-title">주행거리</div><div class="psrow"><span class="pskey">업무용 주행km</span><span class="psval">${s.kmBiz.toLocaleString()} km</span></div><div class="psrow"><span class="pskey">비업무용 주행km</span><span class="psval">${s.kmPersonal.toLocaleString()} km</span></div></div>
-      <div class="psbox"><div class="psbox-title">비용</div><div class="psrow"><span class="pskey">통행료</span><span class="psval">${s.totToll.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">외부 충전 금액</span><span class="psval">${s.totExtCost.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">업무용 충전금액</span><span class="psval">${Math.round(s.bizChargeCost).toLocaleString()}원</span></div><div class="psrow"><span class="pskey">비업무용 충전금액(-)</span><span class="psval">${Math.round(s.personalChargeCost).toLocaleString()}원</span></div><div class="psrow"><span class="pskey">주차비</span><span class="psval">${s.totParking.toLocaleString()}원</span></div></div>
+      <div class="psbox"><div class="psbox-title">주행거리(km)</div><div class="psrow"><span class="pskey">업무용 주행km</span><span class="psval">${s.kmBiz.toLocaleString()} km</span></div><div class="psrow"><span class="pskey">비업무용 주행km</span><span class="psval">${s.kmPersonal.toLocaleString()} km</span></div></div>
+      <div class="psbox"><div class="psbox-title">비용</div><div class="psrow"><span class="pskey">통행료</span><span class="psval">${s.totToll.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">외부충전금액</span><span class="psval">${s.totExtCost.toLocaleString()}원</span></div><div class="psrow"><span class="pskey">업무용 충전금액</span><span class="psval">${Math.round(s.bizChargeCost).toLocaleString()}원</span></div><div class="psrow"><span class="pskey">비업무용 충전금액(-)</span><span class="psval">${Math.round(s.personalChargeCost).toLocaleString()}원</span></div><div class="psrow"><span class="pskey">주차비</span><span class="psval">${s.totParking.toLocaleString()}원</span></div></div>
     </div>
-    <div class="ptotal"><div class="pt-label">${name} ${y}년 ${m}월 예상 청구액</div><div class="pt-val">${Math.round(s.claim).toLocaleString()} 원</div></div>
-    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')} · 참고용 요약본(업무용 충전금액+통행료+주차비) — 회사 제출용 공식 운행경비신청서는 별도 발급됩니다</div></div>`;
+    <div class="ptotal"><div class="pt-label">${name} ${y}년 ${m}월 청구액</div><div class="pt-val">${Math.round(s.claim).toLocaleString()} 원</div></div>
+    <div class="pfoot">출력일: ${new Date().toLocaleDateString('ko-KR')}</div></div>`;
   await new Promise(r=>setTimeout(r,200));
   const canvas=await html2canvas(area.querySelector('.ppage'),{scale:2,useCORS:true,logging:false,backgroundColor:'#fff'});
   const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -1739,9 +1767,9 @@ function tripCSV(){
   const rows=tripRecords.filter(r=>r.staff===name && r.date.startsWith(pref)).sort((a,b)=>a.date.localeCompare(b.date));
   const s=tripSummary(rows);
   const [y,m]=pref.split('-').map(Number);
-  let csv=`\uFEFF차량번호 : ${s.mainCar||'-'} · 성명 : ${name} · ${y}년 ${m}월 운행 내역 (참고용, 회사 공식양식 아님)\n순번,날짜,차량,운행구간,업무용 주행km,비업무용 주행km,통행료,외부 충전량(kWh),외부 충전 금액,주차비\n`;
+  let csv=`\uFEFF차량번호 : ${s.mainCar||'-'} · 성명 : ${name} · ${y}년 ${m}월 운행 내역\n순번,날짜,차량,운행구간,업무용 주행km,비업무용 주행km,통행료,외부 충전량(kWh),외부 충전 금액,주차비\n`;
   rows.forEach((r,i)=>{ csv+=`${i+1},${r.date},${r.car},${r.route||''},${r.kmBiz||0},${r.kmPersonal||0},${r.toll||0},${r.extKwh||0},${r.extCost||0},${r.parking||0}\n`; });
-  csv+=`\n합계 업무용 주행km,${s.kmBiz.toFixed(0)}\n합계 비업무용 주행km,${s.kmPersonal.toFixed(0)}\n합계 통행료,${s.totToll}\n합계 외부 충전 금액,${s.totExtCost}\n업무용 충전금액,${Math.round(s.bizChargeCost)}\n비업무용 충전금액(-),${Math.round(s.personalChargeCost)}\n합계 주차비,${s.totParking}\n예상 청구액(업무용 충전금액+통행료+주차비),${Math.round(s.claim)}\n`;
+  csv+=`\n합계 업무용 주행km,${s.kmBiz.toFixed(0)}\n합계 비업무용 주행km,${s.kmPersonal.toFixed(0)}\n합계 통행료,${s.totToll}\n합계 외부 충전 금액,${s.totExtCost}\n업무용 충전금액,${Math.round(s.bizChargeCost)}\n비업무용 충전금액(-),${Math.round(s.personalChargeCost)}\n합계 주차비,${s.totParking}\n청구액(업무용 충전금액+통행료+주차비),${Math.round(s.claim)}\n`;
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   a.download=`${y}년_${m}월_${name}_운행내역.csv`; a.click(); toast('엑셀 저장 완료');
 }
@@ -1761,10 +1789,10 @@ function openTripEdit(fbKey){
   document.getElementById('te-route').value=r.route||'';
   document.getElementById('te-km-biz').value=r.kmBiz||0;
   document.getElementById('te-km-personal').value=r.kmPersonal||0;
-  document.getElementById('te-toll').value=r.toll||0;
-  document.getElementById('te-parking').value=r.parking||0;
+  document.getElementById('te-toll').value=(r.toll||0).toLocaleString();
+  document.getElementById('te-parking').value=(r.parking||0).toLocaleString();
   document.getElementById('te-ext-kwh').value=r.extKwh||0;
-  document.getElementById('te-ext-cost').value=r.extCost||0;
+  document.getElementById('te-ext-cost').value=(r.extCost||0).toLocaleString();
   openP('pop-tripedit');
 }
 function eTripChip(el,val){ el.closest('.chip-grid').querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); editTripSt.car=val; }
@@ -1776,10 +1804,10 @@ function confirmTripEdit(){
   editTripSt.route=document.getElementById('te-route').value.trim();
   editTripSt.kmBiz=parseFloat(document.getElementById('te-km-biz').value)||0;
   editTripSt.kmPersonal=parseFloat(document.getElementById('te-km-personal').value)||0;
-  editTripSt.toll=parseFloat(document.getElementById('te-toll').value)||0;
-  editTripSt.parking=parseFloat(document.getElementById('te-parking').value)||0;
+  editTripSt.toll=numVal('te-toll');
+  editTripSt.parking=numVal('te-parking');
   editTripSt.extKwh=parseFloat(document.getElementById('te-ext-kwh').value)||0;
-  editTripSt.extCost=parseFloat(document.getElementById('te-ext-cost').value)||0;
+  editTripSt.extCost=numVal('te-ext-cost');
   const upd={...tripRecords[idx],...editTripSt};
   closeP('pop-tripedit');
   if(!fbOK||!DB){ toast('수정 실패'); return; }

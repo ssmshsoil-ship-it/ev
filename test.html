@@ -1700,7 +1700,7 @@ function renderOdometerCard(){
   const personalEl=document.getElementById('trip-month-personal');
   if(!curEndEl) return; // 운행탭 아직 미로딩
   const pref=getLocalDate().slice(0,7);
-  const mine = isDeveloper() ? [] : tripRecords.filter(r=>r.staff===userName() && r.date.startsWith(pref));
+  const mine = tripRecords.filter(r=>r.staff===userName() && r.date.startsWith(pref));
   const kmBiz = mine.reduce((s,r)=>s+(r.kmBiz||0),0);
   const kmPersonal = mine.reduce((s,r)=>s+(r.kmPersonal||0),0);
   const monthTotal = kmBiz+kmPersonal;

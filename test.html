@@ -1646,8 +1646,12 @@ function prevMonthStr(ym){
   const d=new Date(y, m-2, 1); // JS Date는 0-index 월이라 m-2 = 전월
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
-function loadTripOdometer(){
-  if(!fbOK||!DB) return;
+function loadTripOdometer(retryCount){
+  retryCount = retryCount||0;
+  if(!fbOK||!DB){
+    if(retryCount<10) setTimeout(()=>loadTripOdometer(retryCount+1), 300); // Firebase 연결이 아직 안 됐으면 최대 3초간 재시도
+    return;
+  }
   const curYm=getLocalDate().slice(0,7);
   DB.ref('trip_odometer/'+odoKey(curYm)).once('value').then(snap=>{
     if(snap.exists() && typeof snap.val().prevEnd==='number'){
